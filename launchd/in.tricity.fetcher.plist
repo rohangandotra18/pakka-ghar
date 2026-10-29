@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template: scripts/install_mac.sh fills in __PYTHON__ and __DIR__ and copies this to ~/Library/LaunchAgents. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>in.tricity.fetcher</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>__PYTHON__</string>
+    <string>__DIR__/fetcher.py</string>
+    <string>--quiet</string>
+    <string>run</string>
+  </array>
+  <key>WorkingDirectory</key><string>__DIR__</string>
+  <!-- Wakes hourly; each source only fetches when its every_hours has passed, so a Mac that slept catches up within the hour. -->
+  <key>StartInterval</key><integer>3600</integer>
+  <key>RunAtLoad</key><true/>
+  <key>LowPriorityIO</key><true/>
+  <key>ProcessType</key><string>Background</string>
+  <key>StandardOutPath</key><string>__DIR__/data/logs/launchd.out.log</string>
+  <key>StandardErrorPath</key><string>__DIR__/data/logs/launchd.err.log</string>
+</dict>
+</plist>
