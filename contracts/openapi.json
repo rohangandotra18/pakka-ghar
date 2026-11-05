@@ -1,0 +1,5617 @@
+{
+  "components": {
+    "schemas": {
+      "AgreementOut": {
+        "properties": {
+          "certificate": {
+            "title": "Certificate",
+            "type": "string"
+          },
+          "owner_signed": {
+            "title": "Owner Signed",
+            "type": "boolean"
+          },
+          "stamped": {
+            "title": "Stamped",
+            "type": "boolean"
+          },
+          "tenant_signed": {
+            "title": "Tenant Signed",
+            "type": "boolean"
+          },
+          "terms": {
+            "additionalProperties": true,
+            "title": "Terms",
+            "type": "object"
+          }
+        },
+        "required": [
+          "tenant_signed",
+          "owner_signed",
+          "stamped",
+          "certificate",
+          "terms"
+        ],
+        "title": "AgreementOut",
+        "type": "object"
+      },
+      "AssignIn": {
+        "properties": {
+          "assignee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignee"
+          }
+        },
+        "title": "AssignIn",
+        "type": "object"
+      },
+      "AutopayIn": {
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on"
+        ],
+        "title": "AutopayIn",
+        "type": "object"
+      },
+      "BedOut": {
+        "properties": {
+          "bed_id": {
+            "title": "Bed Id",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "integer"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag"
+          },
+          "who": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Who"
+          }
+        },
+        "required": [
+          "bed_id",
+          "label",
+          "who",
+          "tag",
+          "note"
+        ],
+        "title": "BedOut",
+        "type": "object"
+      },
+      "BoardOut": {
+        "properties": {
+          "free": {
+            "title": "Free",
+            "type": "integer"
+          },
+          "full_rooms": {
+            "title": "Full Rooms",
+            "type": "integer"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/RoomBoardOut"
+            },
+            "title": "Rooms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "free",
+          "rooms",
+          "full_rooms"
+        ],
+        "title": "BoardOut",
+        "type": "object"
+      },
+      "BookIn": {
+        "properties": {
+          "listing": {
+            "title": "Listing",
+            "type": "string"
+          },
+          "months": {
+            "default": 11,
+            "title": "Months",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "listing"
+        ],
+        "title": "BookIn",
+        "type": "object"
+      },
+      "BookingOut": {
+        "properties": {
+          "agreement": {
+            "$ref": "#/components/schemas/AgreementOut"
+          },
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "bed": {
+            "title": "Bed",
+            "type": "integer"
+          },
+          "deposit_paid": {
+            "title": "Deposit Paid",
+            "type": "boolean"
+          },
+          "deposit_paise": {
+            "title": "Deposit Paise",
+            "type": "integer"
+          },
+          "hold_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hold Expires At"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "listing": {
+            "title": "Listing",
+            "type": "string"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "move_in_on": {
+            "format": "date",
+            "title": "Move In On",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "offer_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Id"
+          },
+          "police": {
+            "title": "Police",
+            "type": "string"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "listing",
+          "name",
+          "area",
+          "room",
+          "bed",
+          "status",
+          "move_in_on",
+          "months",
+          "rent_paise",
+          "deposit_paise",
+          "hold_expires_at",
+          "deposit_paid",
+          "agreement",
+          "police",
+          "offer_id"
+        ],
+        "title": "BookingOut",
+        "type": "object"
+      },
+      "DeleteIn": {
+        "properties": {
+          "confirm": {
+            "title": "Confirm",
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "title": "DeleteIn",
+        "type": "object"
+      },
+      "DeleteOut": {
+        "properties": {
+          "deleted": {
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "kept": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Kept",
+            "type": "array"
+          }
+        },
+        "required": [
+          "deleted",
+          "kept"
+        ],
+        "title": "DeleteOut",
+        "type": "object"
+      },
+      "DocOut": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "label",
+          "status"
+        ],
+        "title": "DocOut",
+        "type": "object"
+      },
+      "EndIn": {
+        "properties": {
+          "aspects": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Aspects",
+            "type": "object"
+          },
+          "comment": {
+            "default": "",
+            "title": "Comment",
+            "type": "string"
+          },
+          "deposit_on_time": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deposit On Time"
+          }
+        },
+        "required": [
+          "aspects"
+        ],
+        "title": "EndIn",
+        "type": "object"
+      },
+      "FreeBedOut": {
+        "properties": {
+          "bed": {
+            "title": "Bed",
+            "type": "integer"
+          },
+          "bed_id": {
+            "title": "Bed Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "offers_open": {
+            "title": "Offers Open",
+            "type": "boolean"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bed_id",
+          "room",
+          "bed",
+          "kind",
+          "rent_paise",
+          "offers_open"
+        ],
+        "title": "FreeBedOut",
+        "type": "object"
+      },
+      "HealthOut": {
+        "properties": {
+          "database": {
+            "title": "Database",
+            "type": "boolean"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "database",
+          "version"
+        ],
+        "title": "HealthOut",
+        "type": "object"
+      },
+      "HistoryItem": {
+        "properties": {
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "booking_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Id"
+          },
+          "current": {
+            "title": "Current",
+            "type": "boolean"
+          },
+          "deposit": {
+            "title": "Deposit",
+            "type": "string"
+          },
+          "from_label": {
+            "title": "From Label",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "rated": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rated"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "to_label": {
+            "title": "To Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "booking_id",
+          "name",
+          "area",
+          "from_label",
+          "to_label",
+          "rent_paise",
+          "current",
+          "rated",
+          "deposit"
+        ],
+        "title": "HistoryItem",
+        "type": "object"
+      },
+      "HistoryOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "rated_by": {
+            "title": "Rated By",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "required": [
+          "items",
+          "score",
+          "rated_by"
+        ],
+        "title": "HistoryOut",
+        "type": "object"
+      },
+      "InvoiceLineOut": {
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "quantity": {
+            "title": "Quantity",
+            "type": "number"
+          },
+          "rate_paise": {
+            "title": "Rate Paise",
+            "type": "integer"
+          },
+          "sac": {
+            "title": "Sac",
+            "type": "string"
+          },
+          "tax_paise": {
+            "title": "Tax Paise",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "description",
+          "quantity",
+          "rate_paise",
+          "amount_paise",
+          "tax_paise",
+          "sac"
+        ],
+        "title": "InvoiceLineOut",
+        "type": "object"
+      },
+      "InvoiceOut": {
+        "properties": {
+          "due_on": {
+            "format": "date",
+            "title": "Due On",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/InvoiceLineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "paid_paise": {
+            "title": "Paid Paise",
+            "type": "integer"
+          },
+          "period": {
+            "format": "date",
+            "title": "Period",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_paise": {
+            "title": "Total Paise",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "period",
+          "due_on",
+          "status",
+          "total_paise",
+          "paid_paise",
+          "lines"
+        ],
+        "title": "InvoiceOut",
+        "type": "object"
+      },
+      "KycCompleteIn": {
+        "properties": {
+          "auth_code": {
+            "title": "Auth Code",
+            "type": "string"
+          },
+          "txn": {
+            "title": "Txn",
+            "type": "string"
+          }
+        },
+        "required": [
+          "txn",
+          "auth_code"
+        ],
+        "title": "KycCompleteIn",
+        "type": "object"
+      },
+      "KycStartOut": {
+        "properties": {
+          "redirect_url": {
+            "title": "Redirect Url",
+            "type": "string"
+          },
+          "txn": {
+            "title": "Txn",
+            "type": "string"
+          }
+        },
+        "required": [
+          "txn",
+          "redirect_url"
+        ],
+        "title": "KycStartOut",
+        "type": "object"
+      },
+      "ListingOut": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "deposit_months": {
+            "title": "Deposit Months",
+            "type": "integer"
+          },
+          "free": {
+            "title": "Free",
+            "type": "integer"
+          },
+          "free_bed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FreeBedOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gender": {
+            "title": "Gender",
+            "type": "string"
+          },
+          "hot": {
+            "title": "Hot",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "km": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Km"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          },
+          "meals": {
+            "title": "Meals",
+            "type": "string"
+          },
+          "move_in_on": {
+            "format": "date",
+            "title": "Move In On",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "notice_months": {
+            "title": "Notice Months",
+            "type": "integer"
+          },
+          "offers": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfferStatsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "stays": {
+            "title": "Stays",
+            "type": "integer"
+          },
+          "tariff_paise": {
+            "title": "Tariff Paise",
+            "type": "integer"
+          },
+          "verified_owner": {
+            "title": "Verified Owner",
+            "type": "boolean"
+          },
+          "watching": {
+            "title": "Watching",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "gender",
+          "area",
+          "city",
+          "address",
+          "meals",
+          "lat",
+          "lng",
+          "rent_paise",
+          "free",
+          "rating",
+          "stays",
+          "hot",
+          "watching",
+          "free_bed",
+          "offers",
+          "deposit_months",
+          "notice_months",
+          "tariff_paise",
+          "verified_owner",
+          "move_in_on",
+          "km"
+        ],
+        "title": "ListingOut",
+        "type": "object"
+      },
+      "ListingRef": {
+        "properties": {
+          "listing": {
+            "title": "Listing",
+            "type": "string"
+          }
+        },
+        "required": [
+          "listing"
+        ],
+        "title": "ListingRef",
+        "type": "object"
+      },
+      "MeOut": {
+        "properties": {
+          "aadhaar_masked": {
+            "title": "Aadhaar Masked",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "looking_for": {
+            "title": "Looking For",
+            "type": "string"
+          },
+          "memberships": {
+            "items": {
+              "$ref": "#/components/schemas/MembershipOut"
+            },
+            "title": "Memberships",
+            "type": "array"
+          },
+          "move_in_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Move In On"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "profile": {
+            "additionalProperties": true,
+            "title": "Profile",
+            "type": "object"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          },
+          "works_at": {
+            "title": "Works At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "phone",
+          "name",
+          "works_at",
+          "looking_for",
+          "move_in_on",
+          "verified",
+          "aadhaar_masked",
+          "profile",
+          "memberships"
+        ],
+        "title": "MeOut",
+        "type": "object"
+      },
+      "MembershipOut": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "organisation_id": {
+            "format": "uuid",
+            "title": "Organisation Id",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "organisation_id",
+          "name",
+          "role"
+        ],
+        "title": "MembershipOut",
+        "type": "object"
+      },
+      "MeterOut": {
+        "properties": {
+          "daily_kwh": {
+            "items": {
+              "type": "number"
+            },
+            "title": "Daily Kwh",
+            "type": "array"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "synced_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Synced At"
+          },
+          "tariff_paise": {
+            "title": "Tariff Paise",
+            "type": "integer"
+          },
+          "units_14d": {
+            "title": "Units 14D",
+            "type": "number"
+          }
+        },
+        "required": [
+          "model",
+          "synced_at",
+          "daily_kwh",
+          "units_14d",
+          "tariff_paise"
+        ],
+        "title": "MeterOut",
+        "type": "object"
+      },
+      "MoneyOut": {
+        "properties": {
+          "bills_sent": {
+            "title": "Bills Sent",
+            "type": "boolean"
+          },
+          "collected_paise": {
+            "title": "Collected Paise",
+            "type": "integer"
+          },
+          "due_paise": {
+            "title": "Due Paise",
+            "type": "integer"
+          },
+          "escrow_paise": {
+            "title": "Escrow Paise",
+            "type": "integer"
+          },
+          "next_payout_paise": {
+            "title": "Next Payout Paise",
+            "type": "integer"
+          },
+          "payout_account": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout Account"
+          },
+          "period": {
+            "format": "date",
+            "title": "Period",
+            "type": "string"
+          },
+          "read_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read On"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/RoomUnits"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/MoneyRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "tariff_paise": {
+            "title": "Tariff Paise",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "period",
+          "collected_paise",
+          "due_paise",
+          "rows",
+          "rooms",
+          "read_on",
+          "tariff_paise",
+          "bills_sent",
+          "escrow_paise",
+          "next_payout_paise",
+          "payout_account"
+        ],
+        "title": "MoneyOut",
+        "type": "object"
+      },
+      "MoneyRow": {
+        "properties": {
+          "autopay": {
+            "title": "Autopay",
+            "type": "boolean"
+          },
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "due_paise": {
+            "title": "Due Paise",
+            "type": "integer"
+          },
+          "invoice_id": {
+            "format": "uuid",
+            "title": "Invoice Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "paid": {
+            "title": "Paid",
+            "type": "boolean"
+          },
+          "reminded": {
+            "title": "Reminded",
+            "type": "boolean"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "units": {
+            "title": "Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "booking_id",
+          "invoice_id",
+          "name",
+          "room",
+          "units",
+          "autopay",
+          "due_paise",
+          "paid",
+          "reminded"
+        ],
+        "title": "MoneyRow",
+        "type": "object"
+      },
+      "MyVisitOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "listing": {
+            "title": "Listing",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "slot": {
+            "format": "date-time",
+            "title": "Slot",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "listing",
+          "name",
+          "slot",
+          "status"
+        ],
+        "title": "MyVisitOut",
+        "type": "object"
+      },
+      "NewPropertyIn": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "city": {
+            "default": "chandigarh",
+            "title": "City",
+            "type": "string"
+          },
+          "gender": {
+            "default": "Boys",
+            "title": "Gender",
+            "type": "string"
+          },
+          "meals": {
+            "default": "3 meals",
+            "title": "Meals",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "address",
+          "area"
+        ],
+        "title": "NewPropertyIn",
+        "type": "object"
+      },
+      "NewRequestIn": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "listing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "category",
+          "text"
+        ],
+        "title": "NewRequestIn",
+        "type": "object"
+      },
+      "NotificationOut": {
+        "properties": {
+          "created_at": {
+            "title": "Created At",
+            "type": "string"
+          },
+          "data": {
+            "additionalProperties": true,
+            "title": "Data",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "data",
+          "created_at"
+        ],
+        "title": "NotificationOut",
+        "type": "object"
+      },
+      "OfferIn": {
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "listing": {
+            "title": "Listing",
+            "type": "string"
+          },
+          "months": {
+            "default": 11,
+            "title": "Months",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "listing",
+          "amount_paise"
+        ],
+        "title": "OfferIn",
+        "type": "object"
+      },
+      "OfferOut": {
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "bed": {
+            "title": "Bed",
+            "type": "integer"
+          },
+          "booking_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Booking Id"
+          },
+          "cap_paise": {
+            "title": "Cap Paise",
+            "type": "integer"
+          },
+          "closes_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closes At"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "listed_paise": {
+            "title": "Listed Paise",
+            "type": "integer"
+          },
+          "listing": {
+            "title": "Listing",
+            "type": "string"
+          },
+          "max_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Paise"
+          },
+          "min_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Paise"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "move_in_on": {
+            "format": "date",
+            "title": "Move In On",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "listing",
+          "name",
+          "room",
+          "bed",
+          "listed_paise",
+          "cap_paise",
+          "amount_paise",
+          "months",
+          "move_in_on",
+          "status",
+          "closes_at",
+          "count",
+          "min_paise",
+          "max_paise",
+          "rank",
+          "booking_id"
+        ],
+        "title": "OfferOut",
+        "type": "object"
+      },
+      "OfferStatsOut": {
+        "properties": {
+          "cap_paise": {
+            "title": "Cap Paise",
+            "type": "integer"
+          },
+          "closes_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closes At"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "max_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Paise"
+          },
+          "min_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Paise"
+          }
+        },
+        "required": [
+          "count",
+          "min_paise",
+          "max_paise",
+          "cap_paise",
+          "closes_at"
+        ],
+        "title": "OfferStatsOut",
+        "type": "object"
+      },
+      "OffersBoardOut": {
+        "properties": {
+          "accepted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted"
+          },
+          "bed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bed"
+          },
+          "bed_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bed Id"
+          },
+          "cap_paise": {
+            "title": "Cap Paise",
+            "type": "integer"
+          },
+          "closes_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closes At"
+          },
+          "listed_paise": {
+            "title": "Listed Paise",
+            "type": "integer"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/OwnerOfferOut"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "open": {
+            "title": "Open",
+            "type": "boolean"
+          },
+          "room": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Room"
+          }
+        },
+        "required": [
+          "bed_id",
+          "room",
+          "bed",
+          "listed_paise",
+          "cap_paise",
+          "closes_at",
+          "open",
+          "accepted",
+          "offers"
+        ],
+        "title": "OffersBoardOut",
+        "type": "object"
+      },
+      "OffersToggleIn": {
+        "properties": {
+          "open": {
+            "title": "Open",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "open"
+        ],
+        "title": "OffersToggleIn",
+        "type": "object"
+      },
+      "OtpStartIn": {
+        "properties": {
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone"
+        ],
+        "title": "OtpStartIn",
+        "type": "object"
+      },
+      "OtpStartOut": {
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "dev_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dev Code"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "phone"
+        ],
+        "title": "OtpStartOut",
+        "type": "object"
+      },
+      "OtpVerifyIn": {
+        "properties": {
+          "challenge_id": {
+            "format": "uuid",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "device": {
+            "default": "",
+            "title": "Device",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "code"
+        ],
+        "title": "OtpVerifyIn",
+        "type": "object"
+      },
+      "OwnerOfferOut": {
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "months": {
+            "title": "Months",
+            "type": "integer"
+          },
+          "move_in_on": {
+            "format": "date",
+            "title": "Move In On",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "past_stays": {
+            "title": "Past Stays",
+            "type": "integer"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "amount_paise",
+          "months",
+          "move_in_on",
+          "verified",
+          "score",
+          "past_stays"
+        ],
+        "title": "OwnerOfferOut",
+        "type": "object"
+      },
+      "PaymentOut": {
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "key_id": {
+            "title": "Key Id",
+            "type": "string"
+          },
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "order_id",
+          "key_id",
+          "provider",
+          "purpose",
+          "amount_paise",
+          "status"
+        ],
+        "title": "PaymentOut",
+        "type": "object"
+      },
+      "PayoutIn": {
+        "properties": {
+          "account_number": {
+            "title": "Account Number",
+            "type": "string"
+          },
+          "bank_name": {
+            "title": "Bank Name",
+            "type": "string"
+          },
+          "ifsc": {
+            "title": "Ifsc",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bank_name",
+          "account_number",
+          "ifsc"
+        ],
+        "title": "PayoutIn",
+        "type": "object"
+      },
+      "PendingProperty": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "beds": {
+            "title": "Beds",
+            "type": "integer"
+          },
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "documents": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Documents",
+            "type": "object"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "no_cash_pledged": {
+            "title": "No Cash Pledged",
+            "type": "boolean"
+          },
+          "owner": {
+            "title": "Owner",
+            "type": "string"
+          },
+          "owner_phone": {
+            "title": "Owner Phone",
+            "type": "string"
+          },
+          "payout": {
+            "title": "Payout",
+            "type": "boolean"
+          },
+          "pinned": {
+            "title": "Pinned",
+            "type": "boolean"
+          },
+          "rooms": {
+            "title": "Rooms",
+            "type": "integer"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "owner",
+          "owner_phone",
+          "address",
+          "city",
+          "pinned",
+          "rooms",
+          "beds",
+          "documents",
+          "payout",
+          "no_cash_pledged",
+          "submitted_at"
+        ],
+        "title": "PendingProperty",
+        "type": "object"
+      },
+      "PinIn": {
+        "properties": {
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
+        ],
+        "title": "PinIn",
+        "type": "object"
+      },
+      "ProfileIn": {
+        "properties": {
+          "date_of_birth": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Of Birth"
+          },
+          "emergency_contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emergency Contact"
+          },
+          "guardian_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Guardian Name"
+          },
+          "home_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home Address"
+          },
+          "looking_for": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Looking For"
+          },
+          "move_in_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Move In On"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "works_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Works At"
+          }
+        },
+        "title": "ProfileIn",
+        "type": "object"
+      },
+      "PropertyIn": {
+        "properties": {
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "area": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area"
+          },
+          "city": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "City"
+          },
+          "gender": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gender"
+          },
+          "meals": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meals"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "tariff_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tariff Paise"
+          }
+        },
+        "title": "PropertyIn",
+        "type": "object"
+      },
+      "PropertyOut": {
+        "properties": {
+          "address": {
+            "title": "Address",
+            "type": "string"
+          },
+          "area": {
+            "title": "Area",
+            "type": "string"
+          },
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "deposit_months": {
+            "title": "Deposit Months",
+            "type": "integer"
+          },
+          "documents": {
+            "items": {
+              "$ref": "#/components/schemas/DocOut"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
+          "gender": {
+            "title": "Gender",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "max_tariff_paise": {
+            "title": "Max Tariff Paise",
+            "type": "integer"
+          },
+          "meals": {
+            "title": "Meals",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "no_cash_pledged": {
+            "title": "No Cash Pledged",
+            "type": "boolean"
+          },
+          "notice_months": {
+            "title": "Notice Months",
+            "type": "integer"
+          },
+          "payout": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payout"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/RoomOut"
+            },
+            "title": "Rooms",
+            "type": "array"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "tariff_paise": {
+            "title": "Tariff Paise",
+            "type": "integer"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "address",
+          "area",
+          "city",
+          "gender",
+          "meals",
+          "lat",
+          "lng",
+          "status",
+          "tariff_paise",
+          "max_tariff_paise",
+          "deposit_months",
+          "notice_months",
+          "rooms",
+          "documents",
+          "payout",
+          "no_cash_pledged",
+          "verified",
+          "review_note"
+        ],
+        "title": "PropertyOut",
+        "type": "object"
+      },
+      "QueueOut": {
+        "properties": {
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/PendingProperty"
+            },
+            "title": "Properties",
+            "type": "array"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/ReportOut"
+            },
+            "title": "Reports",
+            "type": "array"
+          }
+        },
+        "required": [
+          "properties",
+          "reports"
+        ],
+        "title": "QueueOut",
+        "type": "object"
+      },
+      "RejectIn": {
+        "properties": {
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "title": "RejectIn",
+        "type": "object"
+      },
+      "RentIn": {
+        "properties": {
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rent_paise"
+        ],
+        "title": "RentIn",
+        "type": "object"
+      },
+      "ReportOut": {
+        "properties": {
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "listing": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Listing"
+          },
+          "reporter": {
+            "title": "Reporter",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "text",
+          "listing",
+          "reporter",
+          "status",
+          "created_at"
+        ],
+        "title": "ReportOut",
+        "type": "object"
+      },
+      "ResidentOut": {
+        "properties": {
+          "agreement": {
+            "title": "Agreement",
+            "type": "string"
+          },
+          "autopay": {
+            "title": "Autopay",
+            "type": "boolean"
+          },
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "deposit_held_paise": {
+            "title": "Deposit Held Paise",
+            "type": "integer"
+          },
+          "deposit_outcome": {
+            "title": "Deposit Outcome",
+            "type": "string"
+          },
+          "deposit_paise": {
+            "title": "Deposit Paise",
+            "type": "integer"
+          },
+          "identity": {
+            "title": "Identity",
+            "type": "string"
+          },
+          "leaves_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leaves On"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "phone": {
+            "title": "Phone",
+            "type": "string"
+          },
+          "police": {
+            "title": "Police",
+            "type": "string"
+          },
+          "police_missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Police Missing",
+            "type": "array"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "since": {
+            "title": "Since",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "booking_id",
+          "name",
+          "phone",
+          "room",
+          "status",
+          "identity",
+          "police",
+          "police_missing",
+          "agreement",
+          "rent_paise",
+          "autopay",
+          "deposit_paise",
+          "deposit_held_paise",
+          "deposit_outcome",
+          "since",
+          "leaves_on"
+        ],
+        "title": "ResidentOut",
+        "type": "object"
+      },
+      "ResidentRow": {
+        "properties": {
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "deposit": {
+            "title": "Deposit",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "police": {
+            "title": "Police",
+            "type": "string"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "since": {
+            "title": "Since",
+            "type": "string"
+          },
+          "to": {
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "booking_id",
+          "name",
+          "room",
+          "since",
+          "to",
+          "police",
+          "rating",
+          "deposit"
+        ],
+        "title": "ResidentRow",
+        "type": "object"
+      },
+      "ResidentsOut": {
+        "properties": {
+          "current": {
+            "title": "Current",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ResidentRow"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "past": {
+            "title": "Past",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "current",
+          "past",
+          "items"
+        ],
+        "title": "ResidentsOut",
+        "type": "object"
+      },
+      "ResolveIn": {
+        "properties": {
+          "outcome": {
+            "title": "Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "title": "ResolveIn",
+        "type": "object"
+      },
+      "RoomBoardOut": {
+        "properties": {
+          "beds": {
+            "items": {
+              "$ref": "#/components/schemas/BedOut"
+            },
+            "title": "Beds",
+            "type": "array"
+          },
+          "full": {
+            "title": "Full",
+            "type": "boolean"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          }
+        },
+        "required": [
+          "number",
+          "full",
+          "beds"
+        ],
+        "title": "RoomBoardOut",
+        "type": "object"
+      },
+      "RoomOut": {
+        "properties": {
+          "beds": {
+            "title": "Beds",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "meter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meter"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "number",
+          "kind",
+          "rent_paise",
+          "beds",
+          "meter"
+        ],
+        "title": "RoomOut",
+        "type": "object"
+      },
+      "RoomUnits": {
+        "properties": {
+          "amount_paise": {
+            "title": "Amount Paise",
+            "type": "integer"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "units": {
+            "title": "Units",
+            "type": "number"
+          }
+        },
+        "required": [
+          "room",
+          "units",
+          "amount_paise"
+        ],
+        "title": "RoomUnits",
+        "type": "object"
+      },
+      "RoomsIn": {
+        "properties": {
+          "first_number": {
+            "default": 101,
+            "title": "First Number",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "rooms": {
+            "title": "Rooms",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "rooms",
+          "rent_paise"
+        ],
+        "title": "RoomsIn",
+        "type": "object"
+      },
+      "SessionOut": {
+        "properties": {
+          "me": {
+            "$ref": "#/components/schemas/MeOut"
+          },
+          "new_account": {
+            "title": "New Account",
+            "type": "boolean"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "new_account",
+          "me"
+        ],
+        "title": "SessionOut",
+        "type": "object"
+      },
+      "SettleIn": {
+        "properties": {
+          "deduction_paise": {
+            "default": 0,
+            "title": "Deduction Paise",
+            "type": "integer"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "reason": {
+            "default": "",
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "title": "SettleIn",
+        "type": "object"
+      },
+      "StatementOut": {
+        "properties": {
+          "deductions_paise": {
+            "title": "Deductions Paise",
+            "type": "integer"
+          },
+          "electricity_paise": {
+            "title": "Electricity Paise",
+            "type": "integer"
+          },
+          "fy": {
+            "title": "Fy",
+            "type": "string"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/StatementRow"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "standard_deduction_paise": {
+            "title": "Standard Deduction Paise",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fy",
+          "rent_paise",
+          "electricity_paise",
+          "deductions_paise",
+          "standard_deduction_paise",
+          "rows",
+          "note"
+        ],
+        "title": "StatementOut",
+        "type": "object"
+      },
+      "StatementRow": {
+        "properties": {
+          "electricity_paise": {
+            "title": "Electricity Paise",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "rent_paise": {
+            "title": "Rent Paise",
+            "type": "integer"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "room",
+          "rent_paise",
+          "electricity_paise"
+        ],
+        "title": "StatementRow",
+        "type": "object"
+      },
+      "StayEnvelope": {
+        "properties": {
+          "stay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StayOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "stay"
+        ],
+        "title": "StayEnvelope",
+        "type": "object"
+      },
+      "StayOut": {
+        "properties": {
+          "autopay": {
+            "title": "Autopay",
+            "type": "boolean"
+          },
+          "bill": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InvoiceOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "booking": {
+            "$ref": "#/components/schemas/BookingOut"
+          },
+          "first_due_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Due On"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "leaves_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leaves On"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          },
+          "meter": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MeterOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "moved_in": {
+            "title": "Moved In",
+            "type": "boolean"
+          },
+          "receipts": {
+            "title": "Receipts",
+            "type": "integer"
+          },
+          "since": {
+            "title": "Since",
+            "type": "string"
+          }
+        },
+        "required": [
+          "booking",
+          "lat",
+          "lng",
+          "moved_in",
+          "since",
+          "leaves_on",
+          "autopay",
+          "bill",
+          "first_due_on",
+          "meter",
+          "receipts"
+        ],
+        "title": "StayOut",
+        "type": "object"
+      },
+      "TicketOut": {
+        "properties": {
+          "assignee": {
+            "title": "Assignee",
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "title": "At",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "ref": {
+            "title": "Ref",
+            "type": "string"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "suggested_assignee": {
+            "title": "Suggested Assignee",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "to_pakka_ghar": {
+            "default": false,
+            "title": "To Pakka Ghar",
+            "type": "boolean"
+          },
+          "who": {
+            "title": "Who",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "ref",
+          "who",
+          "room",
+          "category",
+          "text",
+          "status",
+          "at",
+          "assignee",
+          "suggested_assignee"
+        ],
+        "title": "TicketOut",
+        "type": "object"
+      },
+      "TodayOut": {
+        "properties": {
+          "beds_filled": {
+            "title": "Beds Filled",
+            "type": "integer"
+          },
+          "beds_total": {
+            "title": "Beds Total",
+            "type": "integer"
+          },
+          "greeting": {
+            "title": "Greeting",
+            "type": "string"
+          },
+          "offers_open": {
+            "title": "Offers Open",
+            "type": "integer"
+          },
+          "open_requests": {
+            "title": "Open Requests",
+            "type": "integer"
+          },
+          "owner_name": {
+            "title": "Owner Name",
+            "type": "string"
+          },
+          "property": {
+            "title": "Property",
+            "type": "string"
+          },
+          "property_status": {
+            "title": "Property Status",
+            "type": "string"
+          },
+          "rent_unpaid": {
+            "title": "Rent Unpaid",
+            "type": "integer"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          },
+          "todos": {
+            "items": {
+              "$ref": "#/components/schemas/TodoOut"
+            },
+            "title": "Todos",
+            "type": "array"
+          }
+        },
+        "required": [
+          "greeting",
+          "owner_name",
+          "property",
+          "property_status",
+          "review_note",
+          "beds_filled",
+          "beds_total",
+          "rent_unpaid",
+          "offers_open",
+          "open_requests",
+          "todos"
+        ],
+        "title": "TodayOut",
+        "type": "object"
+      },
+      "TodoOut": {
+        "properties": {
+          "action": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "text",
+          "label"
+        ],
+        "title": "TodoOut",
+        "type": "object"
+      },
+      "VisitOut": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "slot": {
+            "format": "date-time",
+            "title": "Slot",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slot"
+        ],
+        "title": "VisitOut",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "TokenAuth": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "Rentals and PGs in the Chandigarh Tricity. Money is integer paise. No cash, ever.",
+    "title": "Pakka Ghar API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "apps_identity_api_logout",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Revoke this session token at once",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/auth/otp/start": {
+      "post": {
+        "operationId": "apps_identity_api_otp_start",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpStartIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OtpStartOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "Send a 6-digit code by SMS or WhatsApp",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/auth/otp/verify": {
+      "post": {
+        "operationId": "apps_identity_api_otp_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OtpVerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "summary": "Check the code and get a session token",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/bookings": {
+      "post": {
+        "operationId": "apps_booking_api_book",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Hold a bed for 10 minutes while the deposit is paid",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/bookings/{booking_id}": {
+      "get": {
+        "operationId": "apps_booking_api_get_booking",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Get Booking",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/bookings/{booking_id}/cancel": {
+      "post": {
+        "operationId": "apps_booking_api_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Cancel",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/bookings/{booking_id}/deposit": {
+      "post": {
+        "operationId": "apps_booking_api_deposit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Start the deposit payment (UPI, into escrow)",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/bookings/{booking_id}/sign": {
+      "post": {
+        "operationId": "apps_booking_api_sign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Aadhaar eSign by the resident",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/bookings/{booking_id}/stamp": {
+      "post": {
+        "operationId": "apps_booking_api_do_stamp",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Pay stamp duty to the state and attach the e-stamp",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/dev/payments/{payment_id}/capture": {
+      "post": {
+        "operationId": "apps_core_dev_api_capture",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payment_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Payment Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "method",
+            "required": false,
+            "schema": {
+              "default": "upi",
+              "title": "Method",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Act as the payment partner: capture this payment",
+        "tags": [
+          "dev"
+        ]
+      }
+    },
+    "/api/events": {
+      "get": {
+        "operationId": "config_api_stream",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "After",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Server-sent events: one per notification, as it happens",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "config_api_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthOut"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "For load balancers and uptime checks",
+        "tags": [
+          "ops"
+        ]
+      }
+    },
+    "/api/history": {
+      "get": {
+        "operationId": "apps_booking_api_history",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Every stay through Pakka Ghar, and the owners\u2019 rating of you",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/kyc/digilocker/complete": {
+      "post": {
+        "operationId": "apps_identity_api_kyc_complete",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KycCompleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Finish DigiLocker; keeps only the last 4 Aadhaar digits",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/kyc/digilocker/start": {
+      "post": {
+        "operationId": "apps_identity_api_kyc_start",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KycStartOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Start DigiLocker consent",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/listings": {
+      "get": {
+        "operationId": "apps_property_api_search",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "lat",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lat"
+            }
+          },
+          {
+            "in": "query",
+            "name": "lng",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lng"
+            }
+          },
+          {
+            "in": "query",
+            "name": "radius_km",
+            "required": false,
+            "schema": {
+              "default": 3.0,
+              "title": "Radius Km",
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gender",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Gender"
+            }
+          },
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ListingOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Search published PGs near a place",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
+    "/api/listings/{slug}": {
+      "get": {
+        "operationId": "apps_property_api_detail",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "One PG",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
+    "/api/me": {
+      "get": {
+        "operationId": "apps_identity_api_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Me",
+        "tags": [
+          "identity"
+        ]
+      },
+      "patch": {
+        "operationId": "apps_identity_api_update_me",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Update name, college or work, and the police-form details",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/me/data": {
+      "get": {
+        "description": "Read with the caller's own row-level security, so it can only ever contain their rows.",
+        "operationId": "apps_identity_privacy_export",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Everything Pakka Ghar holds about you, as JSON",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/me/delete": {
+      "post": {
+        "operationId": "apps_identity_privacy_delete",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Erase your account (refused while you have a stay, money held or a PG)",
+        "tags": [
+          "identity"
+        ]
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "operationId": "config_api_notifications",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "title": "After",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Notifications",
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/offers": {
+      "post": {
+        "operationId": "apps_booking_api_place_offer",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Place or change a sealed offer (listed rent to +15%)",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/offers/mine": {
+      "get": {
+        "operationId": "apps_booking_api_my_offers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OfferOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "My Offers",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/offers/{offer_id}": {
+      "delete": {
+        "operationId": "apps_booking_api_withdraw",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Withdraw",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/owner/beds": {
+      "get": {
+        "operationId": "apps_booking_owner_api_beds",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Beds",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/beds/{bed_id}/offers": {
+      "post": {
+        "operationId": "apps_booking_owner_api_toggle_offers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bed_id",
+            "required": true,
+            "schema": {
+              "title": "Bed Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OffersToggleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Take sealed offers on a free bed (until Friday 6 pm), or stop",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/bills/send": {
+      "post": {
+        "operationId": "apps_booking_owner_api_send_bills",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Add last month's meter readings to this month's bills",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/documents/{kind}": {
+      "post": {
+        "operationId": "apps_property_api_upload_doc",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "file_name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "File Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Record an uploaded ownership paper",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/money": {
+      "get": {
+        "operationId": "apps_booking_owner_api_money",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoneyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Money",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/money/{invoice_id}/remind": {
+      "post": {
+        "operationId": "apps_booking_owner_api_remind",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "invoice_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Invoice Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoneyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Remind in the app and on WhatsApp",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/no-cash-pledge": {
+      "post": {
+        "operationId": "apps_property_api_no_cash",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "The owner's promise to take no cash",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/offers": {
+      "get": {
+        "operationId": "apps_booking_owner_api_offers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffersBoardOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Offers",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/offers/{offer_id}/accept": {
+      "post": {
+        "operationId": "apps_booking_owner_api_accept",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "offer_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Offer Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffersBoardOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Accept one sealed offer; the rest are declined",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/payout": {
+      "post": {
+        "operationId": "apps_property_api_payout",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayoutIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Where rent is paid; checked with a \u20b91 test deposit",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/property": {
+      "get": {
+        "operationId": "apps_property_api_get_property",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Get Property",
+        "tags": [
+          "owner"
+        ]
+      },
+      "patch": {
+        "operationId": "apps_property_api_edit_property",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PropertyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Edit details; every change is audited",
+        "tags": [
+          "owner"
+        ]
+      },
+      "post": {
+        "operationId": "apps_property_api_new_property",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewPropertyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "A new owner lists their first PG (starts as a draft)",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/property/pin": {
+      "put": {
+        "operationId": "apps_property_api_pin",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PinIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Pin the exact building on the map",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/property/submit": {
+      "post": {
+        "operationId": "apps_property_api_submit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Send papers to the trust team",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/residents": {
+      "get": {
+        "operationId": "apps_booking_owner_api_residents",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "tab",
+            "required": false,
+            "schema": {
+              "default": "current",
+              "title": "Tab",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentsOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Residents",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/residents/{booking_id}": {
+      "get": {
+        "operationId": "apps_booking_owner_api_resident",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Resident",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/residents/{booking_id}/move-out": {
+      "post": {
+        "operationId": "apps_booking_owner_api_move_out",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SettleIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Settle the deposit and rate the resident",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/residents/{booking_id}/police/submit": {
+      "post": {
+        "operationId": "apps_booking_owner_api_police_submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Submit the tenant-verification packet",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/residents/{booking_id}/police/verified": {
+      "post": {
+        "operationId": "apps_booking_owner_api_police_verified",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Record that the police cleared the resident",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/residents/{booking_id}/sign": {
+      "post": {
+        "operationId": "apps_booking_owner_api_owner_sign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "booking_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Booking Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "The owner's Aadhaar eSign",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/rooms": {
+      "post": {
+        "operationId": "apps_property_api_add_rooms",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoomsIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Add rooms of one type, with their beds",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/rooms/{number}": {
+      "patch": {
+        "operationId": "apps_booking_owner_api_room_rent",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RentIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Change a room's rent per bed (applies to new bookings only)",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/rooms/{number}/meter": {
+      "post": {
+        "operationId": "apps_property_api_pair_meter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Pair the Wi-Fi meter in a room",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/statement": {
+      "get": {
+        "operationId": "apps_booking_owner_api_statement",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fy",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fy"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Year statement for your CA",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/tickets": {
+      "get": {
+        "operationId": "apps_maintenance_api_owner_tickets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TicketOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Owner Tickets",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/tickets/{ticket_id}/assign": {
+      "post": {
+        "operationId": "apps_maintenance_api_assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Ticket Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Assign",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/tickets/{ticket_id}/fixed": {
+      "post": {
+        "operationId": "apps_maintenance_api_fixed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Ticket Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Fixed",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/today": {
+      "get": {
+        "operationId": "apps_booking_owner_api_today_view",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Today View",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/visits/{visit_id}/confirm": {
+      "post": {
+        "operationId": "apps_booking_owner_api_confirm_visit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "visit_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Visit Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Confirm Visit",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/visits/{visit_id}/decline": {
+      "post": {
+        "operationId": "apps_booking_owner_api_decline_visit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "visit_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Visit Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Turn down a visit; the tenant is told",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/requests": {
+      "post": {
+        "operationId": "apps_maintenance_api_raise_request",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRequestIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Raise a repair, or report a listing or a cash request",
+        "tags": [
+          "requests"
+        ]
+      }
+    },
+    "/api/requests/mine": {
+      "get": {
+        "operationId": "apps_maintenance_api_mine",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TicketOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Mine",
+        "tags": [
+          "requests"
+        ]
+      }
+    },
+    "/api/requests/{ticket_id}/confirm": {
+      "post": {
+        "operationId": "apps_maintenance_api_confirm",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Ticket Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "The resident confirms it's fixed",
+        "tags": [
+          "requests"
+        ]
+      }
+    },
+    "/api/staff/properties/{slug}/approve": {
+      "post": {
+        "operationId": "apps_core_staff_api_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingProperty"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Papers checked: publish the PG",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/staff/properties/{slug}/reject": {
+      "post": {
+        "operationId": "apps_core_staff_api_reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingProperty"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Send the PG back to its owner with the reason",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/staff/queue": {
+      "get": {
+        "operationId": "apps_core_staff_api_queue",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueueOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "PGs waiting for a check, and open reports",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/staff/reports/{report_id}/resolve": {
+      "post": {
+        "operationId": "apps_core_staff_api_resolve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Close a report. A confirmed cash report pauses the listing.",
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/stay": {
+      "get": {
+        "operationId": "apps_booking_api_stay",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "The current stay: bill, meter, agreement, deposit",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/stay/autopay": {
+      "put": {
+        "operationId": "apps_booking_api_autopay",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutopayIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "UPI AutoPay mandate on the 1st of each month",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/stay/end": {
+      "post": {
+        "operationId": "apps_booking_api_end",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EndIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Rate the stay and move out; the deposit refund starts",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/stay/notice": {
+      "post": {
+        "operationId": "apps_booking_api_notice",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StayEnvelope"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Give one month of notice",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/stay/pay": {
+      "post": {
+        "operationId": "apps_booking_api_pay_bill",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Pay this month's bill by UPI",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/visits": {
+      "post": {
+        "operationId": "apps_booking_api_visit",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListingRef"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VisitOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Ask to visit; the owner confirms in the app",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/visits/mine": {
+      "get": {
+        "operationId": "apps_booking_api_my_visits",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MyVisitOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Your visit requests, newest first",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/visits/{visit_id}/cancel": {
+      "post": {
+        "operationId": "apps_booking_api_cancel_visit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "visit_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Visit Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyVisitOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Cancel a visit you asked for",
+        "tags": [
+          "tenant"
+        ]
+      }
+    },
+    "/api/webhooks/razorpay": {
+      "post": {
+        "operationId": "apps_payments_api_razorpay",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "Razorpay events, checked by HMAC signature and stored once",
+        "tags": [
+          "webhooks"
+        ]
+      }
+    }
+  },
+  "servers": []
+}

@@ -1,0 +1,2 @@
+# Local Postgres 16 without Homebrew (prebuilt binaries); production uses managed Postgres.
+pgserver==0.1.4

@@ -1,0 +1,116 @@
+# Pakka Ghar architecture
+
+Pakka Ghar follows the AP2B blueprint (v0.2) for the backend and keeps Expo for the apps. This file says what runs
+where, what the blueprint's rules look like in this code, and where it deliberately differs.
+
+## The pieces
+
+| Part | What it is | Where |
+|---|---|---|
+| Apps | Expo SDK 58 / React Native, one codebase, identical on iOS and Android | `src/` |
+| API | Django 5.2 + Django Ninja, Python 3.12 | `backend/` |
+| Database | PostgreSQL 16, the only store of record | `backend/apps/*/models.py` |
+| Contract | OpenAPI 3.1, generated from the API; the app's TypeScript types come from it | `contracts/openapi.json`, `src/api/schema.d.ts` |
+| Jobs | Celery + Redis (hold expiry, monthly rent, settlements); inline when `REDIS_URL` is unset | `backend/config/celery.py`, `apps/*/tasks.py` |
+| Live events | Server-sent events, one per notification | `GET /api/events`, `src/api/events.tsx` |
+
+Backend apps: `core` (organisations, people, ledger, audit, idempotency, notifications), `identity` (OTP sign-in,
+session tokens, DigiLocker), `property` (PGs, rooms, beds, meters, papers, payouts), `booking` (offers, holds,
+bookings, agreements, police verification, ratings), `payments` (invoices, payments, webhooks, electricity),
+`maintenance` (repairs and trust reports), `jurisdiction` (Tricity police and tariff rules), and the trust team's
+review queue (`apps/core/staff_api.py`).
+
+## The blueprint's first principles, in this code
+
+1. **One source of truth.** Postgres holds every record. Listing availability, ratings and balances are computed
+   from it on each read; nothing is cached in a second store. The app keeps only who is signed in.
+2. **One contract.** `backend/manage.py export_openapi` writes the OpenAPI schema and `npm run api:types` regenerates
+   the app's types from it, so an API change that breaks a screen fails `tsc`.
+3. **One permission policy.** Row-level security is enabled and *forced* on every business table
+   (`apps/core/rls.py`, the `000*_rls` migrations). Each request sets `app.current_org` and `app.current_party`;
+   the database filters every query, including raw SQL. Work that spans owners (webhooks, scheduled jobs, public
+   listing aggregates, the trust team) switches to the `pakka_system` role explicitly with `system()`. A cash report about
+   an owner is invisible to that owner at the database level.
+4. **One append-only ledger.** Money is integer paise. Every financial event is a balanced journal
+   (`apps/core/ledger.py`); a trigger rejects any journal that doesn't sum to zero at commit, and triggers reject
+   `UPDATE`/`DELETE` on journals, lines and the audit trail. Cancellations post contra-entries.
+5. **Humans decide critical boundaries.** Owners accept offers, sign agreements, submit police packets and mark
+   them verified; the app never decides those on its own.
+6. **Never green without evidence.** `backend/tests` runs against a real Postgres test database: cross-tenant
+   isolation (AC-20), no double booking (AC-12), ledger rules (AC-16–18), idempotent replays, token revocation
+   (AC-19), the offer cap, webhooks, metered electricity and a full stay.
+
+## Deliberate differences from the blueprint
+
+- **Expo instead of Next.js + Capacitor (ADR-004).** The apps are native, which keeps maps, gestures, keyboard
+  handling and the identical-on-both-platforms design. The API and contract are frontend-neutral, so a Next.js
+  owner portal can be added later against the same contract.
+- **Repository layout.** The Expo app stays at the root (its tooling expects that); the backend is in `backend/`
+  with its own environment. Metro and TypeScript ignore `backend/`.
+- **Double-booking constraint.** The exclusion constraint compares `int8range(bed_id, bed_id, '[]')` instead of
+  `bed_id WITH =`. It means the same thing and needs no `btree_gist` extension (the local Postgres build lacks it).
+  With `btree_gist` available in production, either form works.
+- **Sign-in.** Phone OTP with revocable session tokens. WebAuthn passkeys (AC-01) need a development build with a
+  native passkey module; they are the next step for sign-in.
+- **No `/legacy/` ERP5 archive or prompt runbook.** This project never had an ERP5 codebase.
+- **No cash, ever.** The blueprint's example command "Record cash payment" is not supported: there is no cash
+  payment method, and a cash request can only be reported to the trust team.
+
+## Personal data (DPDP Act, 2023)
+
+- `GET /api/me/data` returns everything held about the caller, read under their own row-level security.
+- `POST /api/me/delete` erases the account: name, phone, ID details, police-form details, notifications and sign-in
+  codes go; bookings, invoices, payments, the ledger and ratings stay against an anonymous id, as tenancy, tax and
+  payment records must be kept. It is refused while the person has a booking or stay, a deposit in escrow, an unpaid
+  bill, or a PG they manage. VERIFY the retention periods with counsel.
+- Aadhaar is never stored: only its last four digits, the DigiLocker reference and when it was checked.
+
+## Money flow
+
+Pakka Ghar never holds money. Deposits go to the payment partner's escrow account; rent settles from the partner to
+the owner's bank. The ledger records the owner's side of each event:
+
+| Event | Debit | Credit |
+|---|---|---|
+| Deposit captured | escrow | deposit owed to resident |
+| Rent charged | resident owes | rent income |
+| Electricity charged | resident owes | electricity recovered |
+| Bill paid in the app | collected by partner | resident owes |
+| Daily settlement | owner's bank | collected by partner |
+| Deposit returned (less a deduction) | deposit owed to resident | escrow; deduction to owner's bank and income |
+
+A payment becomes captured only through the partner's webhook (HMAC-checked, stored once per event id). In
+development, `/api/dev/payments/{id}/capture` sends that same signed webhook through the real handler.
+
+## Before launch: things that must be checked by a person
+
+- **Police packet fields** for Chandigarh Police, Punjab Police (Mohali) and Haryana Police (Panchkula):
+  `apps/jurisdiction/rules.py`.
+- **Electricity tariff ceilings** per distribution company, from the current tariff orders: same file.
+- **GST treatment** of PG rent (the exemption limit and the taxable rate above it): `apps/payments/services.py`,
+  with a CA.
+- **Providers.** OTP (SMS/WhatsApp), DigiLocker, Razorpay or Cashfree with escrow, and eSign/e-stamp all run as
+  local fakes. Each has a single place to wire the real client (`apps/identity/services.py`,
+  `apps/payments/services.py`, `apps/booking/services.py`).
+- **Development stand-ins**: `/api/dev/payments/{id}/capture` (acting as the payment partner) and returning the OTP
+  to the app exist only with `DEBUG=1`.
+
+## Running it
+
+```bash
+cd backend
+uv venv .venv --python 3.12 && uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev.txt
+scripts/dev-db.sh                         # local Postgres 16 (first run creates roles and the database)
+.venv/bin/python manage.py migrate
+.venv/bin/python manage.py make_staff "+91 XXXXX XXXXX"   # someone on the trust team, to approve new PGs
+.venv/bin/python manage.py runserver 0.0.0.0:8000
+.venv/bin/python -m pytest                # the test suite
+```
+
+Then `npx expo start` at the root. The app finds the API on Metro's host at port 8000 (set `EXPO_PUBLIC_API_URL`
+to override). For the Android emulator, also run `adb reverse tcp:8000 tcp:8000`.
+
+The database starts empty: there is no sample data. An owner signs up in the app and lists a PG; it goes live once
+someone on the trust team approves it (`GET /api/staff/queue`, `POST /api/staff/properties/{id}/approve`). With
+`DEBUG=1` the sign-in code is filled in for you, and `/api/dev/payments/{id}/capture` stands in for the payment
+partner. `manage.py reset_data --yes` empties every table (development only).
