@@ -234,7 +234,7 @@ def capture(pay: Payment, provider_payment_id: str, amount_paise: int, method: s
         if invoice_paid_paise(inv) >= inv.total_paise:
             inv.status = 'paid'
             inv.save(update_fields=['status', 'updated_at'])
-        from apps.booking.services import owners_of
+        from apps.booking.common import owners_of
         for o in owners_of(org):
             notify(o, 'rent.paid', f'{b.guest.first_name} paid ₹{amount_paise // 100:,} in the app.', org=org, invoice=str(inv.id))
     notify(b.guest, 'payment.captured', f'Paid ₹{amount_paise // 100:,}. Receipt saved.', org=org, payment=str(pay.id))
@@ -251,7 +251,7 @@ def _confirm_after_deposit(b: Booking, pay: Payment) -> None:
             Payment.objects.filter(pk=pay.pk).update(status='refunded')
             notify(b.guest, 'booking.lost', 'Your hold ran out and the bed was taken. Your deposit is being refunded.', org=b.organisation)
             return
-        from apps.booking.services import owners_of
+        from apps.booking.common import owners_of
         for o in owners_of(b.organisation):
             notify(o, 'booking.confirmed', f'{b.guest.first_name} paid the deposit for Room {b.bed.room.number}.', org=b.organisation, booking=str(b.id))
 

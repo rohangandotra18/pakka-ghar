@@ -48,6 +48,6 @@ __pycache__/
 .pytest_cache/
 
 # generated on npm install
-src/components/mapEngine.generated.ts
+src/shared/map/mapEngine.generated.ts
 backend/.media/
 backend/.private/

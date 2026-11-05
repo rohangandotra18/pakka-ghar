@@ -7,7 +7,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.booking.models import Booking
-from apps.booking.services import expire_holds
+from apps.booking.bookings.services import expire_holds
 from apps.core.ledger import balance
 from apps.core.rls import system
 

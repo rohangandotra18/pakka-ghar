@@ -3745,7 +3745,7 @@
   "paths": {
     "/api/agreements/{booking_id}": {
       "get": {
-        "operationId": "apps_booking_agreements_get_doc",
+        "operationId": "apps_booking_agreements_api_get_doc",
         "parameters": [
           {
             "in": "path",
@@ -3783,7 +3783,7 @@
     "/api/agreements/{booking_id}/pages/{n}": {
       "get": {
         "description": "Only the two people on the agreement get links (from GET /agreements/{id}); a link is checked here for its\nbooking, page, copy and expiry, so it can't be reused for another page or another agreement.",
-        "operationId": "apps_booking_agreements_page",
+        "operationId": "apps_booking_agreements_api_page",
         "parameters": [
           {
             "in": "path",
@@ -3837,7 +3837,7 @@
     },
     "/api/agreements/{booking_id}/pdf": {
       "get": {
-        "operationId": "apps_booking_agreements_pdf",
+        "operationId": "apps_booking_agreements_api_pdf",
         "parameters": [
           {
             "in": "path",
@@ -3867,7 +3867,7 @@
     },
     "/api/agreements/{booking_id}/sign": {
       "post": {
-        "operationId": "apps_booking_agreements_sign_confirm",
+        "operationId": "apps_booking_agreements_api_sign_confirm",
         "parameters": [
           {
             "in": "path",
@@ -3914,7 +3914,7 @@
     },
     "/api/agreements/{booking_id}/sign/start": {
       "post": {
-        "operationId": "apps_booking_agreements_sign_start",
+        "operationId": "apps_booking_agreements_api_sign_start",
         "parameters": [
           {
             "in": "path",
@@ -3961,7 +3961,7 @@
     },
     "/api/applications": {
       "post": {
-        "operationId": "apps_booking_api_create_application",
+        "operationId": "apps_booking_applications_api_create_application",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -3998,7 +3998,7 @@
     },
     "/api/applications/mine": {
       "get": {
-        "operationId": "apps_booking_api_my_applications",
+        "operationId": "apps_booking_applications_api_my_applications",
         "parameters": [],
         "responses": {
           "200": {
@@ -4029,7 +4029,7 @@
     },
     "/api/applications/{app_id}": {
       "patch": {
-        "operationId": "apps_booking_api_change_application",
+        "operationId": "apps_booking_applications_api_change_application",
         "parameters": [
           {
             "in": "path",
@@ -4077,7 +4077,7 @@
     },
     "/api/applications/{app_id}/members/{member_id}/remove": {
       "post": {
-        "operationId": "apps_booking_api_remove_member",
+        "operationId": "apps_booking_applications_api_remove_member",
         "parameters": [
           {
             "in": "path",
@@ -4125,7 +4125,7 @@
     },
     "/api/applications/{app_id}/withdraw": {
       "post": {
-        "operationId": "apps_booking_api_withdraw_application",
+        "operationId": "apps_booking_applications_api_withdraw_application",
         "parameters": [
           {
             "in": "path",
@@ -4247,7 +4247,7 @@
     },
     "/api/bookings": {
       "post": {
-        "operationId": "apps_booking_api_book",
+        "operationId": "apps_booking_bookings_api_book",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -4284,7 +4284,7 @@
     },
     "/api/bookings/{booking_id}": {
       "get": {
-        "operationId": "apps_booking_api_get_booking",
+        "operationId": "apps_booking_bookings_api_get_booking",
         "parameters": [
           {
             "in": "path",
@@ -4322,7 +4322,7 @@
     },
     "/api/bookings/{booking_id}/cancel": {
       "post": {
-        "operationId": "apps_booking_api_cancel",
+        "operationId": "apps_booking_bookings_api_cancel",
         "parameters": [
           {
             "in": "path",
@@ -4360,7 +4360,7 @@
     },
     "/api/bookings/{booking_id}/deposit": {
       "post": {
-        "operationId": "apps_booking_api_deposit",
+        "operationId": "apps_booking_bookings_api_deposit",
         "parameters": [
           {
             "in": "path",
@@ -4398,7 +4398,7 @@
     },
     "/api/bookings/{booking_id}/stamp": {
       "post": {
-        "operationId": "apps_booking_api_do_stamp",
+        "operationId": "apps_booking_bookings_api_do_stamp",
         "parameters": [
           {
             "in": "path",
@@ -4547,7 +4547,7 @@
     },
     "/api/history": {
       "get": {
-        "operationId": "apps_booking_api_history",
+        "operationId": "apps_booking_stay_api_history",
         "parameters": [],
         "responses": {
           "200": {
@@ -4574,7 +4574,7 @@
     },
     "/api/invites": {
       "get": {
-        "operationId": "apps_booking_api_invites",
+        "operationId": "apps_booking_applications_api_invites",
         "parameters": [],
         "responses": {
           "200": {
@@ -4605,7 +4605,7 @@
     },
     "/api/invites/{member_id}": {
       "post": {
-        "operationId": "apps_booking_api_answer_invite",
+        "operationId": "apps_booking_applications_api_answer_invite",
         "parameters": [
           {
             "in": "path",
@@ -4860,7 +4860,7 @@
     },
     "/api/listings/{slug}/tour-slots": {
       "get": {
-        "operationId": "apps_booking_api_tour_slots",
+        "operationId": "apps_booking_tours_api_tour_slots",
         "parameters": [
           {
             "in": "path",
@@ -5068,7 +5068,7 @@
     },
     "/api/owner/agreement-template": {
       "get": {
-        "operationId": "apps_booking_agreements_get_template",
+        "operationId": "apps_booking_agreements_api_get_template",
         "parameters": [],
         "responses": {
           "200": {
@@ -5100,7 +5100,7 @@
         ]
       },
       "post": {
-        "operationId": "apps_booking_agreements_upload_template",
+        "operationId": "apps_booking_agreements_api_upload_template",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -5153,7 +5153,7 @@
     },
     "/api/owner/agreement-template/remove": {
       "post": {
-        "operationId": "apps_booking_agreements_remove_template",
+        "operationId": "apps_booking_agreements_api_remove_template",
         "parameters": [],
         "responses": {
           "200": {
@@ -5182,7 +5182,7 @@
     },
     "/api/owner/applications": {
       "get": {
-        "operationId": "apps_booking_owner_api_applications",
+        "operationId": "apps_booking_applications_owner_api_applications",
         "parameters": [],
         "responses": {
           "200": {
@@ -5209,7 +5209,7 @@
     },
     "/api/owner/applications/{app_id}/accept": {
       "post": {
-        "operationId": "apps_booking_owner_api_accept",
+        "operationId": "apps_booking_applications_owner_api_accept",
         "parameters": [
           {
             "in": "path",
@@ -5257,7 +5257,7 @@
     },
     "/api/owner/applications/{app_id}/decline": {
       "post": {
-        "operationId": "apps_booking_owner_api_decline",
+        "operationId": "apps_booking_applications_owner_api_decline",
         "parameters": [
           {
             "in": "path",
@@ -5305,7 +5305,7 @@
     },
     "/api/owner/beds": {
       "get": {
-        "operationId": "apps_booking_owner_api_beds",
+        "operationId": "apps_booking_owner_dashboard_beds_beds",
         "parameters": [],
         "responses": {
           "200": {
@@ -5332,7 +5332,7 @@
     },
     "/api/owner/bills/send": {
       "post": {
-        "operationId": "apps_booking_owner_api_send_bills",
+        "operationId": "apps_booking_owner_dashboard_today_send_bills",
         "parameters": [],
         "responses": {
           "200": {
@@ -5406,7 +5406,7 @@
     },
     "/api/owner/money": {
       "get": {
-        "operationId": "apps_booking_owner_api_money",
+        "operationId": "apps_booking_owner_dashboard_money_money",
         "parameters": [],
         "responses": {
           "200": {
@@ -5433,7 +5433,7 @@
     },
     "/api/owner/money/{invoice_id}/remind": {
       "post": {
-        "operationId": "apps_booking_owner_api_remind",
+        "operationId": "apps_booking_owner_dashboard_money_remind",
         "parameters": [
           {
             "in": "path",
@@ -5851,7 +5851,7 @@
     },
     "/api/owner/residents": {
       "get": {
-        "operationId": "apps_booking_owner_api_residents",
+        "operationId": "apps_booking_owner_dashboard_residents_residents",
         "parameters": [
           {
             "in": "query",
@@ -5889,7 +5889,7 @@
     },
     "/api/owner/residents/{booking_id}": {
       "get": {
-        "operationId": "apps_booking_owner_api_resident",
+        "operationId": "apps_booking_owner_dashboard_residents_resident",
         "parameters": [
           {
             "in": "path",
@@ -5927,7 +5927,7 @@
     },
     "/api/owner/residents/{booking_id}/move-out": {
       "post": {
-        "operationId": "apps_booking_owner_api_move_out",
+        "operationId": "apps_booking_owner_dashboard_residents_move_out",
         "parameters": [
           {
             "in": "path",
@@ -5975,7 +5975,7 @@
     },
     "/api/owner/residents/{booking_id}/police/submit": {
       "post": {
-        "operationId": "apps_booking_owner_api_police_submit",
+        "operationId": "apps_booking_owner_dashboard_residents_police_submit",
         "parameters": [
           {
             "in": "path",
@@ -6013,7 +6013,7 @@
     },
     "/api/owner/residents/{booking_id}/police/verified": {
       "post": {
-        "operationId": "apps_booking_owner_api_police_verified",
+        "operationId": "apps_booking_owner_dashboard_residents_police_verified",
         "parameters": [
           {
             "in": "path",
@@ -6088,7 +6088,7 @@
     },
     "/api/owner/rooms/{number}": {
       "patch": {
-        "operationId": "apps_booking_owner_api_room_rent",
+        "operationId": "apps_booking_owner_dashboard_beds_room_rent",
         "parameters": [
           {
             "in": "path",
@@ -6135,7 +6135,7 @@
     },
     "/api/owner/rooms/{number}/bidding": {
       "post": {
-        "operationId": "apps_booking_owner_api_toggle_bidding",
+        "operationId": "apps_booking_applications_owner_api_toggle_bidding",
         "parameters": [
           {
             "in": "path",
@@ -6219,7 +6219,7 @@
     },
     "/api/owner/statement": {
       "get": {
-        "operationId": "apps_booking_owner_api_statement",
+        "operationId": "apps_booking_owner_dashboard_money_statement",
         "parameters": [
           {
             "in": "query",
@@ -6380,7 +6380,7 @@
     },
     "/api/owner/today": {
       "get": {
-        "operationId": "apps_booking_owner_api_today_view",
+        "operationId": "apps_booking_owner_dashboard_today_today_view",
         "parameters": [],
         "responses": {
           "200": {
@@ -6407,7 +6407,7 @@
     },
     "/api/owner/tour-hours": {
       "put": {
-        "operationId": "apps_booking_owner_api_tour_hours",
+        "operationId": "apps_booking_tours_owner_api_tour_hours",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -6446,7 +6446,7 @@
     },
     "/api/owner/visits/{visit_id}/confirm": {
       "post": {
-        "operationId": "apps_booking_owner_api_confirm_visit",
+        "operationId": "apps_booking_tours_owner_api_confirm_visit",
         "parameters": [
           {
             "in": "path",
@@ -6484,7 +6484,7 @@
     },
     "/api/owner/visits/{visit_id}/decline": {
       "post": {
-        "operationId": "apps_booking_owner_api_decline_visit",
+        "operationId": "apps_booking_tours_owner_api_decline_visit",
         "parameters": [
           {
             "in": "path",
@@ -6872,7 +6872,7 @@
     },
     "/api/stay": {
       "get": {
-        "operationId": "apps_booking_api_stay",
+        "operationId": "apps_booking_stay_api_stay",
         "parameters": [],
         "responses": {
           "200": {
@@ -6899,7 +6899,7 @@
     },
     "/api/stay/autopay": {
       "put": {
-        "operationId": "apps_booking_api_autopay",
+        "operationId": "apps_booking_stay_api_autopay",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -6936,7 +6936,7 @@
     },
     "/api/stay/end": {
       "post": {
-        "operationId": "apps_booking_api_end",
+        "operationId": "apps_booking_stay_api_end",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -6973,7 +6973,7 @@
     },
     "/api/stay/notice": {
       "post": {
-        "operationId": "apps_booking_api_notice",
+        "operationId": "apps_booking_stay_api_notice",
         "parameters": [],
         "responses": {
           "200": {
@@ -7000,7 +7000,7 @@
     },
     "/api/stay/pay": {
       "post": {
-        "operationId": "apps_booking_api_pay_bill",
+        "operationId": "apps_booking_stay_api_pay_bill",
         "parameters": [],
         "responses": {
           "200": {
@@ -7027,7 +7027,7 @@
     },
     "/api/visits": {
       "post": {
-        "operationId": "apps_booking_api_visit",
+        "operationId": "apps_booking_tours_api_visit",
         "parameters": [],
         "requestBody": {
           "content": {
@@ -7064,7 +7064,7 @@
     },
     "/api/visits/mine": {
       "get": {
-        "operationId": "apps_booking_api_my_visits",
+        "operationId": "apps_booking_tours_api_my_visits",
         "parameters": [],
         "responses": {
           "200": {
@@ -7095,7 +7095,7 @@
     },
     "/api/visits/{visit_id}/cancel": {
       "post": {
-        "operationId": "apps_booking_api_cancel_visit",
+        "operationId": "apps_booking_tours_api_cancel_visit",
         "parameters": [
           {
             "in": "path",

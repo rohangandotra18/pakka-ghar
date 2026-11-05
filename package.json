@@ -44,7 +44,7 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "api:types": "openapi-typescript contracts/openapi.json -o src/api/schema.d.ts",
+    "api:types": "openapi-typescript contracts/openapi.json -o src/core/api/schema.d.ts",
     "postinstall": "node scripts/build-map-engine.js"
   },
   "private": true

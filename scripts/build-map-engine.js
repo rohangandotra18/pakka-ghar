@@ -1,10 +1,10 @@
-// Puts MapLibre's code and styles inside the app (src/components/mapEngine.generated.ts), so the map no longer
+// Puts MapLibre's code and styles inside the app (src/shared/map/mapEngine.generated.ts), so the map no longer
 // downloads its library from a CDN on every open: only the map tiles come over the network. Runs on npm install.
 const fs = require('fs');
 const path = require('path');
 
 const dist = path.join(__dirname, '..', 'node_modules', 'maplibre-gl', 'dist');
-const out = path.join(__dirname, '..', 'src', 'components', 'mapEngine.generated.ts');
+const out = path.join(__dirname, '..', 'src', 'shared', 'map', 'mapEngine.generated.ts');
 const js = fs.readFileSync(path.join(dist, 'maplibre-gl.js'), 'utf8').replace(/<\/script/gi, '<\\/script');
 const css = fs.readFileSync(path.join(dist, 'maplibre-gl.css'), 'utf8').replace(/<\/style/gi, '<\\/style');
 const version = require(path.join(dist, '..', 'package.json')).version;

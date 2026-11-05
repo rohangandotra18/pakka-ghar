@@ -7,7 +7,7 @@ from uuid import UUID
 from django.utils import timezone
 from ninja import Router, Schema
 
-from apps.booking.services import owners_of
+from apps.booking.common import owners_of
 from apps.maintenance.models import TrustReport
 from apps.property.models import OwnershipDocument, PayoutAccount, Property
 

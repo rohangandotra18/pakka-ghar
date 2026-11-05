@@ -10,9 +10,9 @@ where, what the blueprint's rules look like in this code, and where it deliberat
 | Apps and website | Expo SDK 58 / React Native, one codebase: identical on iOS and Android, and the same screens on the web (react-native-web) | `src/` |
 | API | Django 5.2 + Django Ninja, Python 3.12 | `backend/` |
 | Database | PostgreSQL 16, the only store of record | `backend/apps/*/models.py` |
-| Contract | OpenAPI 3.1, generated from the API; the app's TypeScript types come from it | `contracts/openapi.json`, `src/api/schema.d.ts` |
+| Contract | OpenAPI 3.1, generated from the API; the app's TypeScript types come from it | `contracts/openapi.json`, `src/core/api/schema.d.ts` |
 | Jobs | Celery + Redis (hold expiry, monthly rent, settlements); inline when `REDIS_URL` is unset | `backend/config/celery.py`, `apps/*/tasks.py` |
-| Live events | Server-sent events, one per notification | `GET /api/events`, `src/api/events.tsx` |
+| Live events | Server-sent events, one per notification | `GET /api/events`, `src/core/api/events.tsx` |
 
 Backend apps: `core` (organisations, people, ledger, audit, idempotency, notifications, CORS for the website),
 `identity` (OTP sign-in, session tokens, DigiLocker), `property` (PGs, rooms, beds, meters, papers, payouts, on-site
@@ -20,6 +20,49 @@ photos), `booking` (applications with roommates, room bids, tours, holds, bookin
 police verification, ratings), `payments` (invoices, payments, webhooks, electricity),
 `maintenance` (repairs and trust reports), `jurisdiction` (Tricity police and tariff rules), and the trust team's
 review queue (`apps/core/staff_api.py`).
+
+## Where code lives
+
+The code is organised by feature, so a change to one feature, or to the design, stays in one folder. The rules are
+checked by `npx expo lint` (`eslint.config.js`): a file that reaches past them fails the lint.
+
+**App (`src/`)**
+
+| Folder | What's in it | May use |
+|---|---|---|
+| `design/` | The look: colours, type, spacing (`theme.ts`), fonts (`fonts.ts`), icons and every drawn element (`ui.tsx`: Screen, Btn, Card, Field, Toast…), the tab bar, the loading state | nothing else in the app |
+| `core/api/` | The typed API client (generated from the contract), `useQuery` / `useAction`, live events | `core/` only |
+| `core/session/` | Who is signed in on this device, for each side; toasts; the refresh signal | `core/` only |
+| `core/device/` | The on-site camera with location | `core/` only |
+| `shared/` | Widgets several features use: the top bar with the tenant/owner switch, the sign-up prompt, the map | design, core |
+| `features/<name>/` | One feature: its screens and parts, and an `index.ts` listing what other code may use | design, core, shared, other features' `index.ts` |
+| `shell/` | The frame: providers and fonts, the stack, both tab bars, the toast host | everything, via `index.ts` |
+| `app/` | The URL map for Expo Router. Each file is one line re-exporting a feature's screen | features, shell |
+
+Features: `welcome`, `account` (tenant sign-up), `listing` (owner lists a PG), `search` (find and a listing's page),
+`tours`, `applications` (requests to stay, roommates, bids), `booking`, `agreements`, `photos`, `stay` (My stay,
+history, rating), `repairs`, `owner-dashboard` (Today, beds, money, residents).
+
+What to change for what:
+
+- **A redesign** (colours, type, buttons, cards, spacing, icons): `src/design/` only. Screens use its components
+  and tokens, so they follow.
+- **One feature**: its folder in `src/features/`. Other features see only what its `index.ts` exports, so you can
+  rewrite its insides freely. If you change something it exports, lint and `tsc` show every user.
+- **A new screen**: put it in its feature, export it from the feature's `index.ts`, and add a one-line route
+  file in `src/app/`.
+- **A URL**: rename the route file in `src/app/` and the `router.push` calls that use it. URLs are how features
+  link to one another.
+
+**Backend (`backend/apps/`)**
+
+Each Django app is a domain: `core`, `identity`, `property` (listings, rooms, photos), `payments`, `maintenance`
+(repairs), `jurisdiction` (police and tariff rules). `booking` is split by feature, with one package each for
+`applications`, `tours`, `bookings`, `agreements`, `police`, `stay` and `owner_dashboard`. Each package has a `services.py`
+(the rules) and an `api.py` and/or `owner_api.py` (its endpoints). `booking/common.py` holds the few shared
+lookups. The models stay in each app's `models.py`, because that is the database schema and its migrations.
+Splitting the code never changes tables or row-level security. Endpoints keep their URLs, and their OpenAPI
+operation ids are the view's name, not its file, so moving code between files never changes the app's contract.
 
 ## One account on every device
 
@@ -31,7 +74,7 @@ straight to their dashboard. Each signed-in device is its own revocable session.
 
 The website is the same Expo code built for the browser (`npx expo start --web`, or `npx expo export -p web` for a
 static build). Tenants get Find, My stay, Requests and History; owners get Today, Beds, Money, Residents and Requests.
-What differs on the web: the map draws MapLibre straight into the page (`MapView.web.tsx`; phones run the same
+What differs on the web: the map draws MapLibre straight into the page (`src/shared/map/MapView.web.tsx`; phones run the same
 engine in a web view), and photos can only be taken on a phone, because they must come from the phone's camera at the
 building. The API allows the website's origin through `CORS_ORIGINS`.
 
@@ -45,7 +88,7 @@ building. The API allows the website's origin through `CORS_ORIGINS`.
   agreement, page and copy and expires in 15 minutes. PDFium renders one page at a time, and pages are cached by the
   document's SHA-256. Signing needs every page opened, the typed name and a one-time code. Signatures are
   append-only. Once both have signed, a certificate page with both signatures and the document's SHA-256 is added
-  (`apps/booking/agreements.py`).
+  (`apps/booking/agreements/`).
 
 ## The blueprint's first principles, in this code
 
@@ -118,7 +161,7 @@ development, `/api/dev/payments/{id}/capture` sends that same signed webhook thr
   with a CA.
 - **Providers.** OTP (SMS/WhatsApp), DigiLocker, Razorpay or Cashfree with escrow, and eSign/e-stamp all run as
   local fakes. Each has a single place to wire the real client (`apps/identity/services.py`,
-  `apps/payments/services.py`, `apps/booking/services.py`).
+  `apps/payments/services.py`, `apps/booking/bookings/services.py` for the e-stamp).
 - **Development stand-ins**: `/api/dev/payments/{id}/capture` (acting as the payment partner) and returning the OTP
   to the app exist only with `DEBUG=1`.
 

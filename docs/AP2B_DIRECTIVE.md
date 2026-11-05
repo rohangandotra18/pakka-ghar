@@ -62,7 +62,7 @@ Punjabi (planned next). Each needs its own scoped brief when it's chosen.
 - **Identity:** DigiLocker partner access; OTP via SMS/WhatsApp provider (`apps/identity/services.py`).
 - **Agreements:** whether OTP-confirmed signatures suffice or licensed Aadhaar eSign is required (IT Act 2000); stamp
   duty and registration rules in Chandigarh UT, Punjab (Mohali) and Haryana (Panchkula); the standard agreement text
-  (`apps/booking/agreements.py`) reviewed by a lawyer.
+  (`backend/apps/booking/agreements/document.py`) reviewed by a lawyer.
 - **Police forms** per city and **electricity tariff ceilings** per distribution company (`apps/jurisdiction/rules.py`).
 - **Tax:** GST on PG rent; TDS on rent (194-IB) guidance for residents; owner statement wording.
 - **Data protection (DPDP Act 2023):** consent notices, retention periods for kept financial records, grievance officer.
@@ -73,6 +73,8 @@ Punjabi (planned next). Each needs its own scoped brief when it's chosen.
 - One bounded task at a time, each with acceptance tests written first; no task is "done" without them passing.
 - Backend: `cd backend && .venv/bin/python -m pytest` (real Postgres). App: `npx tsc --noEmit && npx expo lint`.
   After an API change: `manage.py export_openapi` then `npm run api:types`.
+- Keep the layout in ARCHITECTURE.md, "Where code lives": design changes in `src/design/`, a feature's changes in
+  its own folder; `npx expo lint` enforces it.
 - Test on both an iOS simulator and an Android emulator (or devices) for any screen change.
 - New tables get a row-level-security policy migration; the guard test fails otherwise.
 - Never fabricate approvals, test results, screenshots or progress. An AI review is labelled as such; it is not a

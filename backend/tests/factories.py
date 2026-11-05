@@ -86,7 +86,7 @@ def stay(b: Bed, guest: Party, start: date, *, months=11, end: date | None = Non
                                            status=police, submitted_at=t if police != 'not_started' else None,
                                            verified_at=t + timedelta(days=9) if police == 'verified' else None)
     if police != 'verified':
-        from apps.booking.services import prepare_police
+        from apps.booking.police.services import prepare_police
         prepare_police(bk)
     # the deposit, captured into escrow (and settled back out for stays that ended)
     dep = Payment.objects.create(organisation=b.organisation, party=guest, purpose='deposit', booking=bk, amount_paise=bk.deposit_paise,

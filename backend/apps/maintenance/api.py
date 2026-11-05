@@ -6,8 +6,8 @@ from django.db.models import Max
 from django.utils import timezone
 from ninja import Router, Schema
 
-from apps.booking.api import current_booking
-from apps.booking.services import owners_of
+from apps.booking.stay.api import current_booking
+from apps.booking.common import owners_of
 from apps.core.api_support import ApiError, audit, notify, owner_org, party_of
 from apps.core.rls import system
 from apps.property.models import Property

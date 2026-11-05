@@ -4,7 +4,7 @@ from uuid import UUID
 
 from ninja import Router
 
-from apps.booking.api import PaymentOut, payment_out
+from apps.booking.bookings.api import PaymentOut, payment_out
 from apps.payments import services as pay
 from apps.payments.models import Payment
 
