@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { C, F, R, SP } from '@/lib/theme';
@@ -25,11 +25,30 @@ export function T({ v = 'body', style, children, numberOfLines }: { v?: Variant;
 export function Screen({ children, scroll = true, pad = true }: { children: ReactNode; scroll?: boolean; pad?: boolean }) {
   const insets = useSafeAreaInsets();
   const { toastMsg } = useStore();
-  /* bottom padding clears the home indicator or Android gesture bar on screens without a tab bar */
-  const content = <View style={{ gap: SP.md, padding: pad ? SP.lg : 0, paddingBottom: SP.xl * 2 + insets.bottom }}>{children}</View>;
+  const scrollRef = useRef<ScrollViewInstance>(null);
+  /* Neither platform makes room for the keyboard here (Android is edge-to-edge), so we add a spacer the
+     keyboard's height under the content, then scroll the focused field up. Same behaviour on both. */
+  const [kb, setKb] = useState(0);
+  useEffect(() => {
+    if (!scroll) return;
+    const show = Keyboard.addListener('keyboardDidShow', e => {
+      setKb(e.endCoordinates.height);
+      /* wait a frame for the spacer, then bring the field near the top with room for the button under it */
+      requestAnimationFrame(() => {
+        const input = TextInput.State.currentlyFocusedInput();
+        const sv = scrollRef.current, inner = sv?.getInnerViewRef();
+        if (!input || !sv || !inner) return;
+        input.measureLayout(inner, (_x, y) => sv.scrollTo({ y: Math.max(0, y - 96), animated: true }), () => {});
+      });
+    });
+    const hide = Keyboard.addListener('keyboardDidHide', () => setKb(0));
+    return () => { show.remove(); hide.remove(); };
+  }, [scroll]);
+  /* bottom padding clears the home indicator or Android gesture bar, or the keyboard when it's open */
+  const content = <View style={{ gap: SP.md, padding: pad ? SP.lg : 0, paddingBottom: SP.xl * 2 + (kb || insets.bottom) }}>{children}</View>;
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top }}>
-      {scroll ? <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} overScrollMode="never" bounces={false}>{content}</ScrollView> : content}
+      {scroll ? <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} overScrollMode="never" bounces={false}>{content}</ScrollView> : content}
       {toastMsg ? <View pointerEvents="none" style={[s.toast, { bottom: 96 + insets.bottom }]}><T v="smBold" style={{ color: C.bg }}>{toastMsg}</T></View> : null}
     </View>
   );
@@ -84,11 +103,12 @@ export function Steps({ i, labels }: { i: number; labels: string[] }) {
   );
 }
 
-export function Field({ label, value, placeholder, keyboard }: { label: string; value?: string; placeholder?: string; keyboard?: 'default' | 'number-pad' | 'phone-pad' }) {
+/* Pass onChangeText to make it controlled (the value is what gets sent); without it, value is just a starting text. */
+export function Field({ label, value, placeholder, keyboard, onChangeText }: { label: string; value?: string; placeholder?: string; keyboard?: 'default' | 'number-pad' | 'phone-pad'; onChangeText?: (t: string) => void }) {
   return (
     <View style={{ gap: 5 }}>
       <T v="label">{label}</T>
-      <TextInput allowFontScaling={false} defaultValue={value} placeholder={placeholder} placeholderTextColor={C.muted} keyboardType={keyboard}
+      <TextInput allowFontScaling={false} {...(onChangeText ? { value, onChangeText } : { defaultValue: value })} placeholder={placeholder} placeholderTextColor={C.muted} keyboardType={keyboard}
         style={s.input} underlineColorAndroid="transparent" selectionColor={C.accent} />
     </View>
   );
@@ -109,15 +129,18 @@ export function Stars({ value, size = 13 }: { value: number; size?: number }) {
 }
 export function StarInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
-    <View style={{ flexDirection: 'row', gap: 2 }}>
-      {[1, 2, 3, 4, 5].map(n => <Pressable key={n} hitSlop={4} onPress={() => onChange(n)} accessibilityLabel={n + ' stars'}><T style={{ fontSize: 22, color: value >= n ? C.star : C.line }}>★</T></Pressable>)}
+    <View style={{ flexDirection: 'row' }}>
+      {/* 36pt targets with slop, so each star is easy to hit and screen readers announce it */}
+      {[1, 2, 3, 4, 5].map(n => <Pressable key={n} hitSlop={6} onPress={() => onChange(n)} accessibilityRole="button" accessibilityLabel={`${n} star${n > 1 ? 's' : ''}`} accessibilityState={{ selected: value >= n }} style={{ width: 30, height: 36, alignItems: 'center', justifyContent: 'center' }}><T style={{ fontSize: 24, lineHeight: 30, color: value >= n ? C.star : C.line }}>★</T></Pressable>)}
     </View>
   );
 }
 
 export function Note({ children, tone }: { children: ReactNode; tone?: 'warn' | 'ok' | 'soft' }) {
   const bg = tone === 'ok' ? C.okBg : tone === 'soft' ? C.surface2 : C.warnBg;
-  return <View style={{ backgroundColor: bg, borderRadius: R.md, padding: SP.md }}>{typeof children === 'string' ? <T v="sm" style={{ color: C.ink }}>{children}</T> : children}</View>;
+  /* plain text, including text with {values} in it, goes in a T; anything else is laid out as given */
+  const textOnly = Children.toArray(children).every(c => typeof c === 'string' || typeof c === 'number');
+  return <View style={{ backgroundColor: bg, borderRadius: R.md, padding: SP.md }}>{textOnly ? <T v="sm" style={{ color: C.ink }}>{children}</T> : children}</View>;
 }
 
 export function Dot({ color }: { color: string }) { return <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color }} />; }

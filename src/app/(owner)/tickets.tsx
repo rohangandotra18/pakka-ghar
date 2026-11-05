@@ -1,25 +1,41 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 import { AppBar } from '@/components/AppBar';
-import { Badge, Btn, Card, Screen, T } from '@/components/ui';
-import { ASSIGNEE, useStore } from '@/lib/store';
+import { Loading } from '@/components/Loading';
+import { Badge, Btn, Card, Field, Screen, T } from '@/components/ui';
+import { api, ok } from '@/api/client';
+import { useAction, useQuery } from '@/api/hooks';
+
+const when = (iso: string) => {
+  const d = new Date(iso), days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  const hm = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: false });
+  return days === 0 ? `Today ${hm}` : days === 1 ? 'Yesterday' : d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+};
 
 export default function Tickets() {
-  const { s, set, toast } = useStore();
-  const update = (id: string, status: 'Assigned' | 'Fixed', to?: string) => set(p => ({ ownerRequests: p.ownerRequests.map(r => (r.id === id ? { ...r, status, to: to ?? r.to } : r)) }));
+  const { act, busy } = useAction();
+  const q = useQuery(() => ok(api.GET('/api/owner/tickets')));
+  /* who the owner is sending, per request; blank means their saved contact for that kind of repair */
+  const [who, setWho] = useState<Record<string, string>>({});
   return (
     <Screen>
       <AppBar />
       <T v="h2">Requests</T>
-      {s.ownerRequests.map(r => (
+      {!q.data && <Loading error={q.error} retry={q.reload} />}
+      {q.data?.length === 0 && <Card><T v="sm">No requests. Residents raise repairs here and you assign someone.</T></Card>}
+      {q.data?.map(r => (
         <Card key={r.id}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><T v="bodyBold">{r.cat} · Room {r.room}</T><Badge label={r.status} tone={r.status === 'Fixed' ? 'ok' : r.status === 'Assigned' ? 'warn' : 'crit'} /></View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><T v="bodyBold">{r.category} · Room {r.room}</T><Badge label={r.status} tone={r.status === 'Fixed' || r.status === 'Confirmed' ? 'ok' : r.status === 'Assigned' ? 'warn' : 'crit'} /></View>
           <T>{r.text}</T>
-          <T v="sm">{r.who} · {r.at}{r.to ? ` · ${r.to}` : ''}</T>
-          {r.status === 'Raised' && <Btn small label={`Assign ${(ASSIGNEE[r.cat] ?? 'Caretaker').split(' (')[0]}`} onPress={() => { update(r.id, 'Assigned', ASSIGNEE[r.cat] ?? 'Caretaker'); toast("Assigned. The resident can see who's coming."); }} />}
-          {r.status === 'Assigned' && <Btn small label="Mark fixed" onPress={() => { update(r.id, 'Fixed'); toast('Marked fixed. The resident is asked to confirm.'); }} />}
+          <T v="sm">{r.who} · {when(r.at)}{r.assignee ? ` · ${r.assignee}` : ''}</T>
+          {r.status === 'Raised' && <>
+            <Field label="Who's coming?" value={who[r.id] ?? ''} onChangeText={t => setWho(m => ({ ...m, [r.id]: t }))} placeholder={`${r.suggested_assignee} (name and number)`} />
+            <Btn small label="Assign" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/tickets/{ticket_id}/assign', { params: { path: { ticket_id: r.id } }, body: { assignee: who[r.id]?.trim() || null } })), "Assigned. The resident can see who's coming.")} />
+          </>}
+          {r.status === 'Assigned' && <Btn small label="Mark fixed" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/tickets/{ticket_id}/fixed', { params: { path: { ticket_id: r.id } } })), 'Marked fixed. The resident is asked to confirm.')} />}
         </Card>
       ))}
-      <Card soft><T v="bodyBold">Listing reports</T><T v="sm">None open. Residents can report wrong listing details or a request to pay in cash. A confirmed cash report pauses the listing.</T></Card>
+      <Card soft><T v="bodyBold">Listing reports</T><T v="sm">Residents can report wrong listing details or a request to pay in cash. Those go to the Pakka Ghar trust team; a confirmed cash report pauses the listing.</T></Card>
     </Screen>
   );
 }

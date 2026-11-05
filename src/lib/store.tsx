@@ -1,49 +1,99 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
-import { OWNER_REQUESTS, PGS, type PG, type Req } from './data';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import { api, ok, setToken, type Schemas } from '@/api/client';
 
-/* App state for the prototype, held in memory. The real app keeps this on the server. */
+/* The app's own state: which side is on screen, the signed-in person for each side, toasts, and a version
+   number that tells every screen to reload after a change. Everything else lives on the server. */
 export type Role = 'tenant' | 'owner';
-type State = {
-  role: Role | null;
+type Me = Schemas['MeOut'];
+type Session = { token: string; me: Me };
+type State = { role: Role | null; tenant: Session | null; owner: Session | null; booted: boolean };
+
+type Ctx = {
+  s: State;
+  setRole: (r: Role) => void;
+  signIn: (role: Role, token: string, me: Me) => Promise<void>;
+  updateMe: (role: Role, me: Me) => void;
+  signOut: (role: Role) => Promise<void>;
+  /* bump after any change so screens refetch */
+  refresh: () => void;
+  version: number;
+  toast: (m: string) => void;
+  toastMsg: string;
+  /* tenant side is verified and can act; owner side has a property */
   tenantReady: boolean;
   ownerReady: boolean;
-  offer: { pgId: string; amount: number; months: number; placed: boolean; accepted: boolean } | null;
-  booking: { paid: boolean; signed: boolean; stamped: boolean };
-  rentPaid: boolean;
-  autopay: boolean;
-  myRequests: Req[];
-  rated: boolean;
-  ownerRequests: Req[];
-  offersOpen: boolean;
-  acceptedOffer: string | null;
-  paidByApp: Record<string, boolean>;
-  police: Record<string, string>;
-  metersPaired: Record<string, boolean>;
-  /* where each owner pinned their building; the same point is shown to tenants */
-  pins: Record<string, { lat: number; lng: number }>;
-  /* the tenant's current stay; empty until they book (or load the sample stay) */
-  stay: { pgId: string; rent: number; room: string; since: string } | null;
 };
-const initial: State = {
-  role: null, tenantReady: false, ownerReady: false, offer: null,
-  booking: { paid: false, signed: false, stamped: false }, rentPaid: false, autopay: false,
-  myRequests: [],
-  rated: false, ownerRequests: OWNER_REQUESTS, offersOpen: true, acceptedOffer: null, paidByApp: {}, police: {}, metersPaired: {}, pins: {}, stay: null,
-};
-type Ctx = { s: State; set: (u: Partial<State> | ((s: State) => Partial<State>)) => void; toast: (m: string) => void; toastMsg: string };
 const StoreCtx = createContext<Ctx | null>(null);
+const KEY = { tenant: 'pg.session.tenant', owner: 'pg.session.owner', role: 'pg.role' } as const;
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [s, setS] = useState<State>(initial);
+  const [s, setS] = useState<State>({ role: null, tenant: null, owner: null, booted: false });
+  const [version, setVersion] = useState(0);
   const [toastMsg, setToast] = useState('');
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const set = useCallback((u: Partial<State> | ((s: State) => Partial<State>)) => setS(prev => ({ ...prev, ...(typeof u === 'function' ? u(prev) : u) })), []);
+
+  /* restore saved sessions, and drop any the server no longer accepts */
+  useEffect(() => {
+    (async () => {
+      const load = async (k: string): Promise<Session | null> => {
+        try { const raw = await SecureStore.getItemAsync(k); return raw ? JSON.parse(raw) : null; } catch { return null; }
+      };
+      const [tenant, owner] = await Promise.all([load(KEY.tenant), load(KEY.owner)]);
+      let role: Role | null = null;
+      try { role = (await SecureStore.getItemAsync(KEY.role)) as Role | null; } catch { /* first launch */ }
+      const check = async (sess: Session | null, k: string) => {
+        if (!sess) return null;
+        try {
+          const me = await ok(api.GET('/api/me', { headers: { Authorization: `Bearer ${sess.token}` } }));
+          return { ...sess, me };
+        } catch (e) {
+          if ((e as { status?: number }).status === 401) { await SecureStore.deleteItemAsync(k).catch(() => {}); return null; }
+          return sess; /* offline: keep it */
+        }
+      };
+      const [t, o] = await Promise.all([check(tenant, KEY.tenant), check(owner, KEY.owner)]);
+      setS({ role, tenant: t, owner: o, booted: true });
+    })();
+  }, []);
+
+  useEffect(() => { setToken(s.role === 'owner' ? s.owner?.token ?? null : s.tenant?.token ?? null); }, [s.role, s.tenant, s.owner]);
+
+  const setRole = useCallback((role: Role) => {
+    setS(p => ({ ...p, role }));
+    SecureStore.setItemAsync(KEY.role, role).catch(() => {});
+  }, []);
+  const signIn = useCallback(async (role: Role, token: string, me: Me) => {
+    const sess = { token, me };
+    setToken(token);
+    setS(p => ({ ...p, role, [role]: sess }));
+    await Promise.all([SecureStore.setItemAsync(KEY[role], JSON.stringify(sess)), SecureStore.setItemAsync(KEY.role, role)]).catch(() => {});
+  }, []);
+  const updateMe = useCallback((role: Role, me: Me) => {
+    setS(p => {
+      const cur = p[role];
+      if (!cur) return p;
+      const next = { ...cur, me };
+      SecureStore.setItemAsync(KEY[role], JSON.stringify(next)).catch(() => {});
+      return { ...p, [role]: next };
+    });
+  }, []);
+  const signOut = useCallback(async (role: Role) => {
+    const sess = s[role];
+    if (sess) await api.POST('/api/auth/logout', { headers: { Authorization: `Bearer ${sess.token}` } }).catch(() => {});
+    setS(p => ({ ...p, [role]: null }));
+    await SecureStore.deleteItemAsync(KEY[role]).catch(() => {});
+  }, [s]);
+  const refresh = useCallback(() => setVersion(v => v + 1), []);
   const toast = useCallback((m: string) => {
     setToast(m);
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setToast(''), 2600);
+    timer.current = setTimeout(() => setToast(''), 2800);
   }, []);
-  const value = useMemo(() => ({ s, set, toast, toastMsg }), [s, set, toast, toastMsg]);
+  const tenantReady = !!s.tenant?.me.verified;
+  const ownerReady = !!s.owner?.me.memberships.length;
+  const value = useMemo(() => ({ s, setRole, signIn, updateMe, signOut, refresh, version, toast, toastMsg, tenantReady, ownerReady }),
+    [s, setRole, signIn, updateMe, signOut, refresh, version, toast, toastMsg, tenantReady, ownerReady]);
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
 export function useStore() {
@@ -51,13 +101,3 @@ export function useStore() {
   if (!c) throw new Error('useStore outside StoreProvider');
   return c;
 }
-export const pgById = (id?: string) => PGS.find(p => p.id === id) ?? PGS[0];
-/* the owner's own pin wins over the sample position */
-export const pinOf = (p: PG, pins: State['pins']) => pins[p.id] ?? { lat: p.lat, lng: p.lng };
-/* the demo owner (Jatinder) runs this PG */
-export const OWNER_PG = 'sidhu';
-/* a sample stay for the demo tenant, Simran, so the stay screens can be seen without booking */
-export const SAMPLE_STAY = { pgId: 'gurnoor', rent: 10000, room: '204', since: 'Aug 2026' };
-export const SAMPLE_REQUEST: Req = { id: 'R-118', who: 'You', room: '204', cat: 'Electrical', text: 'Ceiling fan makes a grinding noise', status: 'Assigned', at: 'Today', to: 'Gurmeet (electrician)' };
-/* who gets assigned for each kind of request */
-export const ASSIGNEE: Record<string, string> = { Electrical: 'Gurmeet (electrician)', Plumbing: 'Raju (plumber)', 'Wi-Fi': 'Airtel Xstream support', Cleaning: 'Housekeeping', Furniture: 'Ramesh (carpenter)' };

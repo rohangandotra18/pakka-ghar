@@ -34,7 +34,8 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 112
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "scheme": "pakkaghar",
     "experiments": {

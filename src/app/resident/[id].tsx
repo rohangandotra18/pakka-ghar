@@ -1,32 +1,40 @@
 import { useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { Back, Badge, Btn, List, Row, Screen, T } from '@/components/ui';
-import { RESIDENTS } from '@/lib/data';
+import { Loading } from '@/components/Loading';
+import { Back, Badge, Btn, List, Note, Row, Screen, T } from '@/components/ui';
+import { api, inr, ok } from '@/api/client';
+import { useAction, useQuery } from '@/api/hooks';
 import { useStore } from '@/lib/store';
-import { rupees } from '@/lib/theme';
 
 export default function Resident() {
-  const { name } = useLocalSearchParams<{ name: string }>();
-  const r = RESIDENTS.find(x => x.name === name) ?? RESIDENTS[0];
-  const { s, set, toast } = useStore();
-  const pv = s.police[r.name] ?? r.police;
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { toast } = useStore();
+  const { act, busy } = useAction();
+  const q = useQuery(() => ok(api.GET('/api/owner/residents/{booking_id}', { params: { path: { booking_id: id } } })), [id]);
+  const r = q.data;
+  if (!r) return <Screen><Back /><Loading error={q.error} retry={q.reload} /></Screen>;
+  const path = { params: { path: { booking_id: r.booking_id } } };
+  const pv = r.police;
+  const ended = r.status === 'ended' || r.status === 'cancelled';
   return (
     <Screen>
       <Back />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><T v="h2">{r.name}</T><Badge label={`Room ${r.room}`} /></View>
       <List>
-        <Row left="Identity" right={<Badge label="Aadhaar verified" tone="ok" />} />
+        <Row left="Identity" right={<Badge label={r.identity} tone={r.identity === 'Aadhaar verified' ? 'ok' : 'warn'} />} />
         <Row left="Police verification" right={<Badge label={pv} tone={pv === 'Verified' ? 'ok' : pv === 'Submitted' ? 'warn' : 'crit'} />} />
-        <Row left="Agreement" right="Signed · e-stamped" />
-        <Row left="Rent" right={`${rupees(r.rent)} · ${r.autopay ? 'AutoPay' : 'UPI'}`} />
-        <Row left="Deposit" right={`${rupees(r.rent)} in escrow`} />
-        <Row left="Since" right={r.since} last />
+        <Row left="Agreement" right={r.agreement} />
+        <Row left="Rent" right={`${inr(r.rent_paise)} · ${r.autopay ? 'AutoPay' : 'UPI'}`} />
+        <Row left="Deposit" right={ended ? (r.deposit_outcome || '—') : `${inr(r.deposit_held_paise || r.deposit_paise)} in escrow`} />
+        <Row left={ended ? 'Stayed' : 'Since'} right={r.since} last />
       </List>
-      {pv !== 'Verified' && <Btn label={pv === 'Not started' ? 'Submit police verification' : 'Mark verified'} onPress={() => { const next = pv === 'Not started' ? 'Submitted' : 'Verified'; set(p => ({ police: { ...p.police, [r.name]: next } })); toast(`Police verification: ${next.toLowerCase()}.`); }} />}
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Btn kind="secondary" style={{ flex: 1 }} label="Agreement" onPress={() => toast('Agreement opened: signed by both, e-stamp certificate attached.')} />
-        <Btn kind="secondary" style={{ flex: 1 }} label="End stay and rate" onPress={() => toast(`Move-out started: deposit settlement and rating sent to ${r.name.split(' ')[0]}.`)} />
-      </View>
+      {r.leaves_on && <Note tone="soft">Gave notice. Leaves on {new Date(r.leaves_on).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}.</Note>}
+      {r.police_missing.length > 0 && pv === 'Not started' && <Note tone="warn">The police form still needs: {r.police_missing.join(', ')}. Ask {r.name.split(' ')[0]} to add them in the app.</Note>}
+      {!ended && pv === 'Not started' && <Btn label="Submit police verification" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/police/submit', path)), 'Police verification submitted.')} />}
+      {!ended && pv === 'Submitted' && <Btn label="Police confirmed: mark verified" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/police/verified', path)), 'Police verification: verified.')} />}
+      {r.agreement === 'Waiting for your signature' && <Btn label="Sign with Aadhaar OTP" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/sign', path)), 'Signed.')} />}
+      {ended && r.deposit_held_paise > 0 && <Btn label={`Return ${inr(r.deposit_held_paise)} deposit and rate 5 stars`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: 0, reason: '', rating: 5 } })), 'Deposit returned from escrow. Rating saved.')} />}
+      <Btn kind="secondary" label="Agreement" onPress={() => toast(r.agreement === 'Signed · e-stamped' ? 'Agreement: signed by both, e-stamp certificate attached.' : `Agreement: ${r.agreement.toLowerCase()}.`)} />
     </Screen>
   );
 }
