@@ -9,12 +9,12 @@ import { useStore } from '@/lib/store';
 /* Tenants browse without an account. This runs only when they book, make an offer or ask for a visit,
    and then returns them to what they were doing. */
 const STEPS = ['Mobile number', 'About you', 'Verify identity', 'All set'];
-const WHY: Record<string, string> = { book: 'To book a bed', offer: 'To make an offer', visit: 'To book a visit', stay: 'To see your stay' };
+const WHY: Record<string, string> = { book: 'To apply to stay', offer: 'To bid on a room', visit: 'To schedule a tour', stay: 'To see your stay' };
 const LOOK: Record<string, string> = { 'Girls PG': 'Girls', 'Co-ed': 'Co-ed', 'Boys PG': 'Boys' };
 
 export default function TenantOnboarding() {
   const { s, signIn, updateMe, toast, refresh } = useStore();
-  const { next, why, listing } = useLocalSearchParams<{ next?: string; why?: string; listing?: string }>();
+  const { next, why } = useLocalSearchParams<{ next?: string; why?: string }>();
   const me = s.tenant?.me;
   /* someone already signed in but not yet verified starts at their first missing step */
   const [i, setI] = useState(me ? (me.verified ? 3 : me.profile?.guardian_name ? 2 : 1) : 0);
@@ -60,10 +60,6 @@ export default function TenantOnboarding() {
     if (next) router.replace(next as Href);
     else if (router.canGoBack()) router.back();
     else router.replace('/find');
-    if (why === 'visit' && listing) {
-      await ok(api.POST('/api/visits', { body: { listing } }));
-      toast('Visit requested for Saturday 11 am. The owner confirms in the app.');
-    }
   });
 
   return (
@@ -77,7 +73,7 @@ export default function TenantOnboarding() {
         <Field label="Mobile number" value={phone} onChangeText={t => { setPhone(t); setChallenge(null); }} keyboard="phone-pad" placeholder="10-digit mobile number" />
         {challenge ? <>
           <Otp code={challenge.code || '······'} />
-          <T v="sm">{challenge.code ? 'Code filled in for the demo.' : 'Enter the code we sent.'}</T>
+          <T v="sm">{challenge.code ? 'Development build: the code is filled in until an SMS provider is connected.' : 'Enter the code we sent.'}</T>
           <Btn label="Verify" disabled={busy} onPress={verifyCode} />
         </> : <Btn label="Send code" disabled={busy} onPress={sendCode} />}
       </>}

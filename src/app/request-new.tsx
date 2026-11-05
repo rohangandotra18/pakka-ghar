@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { TextInput, View } from 'react-native';
+import { Image, Pressable, TextInput, View } from 'react-native';
 import { Back, Btn, Chip, Chips, Note, Screen, T } from '@/components/ui';
 import { api, ok } from '@/api/client';
 import { useAction, useQuery } from '@/api/hooks';
+import { takeOnSitePhoto, uploadShot, type OnSiteShot } from '@/lib/camera';
+import { useStore } from '@/lib/store';
 import { C, F } from '@/lib/theme';
 
 const REQUEST_CATEGORIES = ['Electrical', 'Plumbing', 'Wi-Fi', 'Cleaning', 'Furniture', 'Listing issue', 'Asked to pay in cash'];
@@ -20,6 +22,7 @@ const VISITOR_TEXT: Record<string, string> = {
 };
 export default function NewRequest() {
   const { act, busy } = useAction();
+  const { toast } = useStore();
   const q = useQuery(() => ok(api.GET('/api/stay')));
   /* repairs need someone living there; anyone can report a listing or a cash request */
   const living = !!q.data?.stay?.moved_in;
@@ -30,6 +33,9 @@ export default function NewRequest() {
   /* what the tenant types is what gets sent; the example for the category shows as a placeholder */
   const [text, setText] = useState('');
   const cash = cat === 'Asked to pay in cash';
+  /* a photo of the problem, taken now in the room with the camera (never from the gallery) */
+  const [shot, setShot] = useState<OnSiteShot | null>(null);
+  const snap = async () => { try { setShot(await takeOnSitePhoto()); } catch (e) { toast(e instanceof Error ? e.message : 'Camera unavailable'); } };
   /* with no stay there's no owner to send to yet, so it goes to Pakka Ghar */
   const toUs = cash || !living;
   return (
@@ -40,10 +46,13 @@ export default function NewRequest() {
       <Chips>{cats.map(c => <Chip key={c} label={c} on={cat === c} onPress={() => setCat(c)} />)}</Chips>
       <T v="label">Describe it</T>
       <TextInput allowFontScaling={false} multiline value={text} onChangeText={setText} placeholder={starter(cat)} placeholderTextColor={C.muted} style={{ minHeight: 90, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.surface, padding: 12, fontFamily: F.semi, fontSize: 15, color: C.ink, textAlignVertical: 'top' }} />
-      {!cash && <View style={{ borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.line, borderRadius: 12, padding: 18, alignItems: 'center' }}><T v="smBold" style={{ color: C.muted }}>+ Add photo</T></View>}
+      {living && !toUs && (shot
+        ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Image source={{ uri: shot.uri }} style={{ width: 72, height: 72, borderRadius: 10 }} accessibilityLabel="Your photo" /><Btn small kind="ghost" label="Retake" onPress={snap} /></View>
+        : <Pressable onPress={snap} accessibilityRole="button" style={{ borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.line, borderRadius: 12, padding: 18, alignItems: 'center' }}><T v="smBold" style={{ color: C.muted }}>+ Take a photo of it</T></Pressable>)}
       <Note tone="soft">{cash ? "This goes to Pakka Ghar only, not the owner. Don't pay cash: it won't count as rent and isn't protected." : !living ? 'This goes to the Pakka Ghar trust team, who check the listing with the owner.' : cat === 'Listing issue' ? 'Listing issues go to Pakka Ghar as well as the owner.' : 'The owner sees it at once and can assign someone.'}</Note>
       <Btn label={toUs ? 'Report to Pakka Ghar' : 'Send request'} disabled={!text.trim() || busy} onPress={() => act(async () => {
-        await ok(api.POST('/api/requests', { body: { category: cat, text: text.trim() } }));
+        const t = await ok(api.POST('/api/requests', { body: { category: cat, text: text.trim() } }));
+        if (shot && !t.to_pakka_ghar) await uploadShot(`/api/requests/${t.id}/photos`, shot).catch(e => toast(e.message));
         router.back();
       }, toUs ? "Reported. We'll look into it within a day." : 'Request sent to the owner.')} />
     </Screen>

@@ -38,7 +38,7 @@ def free_beds(prop: Property, start=None) -> list[Bed]:
     from apps.booking.models import BLOCKING
     start = start or next_move_in()
     lo, hi = ist(start), ist(add_months(start, 1))
-    beds = Bed.objects.filter(room__property=prop).select_related('room').order_by('-offers_open', 'room__number', 'label')
+    beds = Bed.objects.filter(room__property=prop).select_related('room').order_by('room__number', 'label')
     return [b for b in beds if not b.bookings.filter(status__in=BLOCKING, stay_period__overlap=(lo, hi)).exists()]
 
 
@@ -55,14 +55,15 @@ def revealed(qs, cutoff=None):
 
 def listings(props: list[Property], near: tuple[float, float] | None = None) -> list[dict]:
     """The public cards for several PGs in a fixed number of queries, however many PGs there are. Call inside system()."""
-    from apps.booking.models import BLOCKING, Booking, Offer, Rating, Visit
+    from apps.booking.models import BLOCKING, Application, Booking, Rating, Visit
+    from .models import Room
     if not props:
         return []
     ids = [p.id for p in props]
     start = next_move_in()
     lo, hi = ist(start), ist(add_months(start, 1))
     beds: dict = {pid: [] for pid in ids}
-    for b in Bed.objects.filter(room__property_id__in=ids).select_related('room').order_by('-offers_open', 'room__number', 'label'):
+    for b in Bed.objects.filter(room__property_id__in=ids).select_related('room').order_by('room__number', 'label'):
         beds[b.room.property_id].append(b)
     taken = set(Booking.objects.filter(bed__room__property_id__in=ids, status__in=BLOCKING, stay_period__overlap=(lo, hi))
                 .values_list('bed_id', flat=True))
@@ -70,12 +71,19 @@ def listings(props: list[Property], near: tuple[float, float] | None = None) -> 
                    .values_list('booking__bed__room__property_id').annotate(a=Avg('score')))
     stays = dict(Booking.objects.filter(bed__room__property_id__in=ids, status__in=['confirmed', 'active', 'ended'])
                  .values_list('bed__room__property_id').annotate(n=Count('id')))
-    hot_beds = [bd.id for pid in ids for bd in beds[pid] if bd.offers_open]
-    stats = {r['bed_id']: r for r in Offer.objects.filter(bed_id__in=hot_beds, status='placed').values('bed_id')
+    rooms: dict = {pid: [] for pid in ids}
+    for r in Room.objects.filter(property_id__in=ids).order_by('number'):
+        rooms[r.property_id].append(r)
+    from .models import Photo
+    photos: dict = {pid: [] for pid in ids}
+    for ph in Photo.objects.filter(property_id__in=ids, ticket__isnull=True, status='live').select_related('room'):
+        photos[ph.property_id].append({'id': str(ph.id), 'url': ph.image.url, 'thumb': ph.thumb.url if ph.thumb else ph.image.url,
+                                       'room': ph.room.number if ph.room else None, 'caption': ph.caption, 'taken_at': ph.taken_at})
+    live = Application.objects.filter(property_id__in=ids, status__in=['forming', 'pending'])
+    stats = {r['room_id']: r for r in live.filter(amount_paise__isnull=False).values('room_id')
              .annotate(n=Count('id'), lo=Min('amount_paise'), hi=Max('amount_paise'))}
     since = timezone.now() - timedelta(days=14)
-    bidders = dict(Offer.objects.filter(bed__room__property_id__in=ids, status='placed').values_list('bed__room__property_id')
-                   .annotate(n=Count('tenant', distinct=True)))
+    bidders = dict(live.values_list('property_id').annotate(n=Count('lead', distinct=True)))
     visitors = dict(Visit.objects.filter(property_id__in=ids, created_at__gte=since).values_list('property_id')
                     .annotate(n=Count('tenant', distinct=True)))
     out = []
@@ -83,20 +91,26 @@ def listings(props: list[Property], near: tuple[float, float] | None = None) -> 
         free = [bd for bd in beds[p.id] if bd.id not in taken]
         first = free[0] if free else None
         rent = first.room.rent_paise if first else min((bd.room.rent_paise for bd in beds[p.id]), default=0)
-        st = stats.get(first.id) if first and first.offers_open else None
+        room_cards = []
+        for r in rooms[p.id]:
+            n_free = sum(1 for bd in free if bd.room_id == r.id)
+            st = stats.get(r.id)
+            room_cards.append({'number': r.number, 'kind': r.kind, 'kind_label': r.get_kind_display(), 'rent_paise': r.rent_paise,
+                               'beds': sum(1 for bd in beds[p.id] if bd.room_id == r.id), 'free': n_free, 'bidding': r.offers_open,
+                               'cap_paise': offer_cap_paise(r.rent_paise), 'closes_at': r.offers_close_at if r.offers_open else None,
+                               'bids': st['n'] if st else 0, 'min_bid_paise': st['lo'] if st else None, 'max_bid_paise': st['hi'] if st else None})
         lat, lng = float(p.lat or 0), float(p.lng or 0)
         avg = ratings.get(p.id)
         out.append({
             'id': p.slug, 'name': p.name, 'gender': p.gender, 'area': p.area, 'city': p.city,
             'address': p.address, 'meals': p.meals, 'lat': lat, 'lng': lng,
             'rent_paise': rent, 'free': len(free), 'rating': round(float(avg), 1) if avg is not None else None,
-            'stays': stays.get(p.id, 0), 'hot': bool(first and first.offers_open),
+            'stays': stays.get(p.id, 0), 'hot': any(c['bidding'] and c['free'] for c in room_cards),
             'watching': bidders.get(p.id, 0) + visitors.get(p.id, 0),
             'free_bed': {'bed_id': first.id, 'room': first.room.number, 'bed': first.label, 'kind': first.room.get_kind_display(),
-                         'rent_paise': first.room.rent_paise, 'offers_open': first.offers_open} if first else None,
-            'offers': {'count': st['n'] if st else 0, 'min_paise': st['lo'] if st else None, 'max_paise': st['hi'] if st else None,
-                       'closes_at': first.offers_close_at, 'cap_paise': offer_cap_paise(first.room.rent_paise)}
-                      if first and first.offers_open else None,
+                         'rent_paise': first.room.rent_paise, 'offers_open': first.room.offers_open} if first else None,
+            'rooms': [c for c in room_cards if c['free']],
+            'photos': photos[p.id],
             'deposit_months': p.deposit_months, 'notice_months': p.notice_months, 'tariff_paise': p.tariff_paise,
             'verified_owner': p.organisation.verified_at is not None, 'move_in_on': start,
             'km': round(km_between(near[0], near[1], lat, lng), 1) if near else None,

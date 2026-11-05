@@ -1,18 +1,18 @@
-"""Tenant side: visits, sealed offers, booking a bed, the current stay, notice, move-out, history."""
+"""Tenant side: tours, applications (with roommates and bids), booking a bed, the stay, notice, move-out, history."""
 from datetime import date, datetime, timedelta
 from uuid import UUID
 
 from django.utils import timezone
 from ninja import Router, Schema
 
-from apps.core.api_support import IST, ApiError, idempotent, month_start, party_of, today
+from apps.core.api_support import IST, OPTIONAL, ApiError, idempotent, month_start, party_of, today
 from apps.core.rls import system
 from apps.payments import services as pay
 from apps.payments.models import Invoice
-from apps.property.models import Bed, MeterReading, Property
+from apps.property.models import MeterReading, Property
 
 from . import services as svc
-from .models import Booking, Offer, Rating
+from .models import Application, ApplicationMember, Booking, Rating
 
 router = Router(tags=['tenant'])
 
@@ -28,9 +28,23 @@ class ListingRef(Schema):
     listing: str
 
 
-class VisitOut(Schema):
-    id: UUID
-    slot: datetime
+# ---- tours ------------------------------------------------------------------------------------------------
+
+class SlotsOut(Schema):
+    slots: list[datetime]
+    hours: dict
+
+
+@router.get('/listings/{slug}/tour-slots', response=SlotsOut, auth=OPTIONAL, tags=['listings'], summary='Free tour times this week')
+def tour_slots(request, slug: str):
+    p = _prop(slug)
+    return {'slots': svc.tour_slots(p), 'hours': svc.tour_hours(p)}
+
+
+class TourIn(Schema):
+    listing: str
+    slot: datetime | None = None
+    note: str = ''
 
 
 class MyVisitOut(Schema):
@@ -39,100 +53,196 @@ class MyVisitOut(Schema):
     name: str
     slot: datetime
     status: str
+    note: str
 
 
-@router.get('/visits/mine', response=list[MyVisitOut], summary='Your visit requests, newest first')
+def visit_out(v) -> dict:
+    return {'id': v.id, 'listing': v.property.slug, 'name': v.property.name, 'slot': v.slot, 'status': v.status, 'note': v.note}
+
+
+@router.get('/visits/mine', response=list[MyVisitOut], summary='Your tours, newest first')
 def my_visits(request):
     from .models import Visit
     qs = Visit.objects.filter(tenant=party_of(request)).select_related('property').order_by('-created_at')
-    return [{'id': v.id, 'listing': v.property.slug, 'name': v.property.name, 'slot': v.slot, 'status': v.status} for v in qs]
+    return [visit_out(v) for v in qs]
 
 
-@router.post('/visits/{visit_id}/cancel', response=MyVisitOut, summary='Cancel a visit you asked for')
+@router.post('/visits/{visit_id}/cancel', response=MyVisitOut, summary='Cancel a tour you asked for')
 def cancel_visit(request, visit_id: UUID):
+    from apps.core.api_support import notify
+
     from .models import Visit
     v = Visit.objects.filter(pk=visit_id, tenant=party_of(request)).select_related('property').first()
     if not v:
-        raise ApiError(404, 'not_found', 'No such visit.')
+        raise ApiError(404, 'not_found', 'No such tour.')
     if v.status in ('requested', 'confirmed'):
         v.status = 'cancelled'
         v.save(update_fields=['status', 'updated_at'])
         for o in svc.owners_of(v.organisation):
-            from apps.core.api_support import notify
-            notify(o, 'visit.cancelled', f'{request.party.first_name} cancelled their visit.', org=v.organisation)
-    return {'id': v.id, 'listing': v.property.slug, 'name': v.property.name, 'slot': v.slot, 'status': v.status}
+            notify(o, 'visit.cancelled', f'{request.party.first_name} cancelled their tour.', org=v.organisation)
+    return visit_out(v)
 
 
-@router.post('/visits', response=VisitOut, summary='Ask to visit; the owner confirms in the app')
-def visit(request, body: ListingRef):
+@router.post('/visits', response=MyVisitOut, summary='Book a tour at one of the free times')
+def visit(request, body: TourIn):
     party = party_of(request)
-    v = svc.request_visit(party, _prop(body.listing))
-    return {'id': v.id, 'slot': v.slot}
+    v = svc.request_visit(party, _prop(body.listing), body.slot, body.note)
+    return visit_out(v)
 
 
-# ---- offers ---------------------------------------------------------------------------------------------
+# ---- applications: to stay, with roommates, or a bid ---------------------------------------------------------
 
-class OfferIn(Schema):
+class ApplyIn(Schema):
     listing: str
-    amount_paise: int
+    room: str = ''                  # a room number, or empty for any room (of room_kind, if given)
+    room_kind: str = ''
+    amount_paise: int | None = None  # a bid per bed, only for a room that is up for bids
     months: int = 11
+    move_in_on: date | None = None
+    message: str = ''
+    roommates: list[str] = []       # their mobile numbers; each joins from their own app
 
 
-class OfferOut(Schema):
+class MemberOut(Schema):
+    id: UUID
+    name: str
+    phone_last4: str
+    is_lead: bool
+    status: str
+    verified: bool
+    booking_id: UUID | None
+
+
+class ApplicationOut(Schema):
     id: UUID
     listing: str
     name: str
-    room: str
-    bed: int
-    listed_paise: int
-    cap_paise: int
-    amount_paise: int
+    room: str | None
+    room_kind: str
+    amount_paise: int | None
+    rent_paise: int
     months: int
     move_in_on: date
+    message: str
     status: str
-    closes_at: datetime | None
+    decline_reason: str
+    is_lead: bool
+    members: list[MemberOut]
     count: int
     min_paise: int | None
     max_paise: int | None
     rank: int | None
-    booking_id: UUID | None
+    closes_at: datetime | None
+    my_booking_id: UUID | None
 
 
-def offer_out(o: Offer) -> dict:
-    bed, prop = o.bed, o.bed.room.property
-    st = svc.offer_standing(o) if o.status == 'placed' else {'count': 0, 'min_paise': None, 'max_paise': None, 'rank': None}
-    from apps.property.services import offer_cap_paise
-    b = getattr(o, 'booking', None)
-    return {'id': o.id, 'listing': prop.slug, 'name': prop.name, 'room': bed.room.number, 'bed': bed.label,
-            'listed_paise': bed.room.rent_paise, 'cap_paise': offer_cap_paise(bed.room.rent_paise),
-            'amount_paise': o.amount_paise, 'months': o.months, 'move_in_on': o.move_in_on, 'status': o.status,
-            'closes_at': bed.offers_close_at, **st, 'booking_id': b.id if b else None}
+def member_out(m) -> dict:
+    p = m.party
+    b = m.application.bookings.filter(guest_id=m.party_id).first() if m.party_id else None
+    return {'id': m.id, 'name': (p.name if p else '') or 'Invited', 'phone_last4': m.phone[-4:], 'is_lead': m.is_lead,
+            'status': m.status, 'verified': bool(p and p.verified), 'booking_id': b.id if b else None}
 
 
-@router.get('/offers/mine', response=list[OfferOut])
-def my_offers(request):
+def application_out(a, me=None) -> dict:
+    members = [member_out(m) for m in a.members.select_related('party', 'application')]
+    mine = a.bookings.filter(guest=me).order_by('-created_at').first() if me else None
+    room = a.room
+    return {'id': a.id, 'listing': a.property.slug, 'name': a.property.name, 'room': room.number if room else None,
+            'room_kind': a.room_kind or (room.kind if room else ''), 'amount_paise': a.amount_paise,
+            'rent_paise': a.amount_paise or (room.rent_paise if room else 0), 'months': a.months, 'move_in_on': a.move_in_on,
+            'message': a.message, 'status': a.status, 'decline_reason': a.decline_reason, 'is_lead': bool(me and a.lead_id == me.id),
+            'members': members, **svc.standing(a), 'closes_at': room.offers_close_at if room and room.offers_open else None,
+            'my_booking_id': mine.id if mine else None}
+
+
+def _visible_application(party, app_id):
+    """Applications the caller leads or is a member of (members read theirs with the system role, by seat)."""
+    a = Application.objects.filter(pk=app_id, lead=party).select_related('property', 'room').first()
+    if a:
+        return a
+    with system():
+        if ApplicationMember.objects.filter(application_id=app_id, party=party).exists():
+            return Application.objects.select_related('property', 'room').get(pk=app_id)
+    raise ApiError(404, 'not_found', 'No such application.')
+
+
+@router.post('/applications', response=ApplicationOut, summary='Apply to stay: a room or any room, alone or with roommates, at the rent or as a bid')
+def create_application(request, body: ApplyIn):
     party = party_of(request)
-    qs = Offer.objects.filter(tenant=party).exclude(status='withdrawn').select_related('bed__room__property').order_by('-created_at')
-    return [offer_out(o) for o in qs]
+    a = svc.apply(party, _prop(body.listing), room_number=body.room, room_kind=body.room_kind, amount_paise=body.amount_paise,
+                  months=body.months, move_in=body.move_in_on, message=body.message, roommates=body.roommates)
+    return application_out(a, party)
 
 
-@router.post('/offers', response=OfferOut, summary='Place or change a sealed offer (listed rent to +15%)')
-def place_offer(request, body: OfferIn):
+@router.get('/applications/mine', response=list[ApplicationOut], summary='Applications you made or joined')
+def my_applications(request):
     party = party_of(request)
-    prop = _prop(body.listing)
-    bed = Bed.objects.filter(room__property=prop, offers_open=True).select_related('room__property').first()
-    if not bed:
-        raise ApiError(409, 'offers_closed', 'This PG is not taking offers. Book at the listed rent instead.')
-    return offer_out(svc.place_offer(party, bed, body.amount_paise, body.months))
+    with system():
+        ids = set(ApplicationMember.objects.filter(party=party).exclude(status__in=['declined', 'left']).values_list('application_id', flat=True))
+        apps = list(Application.objects.filter(pk__in=ids).select_related('property', 'room').order_by('-created_at'))
+        return [application_out(a, party) for a in apps]
 
 
-@router.delete('/offers/{offer_id}', response=OfferOut)
-def withdraw(request, offer_id: UUID):
+class ChangeIn(Schema):
+    amount_paise: int | None = None
+    months: int | None = None
+
+
+@router.patch('/applications/{app_id}', response=ApplicationOut, summary='Change your bid or stay length')
+def change_application(request, app_id: UUID, body: ChangeIn):
     party = party_of(request)
-    o = Offer.objects.filter(pk=offer_id, tenant=party).first()
-    if not o:
-        raise ApiError(404, 'not_found', 'No such offer.')
-    return offer_out(svc.withdraw_offer(o, party))
+    a = svc.change_bid(_visible_application(party, app_id), party, body.amount_paise, body.months)
+    return application_out(a, party)
+
+
+@router.post('/applications/{app_id}/withdraw', response=ApplicationOut)
+def withdraw_application(request, app_id: UUID):
+    party = party_of(request)
+    a = svc.withdraw(_visible_application(party, app_id), party)
+    return application_out(a, party)
+
+
+@router.post('/applications/{app_id}/members/{member_id}/remove', response=ApplicationOut, summary='Drop a roommate, or leave')
+def remove_member(request, app_id: UUID, member_id: UUID):
+    party = party_of(request)
+    with system():
+        a = svc.remove_member(_visible_application(party, app_id), party, member_id)
+        return application_out(a, party)
+
+
+class InviteOut(Schema):
+    member_id: UUID
+    application_id: UUID
+    listing: str
+    name: str
+    from_name: str
+    room: str | None
+    amount_paise: int | None
+    move_in_on: date
+    months: int
+
+
+@router.get('/invites', response=list[InviteOut], summary='Roommate invitations sent to your number')
+def invites(request):
+    out = []
+    for m in svc.invites_for(party_of(request)):
+        a = m.application
+        out.append({'member_id': m.id, 'application_id': a.id, 'listing': a.property.slug, 'name': a.property.name,
+                    'from_name': a.lead.name, 'room': a.room.number if a.room else None, 'amount_paise': a.amount_paise,
+                    'move_in_on': a.move_in_on, 'months': a.months})
+    return out
+
+
+class AnswerIn(Schema):
+    accept: bool
+
+
+@router.post('/invites/{member_id}', response=ApplicationOut, summary='Join or turn down a roommate invitation')
+def answer_invite(request, member_id: UUID, body: AnswerIn):
+    party = party_of(request)
+    a = svc.respond_invite(member_id, party, body.accept)
+    with system():
+        return application_out(a, party)
 
 
 # ---- booking --------------------------------------------------------------------------------------------
@@ -167,7 +277,7 @@ class BookingOut(Schema):
     deposit_paid: bool
     agreement: AgreementOut
     police: str
-    offer_id: UUID | None
+    application_id: UUID | None
 
 
 def booking_out(b: Booking) -> dict:
@@ -179,7 +289,7 @@ def booking_out(b: Booking) -> dict:
             'deposit_paid': b.payments.filter(purpose='deposit', status='captured').exists(),
             'agreement': {'tenant_signed': bool(a.tenant_signed_at), 'owner_signed': bool(a.owner_signed_at),
                           'stamped': bool(a.stamped_at), 'certificate': a.stamp_certificate, 'terms': a.terms},
-            'police': b.police.status, 'offer_id': b.offer_id}
+            'police': b.police.status, 'application_id': b.application_id}
 
 
 def _mine(request, booking_id) -> Booking:
@@ -190,23 +300,17 @@ def _mine(request, booking_id) -> Booking:
     return b
 
 
-@router.post('/bookings', response=BookingOut, summary='Hold a bed for 10 minutes while the deposit is paid')
+@router.post('/bookings', response=BookingOut, summary='Your held bed at this PG, after the owner accepted your application')
 @idempotent
 def book(request, body: BookIn):
     party = party_of(request)
     prop = _prop(body.listing)
-    from apps.property.services import free_beds, next_move_in
-    with system():  # an accepted offer's hold comes back even after offers have closed
-        held = Booking.objects.filter(guest=party, status='hold', bed__room__property=prop).first()
-    if held:
-        return booking_out(Booking.objects.get(pk=held.pk))
-    with system():  # availability spans other people's bookings
-        beds = [b for b in free_beds(prop) if not b.offers_open]
-    if not beds:
-        raise ApiError(409, 'no_free_bed', 'No bed is free to book at the listed rent. Make an offer, or try another PG.')
-    key, fp = request.idempotency
-    b = svc.create_hold(party, beds[0], next_move_in(), body.months, key, fp)
-    return booking_out(b)
+    svc.expire_holds()
+    with system():  # the hold the owner made when accepting
+        held = Booking.objects.filter(guest=party, status__in=['hold', 'confirmed'], bed__room__property=prop).order_by('-created_at').first()
+    if not held:
+        raise ApiError(409, 'apply_first', 'Apply to stay first. The owner accepts, then you pay the deposit here.')
+    return booking_out(Booking.objects.get(pk=held.pk))
 
 
 @router.get('/bookings/{booking_id}', response=BookingOut)
@@ -236,13 +340,6 @@ def deposit(request, booking_id: UUID):
     svc.expire_holds()
     b.refresh_from_db()
     return payment_out(pay.create_payment(b, 'deposit'))
-
-
-@router.post('/bookings/{booking_id}/sign', response=BookingOut, summary='Aadhaar eSign by the resident')
-def sign(request, booking_id: UUID):
-    b = _mine(request, booking_id)
-    svc.sign_tenant(b, request.party)
-    return booking_out(b)
 
 
 @router.post('/bookings/{booking_id}/stamp', response=BookingOut, summary='Pay stamp duty to the state and attach the e-stamp')

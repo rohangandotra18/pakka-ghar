@@ -36,6 +36,9 @@ class Room(OrgModel):
     number = models.CharField(max_length=8)
     kind = models.CharField(max_length=8, choices=KINDS)
     rent_paise = models.BigIntegerField()                        # per bed per month
+    # Up for bids: tenants (alone or with roommates) bid up to 15% over the rent; the owner picks.
+    offers_open = models.BooleanField(default=False)
+    offers_close_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['property', 'number'], name='uniq_room_number')]
@@ -48,14 +51,16 @@ class Bed(models.Model):
     organisation = models.ForeignKey(Organisation, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='beds')
     label = models.SmallIntegerField()                           # bed 1, 2, 3 in the room
-    offers_open = models.BooleanField(default=False)            # scarce bed: sealed offers instead of first-come
-    offers_close_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['room', 'label'], name='uniq_bed_label')]
         ordering = ['room__number', 'label']
+
+    @property
+    def offers_open(self) -> bool:
+        return self.room.offers_open
 
 
 class Meter(OrgModel):
@@ -92,3 +97,37 @@ class PayoutAccount(OrgModel):
     account_masked = models.CharField(max_length=24)             # XXXX XXXX 4417
     ifsc = models.CharField(max_length=11)
     name_matched_at = models.DateTimeField(null=True, blank=True)  # ₹1 penny-drop check
+
+
+def photo_path(instance, filename):
+    return f'photos/{instance.property_id}/{instance.id}.jpg'
+
+
+def thumb_path(instance, filename):
+    return f'photos/{instance.property_id}/{instance.id}-thumb.jpg'
+
+
+class Photo(OrgModel):
+    """A photo taken in the app with the phone's camera, at the building. Each upload carries the moment and the
+    place it was taken; photos taken elsewhere, earlier, or picked from a gallery are refused (property.photos)."""
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='photos')
+    room = models.ForeignKey(Room, null=True, blank=True, on_delete=models.SET_NULL, related_name='photos')
+    ticket = models.ForeignKey('maintenance.Ticket', null=True, blank=True, on_delete=models.CASCADE, related_name='photos')
+    taken_by = models.ForeignKey('core.Party', on_delete=models.PROTECT, related_name='+')
+    image = models.ImageField(upload_to=photo_path)
+    thumb = models.ImageField(upload_to=thumb_path, blank=True)
+    width = models.IntegerField(default=0)
+    height = models.IntegerField(default=0)
+    sha256 = models.CharField(max_length=64)
+    caption = models.CharField(max_length=80, blank=True)
+    taken_at = models.DateTimeField()                            # the camera's timestamp, checked against upload time
+    lat = models.DecimalField(max_digits=9, decimal_places=6)    # where the phone was when it was taken
+    lng = models.DecimalField(max_digits=9, decimal_places=6)
+    accuracy_m = models.IntegerField()
+    distance_m = models.IntegerField()                           # from the owner's pin
+    device = models.CharField(max_length=80, blank=True)
+    status = models.CharField(max_length=8, default='live')      # live | removed
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['property', 'sha256'], name='one_copy_of_a_photo')]
+        ordering = ['created_at']

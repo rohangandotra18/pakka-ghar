@@ -25,12 +25,28 @@ class FreeBedOut(Schema):
     offers_open: bool
 
 
-class OfferStatsOut(Schema):
-    count: int
-    min_paise: int | None
-    max_paise: int | None
+class RoomCardOut(Schema):
+    number: str
+    kind: str
+    kind_label: str
+    rent_paise: int
+    beds: int
+    free: int
+    bidding: bool
     cap_paise: int
     closes_at: datetime | None
+    bids: int
+    min_bid_paise: int | None
+    max_bid_paise: int | None
+
+
+class ListingPhotoOut(Schema):
+    id: str
+    url: str
+    thumb: str
+    room: str | None
+    caption: str
+    taken_at: datetime
 
 
 class ListingOut(Schema):
@@ -50,7 +66,8 @@ class ListingOut(Schema):
     hot: bool
     watching: int
     free_bed: FreeBedOut | None
-    offers: OfferStatsOut | None
+    rooms: list[RoomCardOut]       # rooms with a free bed: what an application can ask for
+    photos: list[ListingPhotoOut]  # all taken on site with the app's camera
     deposit_months: int
     notice_months: int
     tariff_paise: int

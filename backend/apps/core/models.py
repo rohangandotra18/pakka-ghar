@@ -76,7 +76,7 @@ class OrgModel(UUIDModel):
 
 
 class AuditEvent(models.Model):
-    """Append-only trail of every change to listings, bookings, offers and money. Never updated."""
+    """Append-only trail of every change to listings, applications, bookings and money. Never updated."""
     id = models.BigAutoField(primary_key=True)
     organisation = models.ForeignKey(Organisation, null=True, on_delete=models.CASCADE)
     actor = models.ForeignKey(Party, null=True, on_delete=models.SET_NULL)

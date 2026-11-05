@@ -33,3 +33,7 @@ tzdata==2026.6
 tzlocal==5.4.5
 vine==5.1.0
 wcwidth==0.9.4
+pillow==13.0.0
+pypdf==6.21.4
+pypdfium2==5.14.0
+reportlab==5.1.0

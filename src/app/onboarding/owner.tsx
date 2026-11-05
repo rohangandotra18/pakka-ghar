@@ -3,12 +3,14 @@ import { router } from 'expo-router';
 import { Back, Badge, Btn, Chip, Chips, Field, Hero, List, Note, Row, Screen, Steps, T, Toggle } from '@/components/ui';
 import { Tick } from '@/components/icons';
 import { MapView } from '@/components/MapView';
+import { OwnerAgreement } from '@/components/OwnerAgreement';
+import { OwnerPhotos } from '@/components/OwnerPhotos';
 import { Otp } from '@/components/Otp';
 import { api, ApiError, inr, ok, type Schemas } from '@/api/client';
 import { useQuery } from '@/api/hooks';
 import { useStore } from '@/lib/store';
 
-const STEPS = ['Mobile number', 'Verify identity', 'Your property', 'Building on the map', 'Ownership papers', 'Rooms and beds', 'Electricity meters', 'Payouts', 'Submitted'];
+const STEPS = ['Mobile number', 'Verify identity', 'Your property', 'Building on the map', 'Ownership papers', 'Rooms and beds', 'Photos', 'Agreement', 'Electricity meters', 'Payouts', 'Submitted'];
 /* where the map opens until the owner pins their building */
 const CITIES = { chandigarh: { label: 'Chandigarh', lat: 30.7333, lng: 76.7794 }, mohali: { label: 'Mohali', lat: 30.7046, lng: 76.7179 }, panchkula: { label: 'Panchkula', lat: 30.6942, lng: 76.8606 } } as const;
 type City = keyof typeof CITIES;
@@ -61,6 +63,8 @@ export default function OwnerOnboarding() {
           <Btn label="Verify" disabled={busy} onPress={() => run(async () => {
             const r = await ok(api.POST('/api/auth/otp/verify', { body: { challenge_id: challenge.id, code: challenge.code, device: 'Pakka Ghar app' } }));
             await signIn('owner', r.token, r.me);
+            /* an owner who already has a PG (signing in on another phone or the website) goes straight to it */
+            if (r.me.verified && r.me.memberships.length) { router.replace('/today'); return; }
             setI(r.me.verified ? 2 : 1);
           })} />
         </> : <Btn label="Send code" disabled={busy} onPress={() => run(async () => {
@@ -145,6 +149,18 @@ export default function OwnerOnboarding() {
         <Btn label="Continue" disabled={!rooms.length} onPress={next} />
       </>}
       {i === 6 && <>
+        <T v="h2">Photos of your PG</T>
+        <T v="sm">Tenants trust PGs with real photos. Take a few now: the building, the rooms, the bathroom, the kitchen.</T>
+        <OwnerPhotos rooms={rooms.map(r => r.number)} />
+        <Btn label="Continue" onPress={next} />
+      </>}
+      {i === 7 && <>
+        <T v="h2">Your agreement</T>
+        <T v="sm">Use your own rental agreement or the standard one. Either way it’s signed in the app; no printing, no cash.</T>
+        <OwnerAgreement />
+        <Btn label="Continue" onPress={next} />
+      </>}
+      {i === 8 && <>
         <T v="h2">Electricity meters</T>
         <T v="sm">Pair one Wi-Fi meter per room. Readings reach you and the residents automatically, and the bill is added to rent.</T>
         <List>
@@ -153,11 +169,11 @@ export default function OwnerOnboarding() {
         <T v="sm">₹{((p?.tariff_paise ?? 725) / 100).toFixed(2)} per unit. The app won’t let you set it above your electricity company’s tariff (₹{((p?.max_tariff_paise ?? 750) / 100).toFixed(2)}).</T>
         <Btn label={paired ? 'Continue' : 'Skip for now'} onPress={next} />
       </>}
-      {i === 7 && <>
+      {i === 9 && <>
         <T v="h2">Where rent is paid</T>
         {p?.payout ? <List><Row left="Bank account" right={p.payout} /><Row left="Account check (₹1 test deposit)" right={<Badge label="Name matches" tone="ok" />} last /></List> : <>
           <Field label="Bank" value={f.bank} onChangeText={set('bank')} placeholder="e.g. HDFC Bank" />
-          <Field label="Account number" value={f.account} onChangeText={set('account')} keyboard="number-pad" />
+          <Field label="Account number" value={f.account} onChangeText={set('account')} keyboard="number-pad" placeholder="As on your passbook or cheque" />
           <Field label="IFSC" value={f.ifsc} onChangeText={set('ifsc')} placeholder="11 characters" />
           <Btn kind="secondary" label="Check with a ₹1 test deposit" disabled={busy || !f.bank.trim() || !f.account.trim() || f.ifsc.trim().length !== 11} onPress={() => save(() => ok(api.POST('/api/owner/payout', { body: { bank_name: f.bank, account_number: f.account, ifsc: f.ifsc } })))} />
         </>}
@@ -169,7 +185,7 @@ export default function OwnerOnboarding() {
           next();
         }} />
       </>}
-      {i === 8 && <>
+      {i === 10 && <>
         <Hero icon={<Tick />} title={p?.verified ? 'You’re verified' : 'Submitted for verification'} body={p?.verified ? 'Your papers were checked and your PG is live. Changes you made are saved.' : 'Our team checks your papers within two working days. Meanwhile, set up your bed board and invite current residents to AutoPay.'} />
         <Btn label="Open my dashboard" onPress={() => router.replace('/today')} />
       </>}

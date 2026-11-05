@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from './storage';
 import { api, ok, setToken, type Schemas } from '@/api/client';
 
 /* The app's own state: which side is on screen, the signed-in person for each side, toasts, and a version
@@ -37,18 +37,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     (async () => {
       const load = async (k: string): Promise<Session | null> => {
-        try { const raw = await SecureStore.getItemAsync(k); return raw ? JSON.parse(raw) : null; } catch { return null; }
+        try { const raw = await SecureStore.getItem(k); return raw ? JSON.parse(raw) : null; } catch { return null; }
       };
       const [tenant, owner] = await Promise.all([load(KEY.tenant), load(KEY.owner)]);
       let role: Role | null = null;
-      try { role = (await SecureStore.getItemAsync(KEY.role)) as Role | null; } catch { /* first launch */ }
+      try { role = (await SecureStore.getItem(KEY.role)) as Role | null; } catch { /* first launch */ }
       const check = async (sess: Session | null, k: string) => {
         if (!sess) return null;
         try {
           const me = await ok(api.GET('/api/me', { headers: { Authorization: `Bearer ${sess.token}` } }));
           return { ...sess, me };
         } catch (e) {
-          if ((e as { status?: number }).status === 401) { await SecureStore.deleteItemAsync(k).catch(() => {}); return null; }
+          if ((e as { status?: number }).status === 401) { await SecureStore.deleteItem(k).catch(() => {}); return null; }
           return sess; /* offline: keep it */
         }
       };
@@ -61,20 +61,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const setRole = useCallback((role: Role) => {
     setS(p => ({ ...p, role }));
-    SecureStore.setItemAsync(KEY.role, role).catch(() => {});
+    SecureStore.setItem(KEY.role, role).catch(() => {});
   }, []);
   const signIn = useCallback(async (role: Role, token: string, me: Me) => {
     const sess = { token, me };
     setToken(token);
     setS(p => ({ ...p, role, [role]: sess }));
-    await Promise.all([SecureStore.setItemAsync(KEY[role], JSON.stringify(sess)), SecureStore.setItemAsync(KEY.role, role)]).catch(() => {});
+    await Promise.all([SecureStore.setItem(KEY[role], JSON.stringify(sess)), SecureStore.setItem(KEY.role, role)]).catch(() => {});
   }, []);
   const updateMe = useCallback((role: Role, me: Me) => {
     setS(p => {
       const cur = p[role];
       if (!cur) return p;
       const next = { ...cur, me };
-      SecureStore.setItemAsync(KEY[role], JSON.stringify(next)).catch(() => {});
+      SecureStore.setItem(KEY[role], JSON.stringify(next)).catch(() => {});
       return { ...p, [role]: next };
     });
   }, []);
@@ -82,7 +82,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const sess = s[role];
     if (sess) await api.POST('/api/auth/logout', { headers: { Authorization: `Bearer ${sess.token}` } }).catch(() => {});
     setS(p => ({ ...p, [role]: null }));
-    await SecureStore.deleteItemAsync(KEY[role]).catch(() => {});
+    await SecureStore.deleteItem(KEY[role]).catch(() => {});
   }, [s]);
   const refresh = useCallback(() => setVersion(v => v + 1), []);
   const toast = useCallback((m: string) => {

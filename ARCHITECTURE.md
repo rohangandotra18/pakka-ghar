@@ -7,18 +7,45 @@ where, what the blueprint's rules look like in this code, and where it deliberat
 
 | Part | What it is | Where |
 |---|---|---|
-| Apps | Expo SDK 58 / React Native, one codebase, identical on iOS and Android | `src/` |
+| Apps and website | Expo SDK 58 / React Native, one codebase: identical on iOS and Android, and the same screens on the web (react-native-web) | `src/` |
 | API | Django 5.2 + Django Ninja, Python 3.12 | `backend/` |
 | Database | PostgreSQL 16, the only store of record | `backend/apps/*/models.py` |
 | Contract | OpenAPI 3.1, generated from the API; the app's TypeScript types come from it | `contracts/openapi.json`, `src/api/schema.d.ts` |
 | Jobs | Celery + Redis (hold expiry, monthly rent, settlements); inline when `REDIS_URL` is unset | `backend/config/celery.py`, `apps/*/tasks.py` |
 | Live events | Server-sent events, one per notification | `GET /api/events`, `src/api/events.tsx` |
 
-Backend apps: `core` (organisations, people, ledger, audit, idempotency, notifications), `identity` (OTP sign-in,
-session tokens, DigiLocker), `property` (PGs, rooms, beds, meters, papers, payouts), `booking` (offers, holds,
-bookings, agreements, police verification, ratings), `payments` (invoices, payments, webhooks, electricity),
+Backend apps: `core` (organisations, people, ledger, audit, idempotency, notifications, CORS for the website),
+`identity` (OTP sign-in, session tokens, DigiLocker), `property` (PGs, rooms, beds, meters, papers, payouts, on-site
+photos), `booking` (applications with roommates, room bids, tours, holds, bookings, agreements and e-signatures,
+police verification, ratings), `payments` (invoices, payments, webhooks, electricity),
 `maintenance` (repairs and trust reports), `jurisdiction` (Tricity police and tariff rules), and the trust team's
 review queue (`apps/core/staff_api.py`).
+
+## One account on every device
+
+An account is a phone number. The same person signs in with a code on an Android phone, an iPhone or the website
+and sees the same records, because everything lives in Postgres and each device holds only a session token (the
+phone's secure store, or the browser's local storage on the web). One person can be a tenant and an owner; the app
+keeps a token for each side and the switch at the top changes sides. Signing in as an owner who already has a PG goes
+straight to their dashboard. Each signed-in device is its own revocable session.
+
+The website is the same Expo code built for the browser (`npx expo start --web`, or `npx expo export -p web` for a
+static build). Tenants get Find, My stay, Requests and History; owners get Today, Beds, Money, Residents and Requests.
+What differs on the web: the map draws MapLibre straight into the page (`MapView.web.tsx`; phones run the same
+engine in a web view), and photos can only be taken on a phone, because they must come from the phone's camera at the
+building. The API allows the website's origin through `CORS_ORIGINS`.
+
+## Photos and agreements
+
+- **Photos** are taken in the app's camera only, with the phone's location at that moment. The server keeps a
+  photo only if it was taken in the last 10 minutes within 150 m of the PG's pin, decodes as a real camera image, has
+  no editing or AI-tool marks and isn't a duplicate. It is re-encoded without metadata (`apps/property/photos.py`).
+- **Agreements** are the owner's own PDF behind a filled-in cover page, or the standard text. They sit in private
+  storage and are never served as files. The app shows each page as an image through a signed link that names the
+  agreement, page and copy and expires in 15 minutes. PDFium renders one page at a time, and pages are cached by the
+  document's SHA-256. Signing needs every page opened, the typed name and a one-time code. Signatures are
+  append-only. Once both have signed, a certificate page with both signatures and the document's SHA-256 is added
+  (`apps/booking/agreements.py`).
 
 ## The blueprint's first principles, in this code
 
@@ -34,17 +61,17 @@ review queue (`apps/core/staff_api.py`).
 4. **One append-only ledger.** Money is integer paise. Every financial event is a balanced journal
    (`apps/core/ledger.py`); a trigger rejects any journal that doesn't sum to zero at commit, and triggers reject
    `UPDATE`/`DELETE` on journals, lines and the audit trail. Cancellations post contra-entries.
-5. **Humans decide critical boundaries.** Owners accept offers, sign agreements, submit police packets and mark
+5. **Humans decide critical boundaries.** Owners accept applications and bids, confirm tours, sign agreements, submit police packets and mark
    them verified; the app never decides those on its own.
 6. **Never green without evidence.** `backend/tests` runs against a real Postgres test database: cross-tenant
    isolation (AC-20), no double booking (AC-12), ledger rules (AC-16–18), idempotent replays, token revocation
-   (AC-19), the offer cap, webhooks, metered electricity and a full stay.
+   (AC-19), applications, roommates and the bid cap, tours, on-site photos, agreement signing, CORS, webhooks, metered electricity and a full stay.
 
 ## Deliberate differences from the blueprint
 
 - **Expo instead of Next.js + Capacitor (ADR-004).** The apps are native, which keeps maps, gestures, keyboard
-  handling and the identical-on-both-platforms design. The API and contract are frontend-neutral, so a Next.js
-  owner portal can be added later against the same contract.
+  handling and the identical-on-both-platforms design. The website is the same code through react-native-web, so
+  there is one set of screens to keep right, not two.
 - **Repository layout.** The Expo app stays at the root (its tooling expects that); the backend is in `backend/`
   with its own environment. Metro and TypeScript ignore `backend/`.
 - **Double-booking constraint.** The exclusion constraint compares `int8range(bed_id, bed_id, '[]')` instead of
@@ -107,8 +134,9 @@ scripts/dev-db.sh                         # local Postgres 16 (first run creates
 .venv/bin/python -m pytest                # the test suite
 ```
 
-Then `npx expo start` at the root. The app finds the API on Metro's host at port 8000 (set `EXPO_PUBLIC_API_URL`
-to override). For the Android emulator, also run `adb reverse tcp:8000 tcp:8000`.
+Then `npx expo start` at the root: press `i` for the iPhone simulator, `a` for Android, `w` for the website
+(http://localhost:8081). The app finds the API on Metro's host at port 8000 (set `EXPO_PUBLIC_API_URL` to
+override). For the Android emulator, also run `adb reverse tcp:8000 tcp:8000`.
 
 The database starts empty: there is no sample data. An owner signs up in the app and lists a PG; it goes live once
 someone on the trust team approves it (`GET /api/staff/queue`, `POST /api/staff/properties/{id}/approve`). With

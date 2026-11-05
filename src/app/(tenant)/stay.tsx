@@ -3,8 +3,9 @@ import { View } from 'react-native';
 import { AppBar } from '@/components/AppBar';
 import { Loading } from '@/components/Loading';
 import { SignupPrompt } from '@/components/SignupPrompt';
+import { TenantPlans } from '@/components/TenantPlans';
 import { Bars } from '@/components/icons';
-import { Badge, Btn, Card, List, Note, Row, Screen, T, Toggle } from '@/components/ui';
+import { Badge, Btn, Card, Chip, List, Note, Row, Screen, T, Toggle } from '@/components/ui';
 import { api, idem, inr, ok } from '@/api/client';
 import { useAction, useQuery } from '@/api/hooks';
 import { useStore } from '@/lib/store';
@@ -27,8 +28,9 @@ export default function Stay() {
     <Screen>
       <AppBar />
       <T v="h2">No stay yet</T>
+      <TenantPlans />
       <Card>
-        <T v="sm">When you book a bed, this is where you pay rent, see your room’s electricity reading, and keep your agreement and receipts.</T>
+        <T v="sm">Once an owner accepts you and you pay the deposit, this is where you pay rent, see your room’s electricity reading, and keep your agreement and receipts.</T>
         <Btn label="Find a PG" onPress={() => router.replace('/find')} />
       </Card>
     </Screen>
@@ -42,7 +44,7 @@ export default function Stay() {
   const month = new Date(bill?.period ?? b.move_in_on).toLocaleString('en-IN', { month: 'long' });
   const payNow = () => act(async () => {
     const pay = await ok(api.POST('/api/stay/pay', idem()));
-    /* a release build opens the UPI app; in the demo the payment partner's confirmation is simulated */
+    /* a release build opens the UPI app; in development the payment partner's confirmation comes from the dev stand-in */
     await ok(api.POST('/api/dev/payments/{payment_id}/capture', { params: { path: { payment_id: pay.id }, query: { method: 'upi' } } }));
   }, 'Paid. Receipt saved.');
   return (
@@ -67,7 +69,7 @@ export default function Stay() {
         <T v="sm">You and the owner see the same reading. The bill is added to rent at month end.</T>
       </Card>}
       <List>
-        <Row left="Agreement" right={b.agreement.stamped ? 'Signed · e-stamped' : b.agreement.tenant_signed ? 'Waiting for the owner' : 'Not signed yet'} />
+        <Row left="Agreement" right={<Chip label={b.agreement.stamped ? 'Signed · read' : b.agreement.tenant_signed ? 'Waiting for owner · read' : 'Read and sign'} onPress={() => router.push(`/agreement/${b.id}`)} />} />
         <Row left="Deposit" right={`${inr(b.deposit_paise)} in escrow`} />
         <Row left="Police verification" right={b.police === 'verified' ? <Badge label="Verified" tone="ok" /> : <Badge label={b.police === 'submitted' ? 'Submitted' : 'With the owner'} tone="warn" />} />
         <Row left="Receipts" right={`${st.receipts} saved`} last />

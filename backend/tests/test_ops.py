@@ -114,3 +114,17 @@ def test_housekeeping_keeps_recent_records(db):
         OtpChallenge.objects.filter(phone='+919800022222').update(created_at=timezone.now() - timedelta(days=2))
     assert purge_expired.delay().get() == {'codes': 1, 'replays': 0}
     assert read(lambda: OtpChallenge.objects.count()) == 1
+
+
+def test_the_website_may_call_the_api(db, settings):
+    settings.DEBUG = True   # development: this machine and the local network may call the API
+    c = Api().c
+    pre = c.options('/api/listings', HTTP_ORIGIN='http://localhost:8081', HTTP_ACCESS_CONTROL_REQUEST_METHOD='GET',
+                    HTTP_ACCESS_CONTROL_REQUEST_HEADERS='authorization')
+    assert pre.status_code == 204 and pre['Access-Control-Allow-Origin'] == 'http://localhost:8081'
+    assert 'Authorization' in pre['Access-Control-Allow-Headers']
+    assert c.get('/api/listings', HTTP_ORIGIN='https://evil.example').get('Access-Control-Allow-Origin') is None
+    settings.CORS_ORIGINS = ['https://pakkaghar.in']
+    settings.DEBUG = False
+    assert c.get('/api/listings', HTTP_ORIGIN='https://pakkaghar.in')['Access-Control-Allow-Origin'] == 'https://pakkaghar.in'
+    assert c.get('/api/listings', HTTP_ORIGIN='http://localhost:8081').get('Access-Control-Allow-Origin') is None

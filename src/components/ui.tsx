@@ -1,5 +1,5 @@
 import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type StyleProp, type TextStyle, type ViewStyle, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { C, F, R, SP } from '@/lib/theme';
@@ -45,7 +45,8 @@ export function Screen({ children, scroll = true, pad = true }: { children: Reac
     return () => { show.remove(); hide.remove(); };
   }, [scroll]);
   /* bottom padding clears the home indicator or Android gesture bar, or the keyboard when it's open */
-  const content = <View style={{ gap: SP.md, padding: pad ? SP.lg : 0, paddingBottom: SP.xl * 2 + (kb || insets.bottom) }}>{children}</View>;
+  /* on the website the same screens sit in a centred, readable column */
+  const content = <View style={{ gap: SP.md, padding: pad ? SP.lg : 0, paddingBottom: SP.xl * 2 + (kb || insets.bottom), ...(Platform.OS === 'web' ? { width: '100%', maxWidth: 760, alignSelf: 'center' as const } : null) }}>{children}</View>;
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top }}>
       {scroll ? <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} overScrollMode="never" bounces={false}>{content}</ScrollView> : content}

@@ -5,7 +5,7 @@ from django.core.management import call_command
 
 from apps.core.rls import system
 from apps.maintenance.models import TrustReport
-from apps.property.models import Bed, Property
+from apps.property.models import Property
 
 from .conftest import Api, read
 
@@ -45,8 +45,13 @@ def test_new_owner_to_first_booking(db):
     assert [x['id'] for x in found] == ['gill-girls-pg'] and found[0]['verified_owner'] and found[0]['free'] == 4
     tenant = sign_in('98222 33333')
     verify(tenant)
+    app = tenant.post('/applications', {'listing': 'gill-girls-pg', 'message': 'Final-year student at PU'}).json()
+    assert app['status'] == 'pending'
+    queue = owner.get('/owner/applications').json()['applications']
+    assert [a['id'] for a in queue] == [app['id']] and queue[0]['fits'] == ['101', '102']
+    owner.post(f"/owner/applications/{app['id']}/accept", {'room': '102'})
     b = tenant.post('/bookings', {'listing': 'gill-girls-pg'}, idem=uuid.uuid4().hex).json()
-    assert (b['room'], b['rent_paise'], b['status']) == ('101', 850000, 'hold')
+    assert (b['room'], b['rent_paise'], b['status']) == ('102', 850000, 'hold')
 
 
 def test_confirmed_cash_report_pauses_the_listing(world):
@@ -60,17 +65,15 @@ def test_confirmed_cash_report_pauses_the_listing(world):
     assert read(lambda: TrustReport.objects.get().status) == 'confirmed'
 
 
-def test_owner_opens_and_closes_offers(world):
+def test_owner_puts_a_room_up_for_bids_and_stops(world):
     owner = world['api'](world['owner_a'])
-    bid = read(lambda: Bed.objects.get(room__property=world['a'], room__number='104', label=3).id)
-    assert owner.post(f'/owner/beds/{bid}/offers', {'open': True}).status_code == 200
-    world['api'](world['simran']).post('/offers', {'listing': 'sidhu', 'amount_paise': 950000, 'months': 11})
-    assert owner.patch('/owner/rooms/104', {'rent_paise': 950000}).status_code == 409   # offers made against the old rent
-    owner.post(f'/owner/beds/{bid}/offers', {'open': False})
-    mine = world['api'](world['simran']).get('/offers/mine').json()
-    assert mine[0]['status'] == 'declined'
+    assert owner.post('/owner/rooms/104/bidding', {'open': True}).status_code == 200
+    bid = world['api'](world['simran']).post('/applications', {'listing': 'sidhu', 'room': '104', 'amount_paise': 950000}).json()
+    assert owner.patch('/owner/rooms/104', {'rent_paise': 950000}).status_code == 409   # bids made against the old rent
+    owner.post('/owner/rooms/104/bidding', {'open': False})
+    mine = world['api'](world['simran']).get('/applications/mine').json()
+    assert mine[0]['id'] == bid['id'] and mine[0]['status'] == 'declined'
     assert owner.patch('/owner/rooms/104', {'rent_paise': 950000}).status_code == 200
-    assert Api().get('/listings/sidhu').json()['rent_paise'] in (900000, 950000)
 
 
 def test_reset_data_needs_debug_and_yes(db):

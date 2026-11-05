@@ -46,3 +46,8 @@ backend/.pgdata/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# generated on npm install
+src/components/mapEngine.generated.ts
+backend/.media/
+backend/.private/

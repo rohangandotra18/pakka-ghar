@@ -1,4 +1,4 @@
-"""Owner side: today's to-dos, the bed board, offers, residents, money and the year statement."""
+"""Owner side: today's to-dos, the bed board, applications and bids, tours, residents, money and the year statement."""
 from datetime import date, datetime
 from uuid import UUID
 
@@ -14,10 +14,9 @@ from apps.maintenance.models import Ticket
 from apps.payments import services as pay
 from apps.payments.models import ElectricityRun, Invoice, Reminder
 from apps.property.models import Bed, MeterReading, PayoutAccount, Property
-from apps.property.services import offer_cap_paise
 
 from . import services as svc
-from .models import Booking, Offer, Visit
+from .models import Application, Booking, Visit
 
 router = Router(tags=['owner'])
 
@@ -56,7 +55,8 @@ class TodayOut(Schema):
     beds_filled: int
     beds_total: int
     rent_unpaid: int
-    offers_open: int
+    offers_open: int          # open bids on rooms up for bids
+    applications: int         # requests to stay waiting for you
     open_requests: int
     todos: list[TodoOut]
 
@@ -68,19 +68,21 @@ def today_view(request):
     current = list(_current(p))
     total = Bed.objects.filter(room__property=p).count()
     unpaid = Invoice.objects.filter(booking__bed__room__property=p, period=period, status='open').count()
-    offer_beds = Bed.objects.filter(room__property=p, offers_open=True).select_related('room')
-    offers = Offer.objects.filter(bed__in=offer_beds, status='placed').count()
+    pending = Application.objects.filter(property=p, status='pending')
+    offers = pending.filter(amount_paise__isnull=False).count()
+    stays = pending.filter(amount_paise__isnull=True).count()
     open_t = Ticket.objects.filter(property=p, status__in=['Raised', 'Assigned']).count()
     todos = []
-    for bed in offer_beds:
-        n = Offer.objects.filter(bed=bed, status='placed').count()
-        if n:
-            todos.append({'key': f'offers-{bed.id}', 'text': f'{n} offer{"s" if n != 1 else ""} on Room {bed.room.number}, bed {bed.label}', 'label': 'Review', 'route': '/offers'})
+    for room in p.rooms.filter(offers_open=True):
+        n = pending.filter(room=room, amount_paise__isnull=False).count()
+        todos.append({'key': f'bids-{room.number}', 'text': f'Room {room.number} is up for bids: {n} bid{"s" if n != 1 else ""} so far', 'label': 'Review', 'route': '/applications'})
+    if stays:
+        todos.append({'key': 'applications', 'text': f'{stays} request{"s" if stays != 1 else ""} to stay', 'label': 'Review', 'route': '/applications'})
     if open_t:
         todos.append({'key': 'tickets', 'text': f'{open_t} maintenance request{"s" if open_t != 1 else ""}', 'label': 'Open', 'route': '/tickets'})
     for b in Booking.objects.filter(bed__room__property=p, status__in=['confirmed', 'active'], agreement__tenant_signed_at__isnull=False,
                                     agreement__owner_signed_at__isnull=True).select_related('guest'):
-        todos.append({'key': f'sign-{b.id}', 'text': f'{b.guest.name} signed the agreement. Your signature is next.', 'label': 'Sign', 'action': f'sign:{b.id}'})
+        todos.append({'key': f'sign-{b.id}', 'text': f'{b.guest.name} signed the agreement. Your signature is next.', 'label': 'Read & sign', 'route': f'/agreement/{b.id}'})
     for b in current + list(Booking.objects.filter(bed__room__property=p, status='confirmed').select_related('guest', 'police')):
         st = b.police.status
         if st != 'verified':
@@ -98,7 +100,7 @@ def today_view(request):
     me = party_of(request)
     return {'greeting': 'Good morning' if hour < 12 else 'Good afternoon' if hour < 17 else 'Good evening', 'owner_name': me.first_name,
             'property': p.name, 'property_status': p.status, 'review_note': (p.attributes or {}).get('review_note'), 'beds_filled': len(current), 'beds_total': total, 'rent_unpaid': unpaid,
-            'offers_open': offers, 'open_requests': open_t, 'todos': todos}
+            'offers_open': offers, 'applications': stays, 'open_requests': open_t, 'todos': todos}
 
 
 @router.post('/owner/bills/send', response=TodayOut, summary="Add last month's meter readings to this month's bills")
@@ -147,6 +149,8 @@ class BedOut(Schema):
 class RoomBoardOut(Schema):
     number: str
     full: bool
+    bidding: bool
+    bids: int
     beds: list[BedOut]
 
 
@@ -179,65 +183,113 @@ def beds(request):
             else:
                 all_full = False
                 free += 1
-                n = Offer.objects.filter(bed=bed, status='placed').count()
-                cells.append({'bed_id': bed.id, 'label': bed.label, 'who': None, 'tag': 'offers' if bed.offers_open else 'free',
-                              'note': f'{n} offer{"s" if n != 1 else ""}' if bed.offers_open else 'Free · listed'})
+                cells.append({'bed_id': bed.id, 'label': bed.label, 'who': None, 'tag': 'offers' if room.offers_open else 'free',
+                              'note': 'Up for bids' if room.offers_open else 'Free · listed'})
         full += all_full
-        rooms.append({'number': room.number, 'full': all_full, 'beds': cells})
+        rooms.append({'number': room.number, 'full': all_full, 'bidding': room.offers_open, 'beds': cells,
+                      'bids': Application.objects.filter(room=room, status='pending', amount_paise__isnull=False).count()})
     return {'free': free, 'rooms': rooms, 'full_rooms': full}
 
 
-# ---- offers -----------------------------------------------------------------------------------------------
+# ---- applications and bids --------------------------------------------------------------------------------
 
-class OwnerOfferOut(Schema):
+class ApplicantOut(Schema):
     id: UUID
     name: str
-    amount_paise: int
-    months: int
-    move_in_on: date
     verified: bool
+    works_at: str
     score: float | None
     past_stays: int
+    status: str
+    is_lead: bool
 
 
-class OffersBoardOut(Schema):
-    bed_id: int | None
+class OwnerApplicationOut(Schema):
+    id: UUID
     room: str | None
-    bed: int | None
-    listed_paise: int
+    room_kind: str
+    amount_paise: int | None
+    rent_paise: int
+    months: int
+    move_in_on: date
+    message: str
+    status: str
+    size: int
+    members: list[ApplicantOut]
+    fits: list[str]          # rooms that have enough free beds together, for an "any room" application
+    created_at: datetime
+
+
+class BiddingRoomOut(Schema):
+    number: str
+    kind: str
+    rent_paise: int
     cap_paise: int
+    free: int
     closes_at: datetime | None
-    open: bool
-    accepted: str | None
-    offers: list[OwnerOfferOut]
 
 
-@router.get('/owner/offers', response=OffersBoardOut)
-def offers(request):
+class ApplicationsOut(Schema):
+    bidding: list[BiddingRoomOut]
+    applications: list[OwnerApplicationOut]
+    decided: list[OwnerApplicationOut]
+
+
+def owner_application_out(a: Application) -> dict:
+    members = []
+    for m in a.members.select_related('party').exclude(status__in=['declined', 'left']):
+        rec = svc.tenant_record(m.party) if m.party else {'score': None, 'past_stays': 0}
+        members.append({'id': m.id, 'name': m.party.name if m.party else 'Invited', 'verified': bool(m.party and m.party.verified),
+                        'works_at': m.party.works_at if m.party else '', 'score': rec['score'], 'past_stays': rec['past_stays'],
+                        'status': m.status, 'is_lead': m.is_lead})
+    size = len([m for m in members if m['status'] == 'joined'])
+    fits = [] if a.room_id or a.status != 'pending' else [r.number for r in svc._rooms_that_fit(a.property, size, a.move_in_on, a.room_kind)]
+    return {'id': a.id, 'room': a.room.number if a.room else None, 'room_kind': a.room_kind or (a.room.kind if a.room else ''),
+            'amount_paise': a.amount_paise, 'rent_paise': a.amount_paise or (a.room.rent_paise if a.room else 0), 'months': a.months,
+            'move_in_on': a.move_in_on, 'message': a.message, 'status': a.status, 'size': size, 'members': members, 'fits': fits,
+            'created_at': a.created_at}
+
+
+@router.get('/owner/applications', response=ApplicationsOut, summary='Requests to stay and bids, best bids first')
+def applications(request):
     p = _prop(request)
-    bed = (Bed.objects.filter(room__property=p, offers_open=True).select_related('room').first()
-           or Bed.objects.filter(room__property=p, offers__status='accepted').select_related('room').order_by('-offers__decided_at').first())
-    if not bed:
-        return {'bed_id': None, 'room': None, 'bed': None, 'listed_paise': 0, 'cap_paise': 0, 'closes_at': None, 'open': False, 'accepted': None, 'offers': []}
-    acc = Offer.objects.filter(bed=bed, status='accepted').select_related('tenant').order_by('-decided_at').first()
-    items = []
-    for o in Offer.objects.filter(bed=bed, status='placed').select_related('tenant').order_by('-amount_paise'):
-        rec = svc.tenant_record(o.tenant)
-        items.append({'id': o.id, 'name': o.tenant.name, 'amount_paise': o.amount_paise, 'months': o.months, 'move_in_on': o.move_in_on,
-                      'verified': o.tenant.verified, 'score': rec['score'], 'past_stays': rec['past_stays']})
-    return {'bed_id': bed.id, 'room': bed.room.number, 'bed': bed.label, 'listed_paise': bed.room.rent_paise,
-            'cap_paise': offer_cap_paise(bed.room.rent_paise), 'closes_at': bed.offers_close_at, 'open': bed.offers_open,
-            'accepted': acc.tenant.name if acc and not bed.offers_open else None, 'offers': items}
+    from apps.property.services import offer_cap_paise
+    bidding = []
+    for r in p.rooms.filter(offers_open=True):
+        bidding.append({'number': r.number, 'kind': r.get_kind_display(), 'rent_paise': r.rent_paise, 'cap_paise': offer_cap_paise(r.rent_paise),
+                        'free': len(svc.free_in_room(r, svc.next_move_in())), 'closes_at': r.offers_close_at})
+    live = Application.objects.filter(property=p, status='pending').select_related('room', 'property')
+    order = sorted(live, key=lambda a: (a.amount_paise is None, -(a.amount_paise or 0), a.created_at))
+    recent = Application.objects.filter(property=p, status__in=['accepted', 'declined']).select_related('room', 'property').order_by('-decided_at')[:10]
+    return {'bidding': bidding, 'applications': [owner_application_out(a) for a in order], 'decided': [owner_application_out(a) for a in recent]}
 
 
-@router.post('/owner/offers/{offer_id}/accept', response=OffersBoardOut, summary='Accept one sealed offer; the rest are declined')
-def accept(request, offer_id: UUID):
+def _app(request, app_id) -> Application:
     p = _prop(request)
-    o = Offer.objects.filter(pk=offer_id, bed__room__property=p).select_related('tenant', 'bed__room__property').first()
-    if not o:
-        raise ApiError(404, 'not_found', 'No such offer.')
-    svc.accept_offer(o, request.party)
-    return offers(request)
+    a = Application.objects.filter(pk=app_id, property=p).select_related('room', 'property', 'lead').first()
+    if not a:
+        raise ApiError(404, 'not_found', 'No such application.')
+    return a
+
+
+class AcceptIn(Schema):
+    room: str = ''    # for an "any room" application: which room to put them in
+
+
+@router.post('/owner/applications/{app_id}/accept', response=ApplicationsOut, summary='Accept: beds are held 24 hours for each person')
+def accept(request, app_id: UUID, body: AcceptIn):
+    svc.accept(_app(request, app_id), request.party, body.room)
+    return applications(request)
+
+
+class DeclineIn(Schema):
+    reason: str = ''
+
+
+@router.post('/owner/applications/{app_id}/decline', response=ApplicationsOut)
+def decline(request, app_id: UUID, body: DeclineIn):
+    svc.decline(_app(request, app_id), request.party, body.reason)
+    return applications(request)
 
 
 # ---- residents ----------------------------------------------------------------------------------------------
@@ -331,13 +383,6 @@ def police_submit(request, booking_id: UUID):
 def police_verified(request, booking_id: UUID):
     b = _booking(request, booking_id)
     svc.mark_police_verified(b, request.party)
-    return resident_out(b)
-
-
-@router.post('/owner/residents/{booking_id}/sign', response=ResidentOut, summary="The owner's Aadhaar eSign")
-def owner_sign(request, booking_id: UUID):
-    b = _booking(request, booking_id)
-    svc.sign_owner(b, request.party)
     return resident_out(b)
 
 
@@ -471,36 +516,44 @@ def statement(request, fy: str | None = None):
                     'PG income with services such as meals is often business income instead.'}
 
 
-# ---- owner controls: offers on a bed, room rent ----------------------------------------------------------
+# ---- owner controls: a room up for bids, room rent, tour hours ------------------------------------------------
 
-class OffersToggleIn(Schema):
+class BiddingIn(Schema):
     open: bool
 
 
-@router.post('/owner/beds/{bed_id}/offers', response=BoardOut, summary='Take sealed offers on a free bed (until Friday 6 pm), or stop')
-def toggle_offers(request, bed_id: int, body: OffersToggleIn):
+@router.post('/owner/rooms/{number}/bidding', response=BoardOut, summary='Put a room up for bids until Friday 6 pm, or stop')
+def toggle_bidding(request, number: str, body: BiddingIn):
+    from apps.property.models import Room
     p = _prop(request)
-    bed = Bed.objects.filter(pk=bed_id, room__property=p).select_related('room').first()
-    if not bed:
-        raise ApiError(404, 'not_found', 'No such bed.')
-    if body.open:
-        from apps.property.services import free_beds
-        with system():
-            if bed.id not in {b.id for b in free_beds(p)}:
-                raise ApiError(409, 'bed_not_free', 'Offers can only be taken on a bed that is free from the next move-in date.')
-        svc.open_offers(bed)
-    elif bed.offers_open:
-        now = timezone.now()
-        open_ = list(Offer.objects.filter(bed=bed, status='placed').select_related('tenant'))
-        Offer.objects.filter(pk__in=[o.pk for o in open_]).update(status='declined', decided_at=now, updated_at=now)
-        bed.offers_open = False
-        bed.save(update_fields=['offers_open', 'updated_at'])
-        from apps.core.api_support import notify
-        for o in open_:
-            notify(o.tenant, 'offer.declined', f'{p.name} stopped taking offers on that bed. You can book other beds at the listed rent.', org=p.organisation)
-    from apps.core.api_support import audit
-    audit(p.organisation, request.party, 'bed.offers_open' if body.open else 'bed.offers_closed', bed)
+    room = Room.objects.filter(property=p, number=number).first()
+    if not room:
+        raise ApiError(404, 'not_found', f'No room {number}.')
+    if body.open and not room.offers_open:
+        svc.open_bidding(room, request.party)
+    elif not body.open and room.offers_open:
+        svc.close_bidding(room, request.party, reason=f'{p.name} stopped taking bids on Room {number}. You can apply at the listed rent.')
     return beds(request)
+
+
+class TourHoursIn(Schema):
+    days: list[int]       # 0 = Monday
+    start: str            # "10:00"
+    end: str              # "18:00"
+    minutes: int = 30
+
+
+@router.put('/owner/tour-hours', response=dict, summary='When tenants can book tours')
+def tour_hours(request, body: TourHoursIn):
+    import re
+    p = _prop(request)
+    ok = (all(0 <= d <= 6 for d in body.days) and re.fullmatch(r'\d\d:\d\d', body.start) and re.fullmatch(r'\d\d:\d\d', body.end)
+          and body.start < body.end and body.minutes in (15, 30, 45, 60))
+    if not ok:
+        raise ApiError(422, 'bad_hours', 'Pick days, a start before the end (HH:MM), and 15–60 minute tours.')
+    p.attributes = {**(p.attributes or {}), 'tour_hours': body.model_dump()}
+    p.save(update_fields=['attributes', 'updated_at'])
+    return svc.tour_hours(p)
 
 
 class RentIn(Schema):
@@ -516,8 +569,8 @@ def room_rent(request, number: str, body: RentIn):
         raise ApiError(404, 'not_found', f'No room {number}.')
     if not 100000 <= body.rent_paise <= 10000000:
         raise ApiError(422, 'bad_rent', 'Rent per bed must be between ₹1,000 and ₹1,00,000.')
-    if Bed.objects.filter(room=room, offers_open=True, offers__status='placed').exists():
-        raise ApiError(409, 'offers_running', 'Close the offers on this room first: they were made against the current rent.')
+    if room.offers_open and Application.objects.filter(room=room, status__in=['forming', 'pending'], amount_paise__isnull=False).exists():
+        raise ApiError(409, 'offers_running', 'Stop the bidding on this room first: the bids were made against the current rent.')
     from apps.core.api_support import audit
     before = {'rent_paise': room.rent_paise}
     room.rent_paise = body.rent_paise

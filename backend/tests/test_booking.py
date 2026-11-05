@@ -12,7 +12,7 @@ from apps.core.ledger import balance
 from apps.core.rls import system
 
 from .conftest import read
-from .helpers import bed, period
+from .helpers import accepted, bed, period
 
 
 def _booking(b, guest, start, status='confirmed', months=11, **kw):
@@ -48,7 +48,7 @@ def _book(api, listing='sidhu', key=None):
 
 
 def test_booking_flow_deposit_into_escrow(world):
-    api = world['api'](world['simran'])
+    api = accepted(world, world['simran'], world['owner_a'])
     r = _book(api)
     assert r.status_code == 200, r.content
     bk = r.json()
@@ -64,7 +64,7 @@ def test_booking_flow_deposit_into_escrow(world):
 
 
 def test_idempotency_replays_and_refuses_reuse(world):
-    api = world['api'](world['simran'])
+    api = accepted(world, world['simran'], world['owner_a'])
     first = _book(api, key='same-key')
     again = _book(api, key='same-key')
     assert again.json()['id'] == first.json()['id'] and again.headers.get('Idempotent-Replay') == 'true'
@@ -74,13 +74,18 @@ def test_idempotency_replays_and_refuses_reuse(world):
 
 
 def test_unverified_cannot_book(world):
-    r = _book(world['api'](world['unverified']))
+    r = world['api'](world['unverified']).post('/applications', {'listing': 'sidhu'})
     assert r.status_code == 403 and r.json()['code'] == 'verify_identity'
     assert read(lambda: Booking.objects.count()) == 0  # the failed request wrote nothing
 
 
+def test_booking_needs_an_accepted_application(world):
+    r = _book(world['api'](world['simran']))
+    assert r.status_code == 409 and r.json()['code'] == 'apply_first'
+
+
 def test_cancel_reverses_the_deposit_with_a_contra_entry(world):
-    api = world['api'](world['simran'])
+    api = accepted(world, world['simran'], world['owner_a'])
     bk = _book(api).json()
     pay = api.post(f"/bookings/{bk['id']}/deposit", idem='d2').json()
     from apps.payments.models import Payment

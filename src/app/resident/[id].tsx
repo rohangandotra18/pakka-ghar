@@ -1,14 +1,12 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 import { Loading } from '@/components/Loading';
 import { Back, Badge, Btn, List, Note, Row, Screen, T } from '@/components/ui';
 import { api, inr, ok } from '@/api/client';
 import { useAction, useQuery } from '@/api/hooks';
-import { useStore } from '@/lib/store';
 
 export default function Resident() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { toast } = useStore();
   const { act, busy } = useAction();
   const q = useQuery(() => ok(api.GET('/api/owner/residents/{booking_id}', { params: { path: { booking_id: id } } })), [id]);
   const r = q.data;
@@ -32,9 +30,9 @@ export default function Resident() {
       {r.police_missing.length > 0 && pv === 'Not started' && <Note tone="warn">The police form still needs: {r.police_missing.join(', ')}. Ask {r.name.split(' ')[0]} to add them in the app.</Note>}
       {!ended && pv === 'Not started' && <Btn label="Submit police verification" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/police/submit', path)), 'Police verification submitted.')} />}
       {!ended && pv === 'Submitted' && <Btn label="Police confirmed: mark verified" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/police/verified', path)), 'Police verification: verified.')} />}
-      {r.agreement === 'Waiting for your signature' && <Btn label="Sign with Aadhaar OTP" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/sign', path)), 'Signed.')} />}
+      {r.agreement === 'Waiting for your signature' && <Btn label="Read and sign the agreement" onPress={() => router.push(`/agreement/${r.booking_id}`)} />}
       {ended && r.deposit_held_paise > 0 && <Btn label={`Return ${inr(r.deposit_held_paise)} deposit and rate 5 stars`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: 0, reason: '', rating: 5 } })), 'Deposit returned from escrow. Rating saved.')} />}
-      <Btn kind="secondary" label="Agreement" onPress={() => toast(r.agreement === 'Signed · e-stamped' ? 'Agreement: signed by both, e-stamp certificate attached.' : `Agreement: ${r.agreement.toLowerCase()}.`)} />
+      <Btn kind="secondary" label="Open the agreement" onPress={() => router.push(`/agreement/${r.booking_id}`)} />
     </Screen>
   );
 }

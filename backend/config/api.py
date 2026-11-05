@@ -9,6 +9,7 @@ from django.db.models import Max
 from django.http import StreamingHttpResponse
 from ninja import NinjaAPI, Router, Schema, Status
 
+from apps.booking.agreements import router as agreements_router
 from apps.booking.api import router as tenant_router
 from apps.booking.owner_api import router as owner_router
 from apps.core.api_support import ApiError, bearer, party_of
@@ -21,6 +22,7 @@ from apps.maintenance.api import router as requests_router
 from apps.payments.api import router as webhook_router
 from apps.property.api import owner as property_owner_router
 from apps.property.api import router as listings_router
+from apps.property.photos import router as photos_router
 
 api = NinjaAPI(title='Pakka Ghar API', version='1.0.0', auth=bearer, urls_namespace='api',
                description='Rentals and PGs in the Chandigarh Tricity. Money is integer paise. No cash, ever.')
@@ -44,7 +46,7 @@ def on_integrity(request, exc):
     return api.create_response(request, {'code': 'conflict', 'message': 'That clashes with something already saved. Refresh and try again.'}, status=409)
 
 
-for r in (identity_router, listings_router, tenant_router, requests_router, owner_router, property_owner_router, webhook_router, staff_router, privacy_router):
+for r in (identity_router, listings_router, tenant_router, requests_router, owner_router, property_owner_router, webhook_router, staff_router, privacy_router, photos_router, agreements_router):
     api.add_router('', r)
 
 

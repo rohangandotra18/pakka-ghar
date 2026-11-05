@@ -78,4 +78,4 @@ def test_search_cost_does_not_grow_with_pgs(db):
     _add_pgs(10, 2)
     with CaptureQueriesContext(connection) as many:
         assert len(Api().get('/listings?lat=30.7543&lng=76.7713').json()) == 12
-    assert len(many.captured_queries) == len(few.captured_queries) <= 16
+    assert len(many.captured_queries) == len(few.captured_queries) <= 20

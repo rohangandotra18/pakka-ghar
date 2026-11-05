@@ -35,7 +35,21 @@
           "imageWidth": 112
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Pakka Ghar uses the camera to take photos of your PG on site. Photos can only be taken, never picked from your gallery.",
+          "photosPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Pakka Ghar checks that listing photos are taken at the building."
+        }
+      ]
     ],
     "scheme": "pakkaghar",
     "experiments": {

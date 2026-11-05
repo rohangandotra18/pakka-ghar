@@ -30,6 +30,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'apps.core.middleware.RequestLog',
+    'apps.core.middleware.Cors',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -79,7 +80,20 @@ OTP_TTL_SECONDS = 300
 OTP_MAX_ATTEMPTS = 5
 OTP_PER_PHONE_10MIN = 5
 OTP_PER_IP_10MIN = int(env('OTP_PER_IP_10MIN', '20'))
+CORS_ORIGINS = [o for o in env('CORS_ORIGINS', '').split(',') if o]   # the website's address in production
 NUM_PROXIES = int(env('NUM_PROXIES', '0'))   # load balancers in front of the app, for the client's real address
+# Photos: taken in the app's camera at the building, moments before upload (apps.property.photos)
+MEDIA_ROOT = Path(env('MEDIA_ROOT', str(BASE_DIR / '.media')))
+MEDIA_URL = env('MEDIA_URL', '/media/')
+# Agreements and other private files: never served directly, only through an endpoint that checks who is asking
+PRIVATE_ROOT = Path(env('PRIVATE_ROOT', str(BASE_DIR / '.private')))
+AGREEMENT_MAX_BYTES = 10 * 1024 * 1024
+AGREEMENT_MAX_PAGES = 30
+PHOTO_MAX_BYTES = 12 * 1024 * 1024
+PHOTO_MAX_AGE_S = 600          # taken in the last 10 minutes
+PHOTO_MAX_DISTANCE_M = 150     # from the owner's pin
+PHOTO_MAX_ACCURACY_M = 100     # the phone's GPS fix must be at least this good
+
 HOLD_MINUTES = 10                 # a bed held while the tenant pays the deposit
 OFFER_HOLD_HOURS = 24             # an accepted offer holds the bed this long
 OFFER_CAP_BP = 1500               # offers can go at most 15% over the listed rent

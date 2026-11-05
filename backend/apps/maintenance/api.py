@@ -37,12 +37,14 @@ class TicketOut(Schema):
     assignee: str
     suggested_assignee: str
     to_pakka_ghar: bool = False
+    photos: list[str] = []
 
 
 def ticket_out(t: Ticket) -> dict:
     return {'id': str(t.id), 'ref': t.reference, 'who': t.raised_by.name, 'room': t.room.number if t.room else '–', 'category': t.category,
             'text': t.text, 'status': t.status, 'at': t.created_at, 'assignee': t.assignee,
-            'suggested_assignee': contact_for(t)}
+            'suggested_assignee': contact_for(t),
+            'photos': [ph.thumb.url if ph.thumb else ph.image.url for ph in t.photos.filter(status='live')]}
 
 
 def report_out(r: TrustReport) -> dict:

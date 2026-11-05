@@ -10,6 +10,9 @@ import type { components, paths } from './schema';
 function apiBase() {
   const fromEnv = process.env.EXPO_PUBLIC_API_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
+  if (typeof window !== 'undefined' && window.location?.hostname && !Constants.expoConfig?.hostUri) {
+    return `${window.location.protocol}//${window.location.hostname}:8000`;   // the website: API on the same host
+  }
   const host = Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost';
   return `http://${host}:8000`;
 }
@@ -59,3 +62,25 @@ export const idem = (key = newKey()) => ({ headers: { 'Idempotency-Key': key } }
 /* Money is integer paise everywhere in the API. */
 export const inr = (paise: number | null | undefined) => '₹' + Math.round((paise ?? 0) / 100).toLocaleString('en-IN');
 export const rupeesOf = (paise: number) => Math.round(paise / 100);
+
+/* File uploads (multipart). Expo's fetch rejects React Native's { uri, name, type } file parts, while React Native's
+   XMLHttpRequest streams them from disk, so uploads go through XHR. */
+export function postFile(path: string, file: { uri: string; name: string; type: string; webFile?: Blob }, fields: Record<string, string> = {}): Promise<Record<string, unknown>> {
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    if (file.webFile) form.append('file', file.webFile, file.name);   // website: the browser's File
+    else form.append('file', file as unknown as Blob);                // phone: streamed from disk by uri
+    for (const [k, v] of Object.entries(fields)) form.append(k, v);
+    const x = new XMLHttpRequest();
+    x.open('POST', `${API_BASE}${path}`);
+    if (currentToken) x.setRequestHeader('Authorization', `Bearer ${currentToken}`);
+    x.onload = () => {
+      let body: Record<string, unknown> = {};
+      try { body = JSON.parse(x.responseText); } catch { /* not JSON */ }
+      if (x.status >= 200 && x.status < 300) resolve(body);
+      else reject(new ApiError(x.status, String(body.code ?? x.status), String(body.message ?? 'The upload failed.')));
+    };
+    x.onerror = () => reject(new ApiError(0, 'offline', "Can't reach Pakka Ghar. Check your connection."));
+    x.send(form);
+  });
+}

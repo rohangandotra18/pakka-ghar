@@ -1,4 +1,4 @@
-"""Offers, holds, bookings, agreements, police verification, notice, move-out and ratings."""
+"""Applications (with roommates and bids), holds, bookings, agreements, tours, police verification, notice, move-out and ratings."""
 import secrets
 from datetime import date, timedelta
 from decimal import Decimal
@@ -14,10 +14,10 @@ from apps.core.ledger import post
 from apps.core.models import Membership, Party
 from apps.core.rls import system
 from apps.jurisdiction.rules import MissingFields, build_packet
-from apps.property.models import Bed, Property
+from apps.property.models import Bed, Property, Room
 from apps.property.services import next_move_in, offer_cap_paise
 
-from .models import BLOCKING, Agreement, Booking, Offer, PoliceVerification, Rating, Visit
+from .models import BLOCKING, Agreement, Application, ApplicationMember, Booking, PoliceVerification, Rating, Visit
 
 ASPECTS = ('Cleanliness', 'Food', 'Owner response', 'Value')
 
@@ -55,7 +55,7 @@ def _terms(b: Booking) -> dict:
 
 
 def create_hold(party: Party, bed: Bed, move_in: date, months: int, key: str, fp: str,
-                offer: Offer | None = None, hold_for: timedelta | None = None) -> Booking:
+                application: Application | None = None, rent_paise: int | None = None, hold_for: timedelta | None = None) -> Booking:
     require_verified(party)
     if months not in (6, 9, 11):
         raise ApiError(422, 'bad_months', 'Choose 6, 9 or 11 months.')
@@ -70,7 +70,7 @@ def create_hold(party: Party, bed: Bed, move_in: date, months: int, key: str, fp
             raise ApiError(409, 'already_booked', 'You already have a booking. End that stay before booking another.')
         with system():
             Booking.objects.filter(pk=b.pk).update(status='cancelled', updated_at=timezone.now())
-    rent = offer.amount_paise if offer else bed.room.rent_paise
+    rent = rent_paise or bed.room.rent_paise
     now = timezone.now()
     try:
         with transaction.atomic():
@@ -78,14 +78,17 @@ def create_hold(party: Party, bed: Bed, move_in: date, months: int, key: str, fp
                 organisation=bed.organisation, reference='PG-' + secrets.token_hex(4).upper(), bed=bed, guest=party,
                 status='hold', stay_period=DateTimeTZRange(ist(move_in), ist(add_months(move_in, months))),
                 hold_expires_at=now + (hold_for or timedelta(minutes=settings.HOLD_MINUTES)), months=months,
-                rent_paise=rent, deposit_paise=bed.room.rent_paise * prop.deposit_months,  # an offer never raises the deposit
-                offer=offer, idempotency_key=key, request_fingerprint=fp)
+                rent_paise=rent, deposit_paise=bed.room.rent_paise * prop.deposit_months,  # a bid never raises the deposit
+                application=application, idempotency_key=key, request_fingerprint=fp)
     except IntegrityError as e:
         if 'exclude_space_double_booking' in str(e):
             raise ApiError(409, 'bed_taken', 'Someone has just booked that bed. Pick another.')
         raise
     b.refresh_from_db()
-    Agreement.objects.create(organisation=b.organisation, booking=b, tenant=party, terms=_terms(b))
+    ag = Agreement.objects.create(organisation=b.organisation, booking=b, tenant=party, terms=_terms(b))
+    from .agreements import build_document
+    with system():  # reads the owner's template and both names
+        build_document(Agreement.objects.select_related('booking__bed__room__property', 'booking__guest').get(pk=ag.pk))
     PoliceVerification.objects.create(organisation=b.organisation, booking=b, tenant=party, jurisdiction=prop.city)
     audit(b.organisation, party, 'booking.hold', b, after={'bed': bed.id, 'rent_paise': rent})
     return b
@@ -199,47 +202,13 @@ def mark_police_verified(b: Booking, actor: Party) -> PoliceVerification:
     return pv
 
 
-# ---- offers ----------------------------------------------------------------------------------------------
+# ---- applications: alone or with roommates, at the listed rent or as a bid ----------------------------------
 
-def place_offer(party: Party, bed: Bed, amount_paise: int, months: int) -> Offer:
-    require_verified(party)
-    if not bed.offers_open or (bed.offers_close_at and bed.offers_close_at < timezone.now()):
-        raise ApiError(409, 'offers_closed', 'Offers are closed on this bed. Book it at the listed rent instead.')
-    with system():
-        if Booking.objects.filter(guest=party, status__in=['confirmed', 'active']).exists():
-            raise ApiError(409, 'already_booked', 'You already have a booking. Cancel it or move out before making offers.')
-    rent = bed.room.rent_paise
-    cap = offer_cap_paise(rent)
-    if not rent <= amount_paise <= cap:
-        raise ApiError(422, 'offer_out_of_range', f'Offers go from ₹{rent // 100:,} to ₹{cap // 100:,} (15% over the listed rent).')
-    if months not in (6, 9, 11):
-        raise ApiError(422, 'bad_months', 'Choose 6, 9 or 11 months.')
-    o = Offer.objects.filter(bed=bed, tenant=party, status='placed').first()
-    if o:
-        before = {'amount_paise': o.amount_paise, 'months': o.months}
-        o.amount_paise, o.months = amount_paise, months
-        o.save(update_fields=['amount_paise', 'months', 'updated_at'])
-        audit(o.organisation, party, 'offer.change', o, before, {'amount_paise': amount_paise, 'months': months})
-        return o
-    o = Offer.objects.create(organisation=bed.organisation, bed=bed, tenant=party, amount_paise=amount_paise,
-                             months=months, move_in_on=next_move_in())
-    audit(o.organisation, party, 'offer.place', o, after={'amount_paise': amount_paise, 'months': months})
-    for ow in owners_of(o.organisation):
-        notify(ow, 'offer.new', f'New offer on Room {bed.room.number}, bed {bed.label}.', org=o.organisation, offer=str(o.id))
-    return o
-
-
-def withdraw_offer(o: Offer, party: Party) -> Offer:
-    if o.status != 'placed':
-        raise ApiError(409, 'not_open', 'This offer is no longer open.')
-    o.status, o.decided_at = 'withdrawn', timezone.now()
-    o.save(update_fields=['status', 'decided_at', 'updated_at'])
-    audit(o.organisation, party, 'offer.withdraw', o)
-    return o
+MAX_ROOMMATES = 2   # a triple room is the largest
 
 
 def tenant_record(party: Party) -> dict:
-    """The rental record owners see with an offer: past stays and the owners' revealed ratings."""
+    """The rental record owners see with an application: past stays and the owners' revealed ratings."""
     with system():
         from apps.property.services import revealed
         cutoff = timezone.now() - timedelta(days=settings.RATING_REVEAL_DAYS)
@@ -248,56 +217,304 @@ def tenant_record(party: Party) -> dict:
     return {'score': round(float(agg['a']), 1) if agg['a'] is not None else None, 'rated_by': agg['n'], 'past_stays': stays}
 
 
-def offer_standing(o: Offer) -> dict:
-    """What a tenant may know about a sealed round: how many offers, their range, and roughly where theirs sits."""
+def free_in_room(room: Room, start: date) -> list[Bed]:
+    """Beds in this room with nothing booked for a month from `start`. Spans everyone's bookings: system role."""
+    lo, hi = ist(start), ist(add_months(start, 1))
     with system():
-        amounts = sorted((x.amount_paise for x in Offer.objects.filter(bed_id=o.bed_id, status='placed')), reverse=True)
-    rank = amounts.index(o.amount_paise) + 1 if o.amount_paise in amounts else None
+        taken = set(Booking.objects.filter(bed__room=room, status__in=BLOCKING, stay_period__overlap=(lo, hi)).values_list('bed_id', flat=True))
+        return [b for b in Bed.objects.filter(room=room).select_related('room').order_by('label') if b.id not in taken]
+
+
+def _no_live_booking(party: Party) -> None:
+    with system():
+        if Booking.objects.filter(guest=party, status__in=['confirmed', 'active']).exists():
+            raise ApiError(409, 'already_booked', 'You already have a booking. Cancel it or move out before applying elsewhere.')
+
+
+def _check_bid(room: Room, amount_paise: int | None) -> None:
+    if room.offers_open:
+        if room.offers_close_at and room.offers_close_at < timezone.now():
+            raise ApiError(409, 'bids_closed', 'Bidding on this room has closed.')
+        cap = offer_cap_paise(room.rent_paise)
+        if amount_paise is None or not room.rent_paise <= amount_paise <= cap:
+            raise ApiError(422, 'bid_out_of_range', f'Room {room.number} is up for bids: bid from ₹{room.rent_paise // 100:,} to ₹{cap // 100:,} a bed (15% over the rent).')
+    elif amount_paise is not None:
+        raise ApiError(422, 'not_bidding', f'Room {room.number} isn’t up for bids. Apply at the listed rent.')
+
+
+def _rooms_that_fit(prop: Property, size: int, start: date, kind: str = '', exclude_bidding: bool = True) -> list[Room]:
+    rooms = Room.objects.filter(property=prop).order_by('number')
+    if kind:
+        rooms = rooms.filter(kind=kind)
+    if exclude_bidding:
+        rooms = rooms.filter(offers_open=False)
+    return [r for r in rooms if len(free_in_room(r, start)) >= size]
+
+
+def apply(lead: Party, prop: Property, *, room_number: str = '', room_kind: str = '', amount_paise: int | None = None,
+          months: int = 11, move_in: date | None = None, message: str = '', roommates: list[str] = ()) -> Application:
+    from apps.identity.services import normalise_phone
+    require_verified(lead)
+    _no_live_booking(lead)
+    if months not in (6, 9, 11):
+        raise ApiError(422, 'bad_months', 'Choose 6, 9 or 11 months.')
+    move_in = move_in or next_move_in()
+    if move_in < today() or move_in > today() + timedelta(days=120):
+        raise ApiError(422, 'bad_move_in', 'Pick a move-in date in the next four months.')
+    phones = []
+    for raw in roommates:
+        ph = normalise_phone(raw)
+        if ph == lead.phone:
+            raise ApiError(422, 'roommate_is_you', 'Add your roommate’s number, not yours.')
+        if ph not in phones:
+            phones.append(ph)
+    if len(phones) > MAX_ROOMMATES:
+        raise ApiError(422, 'too_many', 'You can apply with up to two roommates.')
+    size = 1 + len(phones)
+    if Application.objects.filter(property=prop, lead=lead, status__in=['forming', 'pending']).exists():
+        raise ApiError(409, 'already_applied', 'You already have an application here. Change or withdraw it instead.')
+    room = None
+    if room_number:
+        room = Room.objects.filter(property=prop, number=room_number).first()
+        if not room:
+            raise ApiError(404, 'no_room', f'No room {room_number}.')
+        _check_bid(room, amount_paise)
+        if len(free_in_room(room, move_in)) < size:
+            raise ApiError(409, 'not_enough_beds', f'Room {room.number} doesn’t have {size} free bed{"s" if size > 1 else ""} then.')
+    else:
+        if amount_paise is not None:
+            raise ApiError(422, 'pick_room', 'Pick the room you’re bidding on.')
+        if not _rooms_that_fit(prop, size, move_in, room_kind):
+            raise ApiError(409, 'not_enough_beds', f'No room here has {size} free bed{"s" if size > 1 else ""} together then. Try another date or PG.')
+    a = Application.objects.create(organisation=prop.organisation, property=prop, room=room, room_kind=room_kind if not room else '',
+                                   lead=lead, amount_paise=amount_paise, months=months, move_in_on=move_in, message=message.strip()[:500],
+                                   status='forming' if phones else 'pending')
+    ApplicationMember.objects.create(organisation=prop.organisation, application=a, phone=lead.phone, party=lead, is_lead=True,
+                                     status='joined', joined_at=timezone.now())
+    for ph in phones:
+        ApplicationMember.objects.create(organisation=prop.organisation, application=a, phone=ph)
+        with system():
+            mate = Party.objects.filter(phone=ph).first()
+        if mate:
+            notify(mate, 'invite.new', f'{lead.first_name} wants you as a roommate at {prop.name}. Accept in the app.', org=prop.organisation, application=str(a.id))
+    audit(a.organisation, lead, 'application.create', a, after={'size': size, 'bid': amount_paise})
+    if a.status == 'pending':
+        _tell_owners_new(a)
+    return a
+
+
+def _tell_owners_new(a: Application) -> None:
+    n = a.members.filter(status='joined').count()
+    what = f'bid ₹{a.amount_paise // 100:,} a bed on Room {a.room.number}' if a.is_bid else f'applied to stay{f" in Room {a.room.number}" if a.room else ""}'
+    who = a.lead.first_name + (f' and {n - 1} roommate{"s" if n > 2 else ""}' if n > 1 else '')
+    for o in owners_of(a.organisation):
+        notify(o, 'application.new', f'{who} {what}.', org=a.organisation, application=str(a.id))
+
+
+def change_bid(a: Application, party: Party, amount_paise: int | None, months: int | None) -> Application:
+    if a.lead_id != party.id or a.status not in ('forming', 'pending'):
+        raise ApiError(409, 'not_open', 'This application can’t be changed now.')
+    if amount_paise is not None:
+        if not a.room:
+            raise ApiError(422, 'not_bidding', 'This application isn’t a bid.')
+        _check_bid(a.room, amount_paise)
+        a.amount_paise = amount_paise
+    if months is not None:
+        if months not in (6, 9, 11):
+            raise ApiError(422, 'bad_months', 'Choose 6, 9 or 11 months.')
+        a.months = months
+    a.save(update_fields=['amount_paise', 'months', 'updated_at'])
+    audit(a.organisation, party, 'application.change', a, after={'amount_paise': a.amount_paise, 'months': a.months})
+    return a
+
+
+def withdraw(a: Application, party: Party) -> Application:
+    if a.lead_id != party.id:
+        raise ApiError(403, 'not_lead', 'Only the person who applied can withdraw it. You can leave it instead.')
+    if a.status not in ('forming', 'pending'):
+        raise ApiError(409, 'not_open', 'This application is no longer open.')
+    a.status, a.decided_at = 'withdrawn', timezone.now()
+    a.save(update_fields=['status', 'decided_at', 'updated_at'])
+    for m in a.members.exclude(party=party).filter(status='joined').select_related('party'):
+        notify(m.party, 'application.withdrawn', f'{party.first_name} withdrew your application to {a.property.name}.', org=a.organisation)
+    audit(a.organisation, party, 'application.withdraw', a)
+    return a
+
+
+def invites_for(party: Party) -> list[ApplicationMember]:
+    """Roommate invitations sent to this person's phone number (found by number, so the system role reads them)."""
+    with system():
+        return list(ApplicationMember.objects.filter(phone=party.phone, status='invited', application__status='forming')
+                    .select_related('application__property', 'application__lead', 'application__room'))
+
+
+def respond_invite(member_id, party: Party, accept: bool) -> Application:
+    with system():
+        m = ApplicationMember.objects.select_related('application__property', 'application__lead').filter(
+            pk=member_id, phone=party.phone, status='invited', application__status='forming').first()
+        if not m:
+            raise ApiError(404, 'not_found', 'This invitation is no longer open.')
+        a = m.application
+        if accept:
+            require_verified(party)
+            _no_live_booking(party)
+            m.party, m.status, m.joined_at = party, 'joined', timezone.now()
+        else:
+            m.status = 'declined'
+        m.save(update_fields=['party', 'status', 'joined_at', 'updated_at'])
+        notify(a.lead, 'invite.answered', f'{party.first_name} {"joined" if accept else "said no to"} your application to {a.property.name}.', org=a.organisation)
+        _maybe_ready(a)
+        audit(a.organisation, party, 'invite.accept' if accept else 'invite.decline', m)
+        return a
+
+
+def remove_member(a: Application, party: Party, member_id) -> Application:
+    """The lead drops someone who said no or hasn't answered; a joined roommate can remove themselves."""
+    m = a.members.filter(pk=member_id).exclude(is_lead=True).first()
+    if not m or (a.lead_id != party.id and m.party_id != party.id):
+        raise ApiError(404, 'not_found', 'No such roommate on this application.')
+    if a.status not in ('forming', 'pending'):
+        raise ApiError(409, 'not_open', 'This application is no longer open.')
+    m.status = 'left'
+    m.save(update_fields=['status', 'updated_at'])
+    _maybe_ready(a)
+    return a
+
+
+def _maybe_ready(a: Application) -> None:
+    """Goes to the owner once everyone on it has joined. A roommate who said no keeps it waiting until the lead drops
+    them: the lead asked to live with that person, so it never turns into a solo application on its own."""
+    live = [m for m in a.members.all() if m.status in ('invited', 'joined', 'declined')]
+    if a.status == 'forming' and live and all(m.status == 'joined' for m in live):
+        a.status = 'pending'
+        a.save(update_fields=['status', 'updated_at'])
+        _tell_owners_new(a)
+
+
+def standing(a: Application) -> dict:
+    """For a bid: how many bids on the room, their range, and where this one sits. Bids are sealed: no names."""
+    if not (a.is_bid and a.room_id):
+        return {'count': 0, 'min_paise': None, 'max_paise': None, 'rank': None}
+    with system():
+        amounts = sorted(Application.objects.filter(room_id=a.room_id, status__in=['forming', 'pending'], amount_paise__isnull=False)
+                         .values_list('amount_paise', flat=True), reverse=True)
+    rank = amounts.index(a.amount_paise) + 1 if a.amount_paise in amounts else None
     return {'count': len(amounts), 'min_paise': amounts[-1] if amounts else None, 'max_paise': amounts[0] if amounts else None, 'rank': rank}
 
 
 @transaction.atomic
-def accept_offer(o: Offer, actor: Party) -> Booking:
-    if o.status != 'placed':
-        raise ApiError(409, 'not_open', 'This offer is no longer open.')
-    if not o.tenant.verified:
-        raise ApiError(409, 'tenant_unverified', "This person hasn't verified their ID yet.")
-    bed = Bed.objects.select_for_update().get(pk=o.bed_id)
+def accept(a: Application, actor: Party, room_number: str = '') -> list[Booking]:
+    if a.status != 'pending':
+        raise ApiError(409, 'not_open', 'This application isn’t waiting for you.')
+    members = [m for m in a.members.select_related('party') if m.status == 'joined']
+    for m in members:
+        if not m.party.verified:
+            raise ApiError(409, 'tenant_unverified', f'{m.party.first_name} hasn’t verified their ID yet.')
+    size = len(members)
+    room = a.room
+    if not room:
+        fits = _rooms_that_fit(a.property, size, a.move_in_on, a.room_kind)
+        room = next((r for r in fits if r.number == room_number), None) if room_number else (fits[0] if fits else None)
+        if not room:
+            raise ApiError(409, 'not_enough_beds', f'No room has {size} free bed{"s" if size > 1 else ""} together for {a.move_in_on:%-d %b}.')
+    room = Room.objects.select_for_update().get(pk=room.pk)
+    beds = free_in_room(room, a.move_in_on)
+    if len(beds) < size:
+        raise ApiError(409, 'not_enough_beds', f'Room {room.number} no longer has {size} free beds.')
+    rent = a.amount_paise or room.rent_paise
+    bookings = [create_hold(m.party, bed, a.move_in_on, a.months, key=f'app-{a.id}-{m.id}', fp=f'app-{a.id}', application=a,
+                            rent_paise=rent, hold_for=timedelta(hours=settings.OFFER_HOLD_HOURS))
+                for m, bed in zip(members, beds)]
     now = timezone.now()
-    o.status, o.decided_at = 'accepted', now
-    o.save(update_fields=['status', 'decided_at', 'updated_at'])
-    others = list(Offer.objects.filter(bed=bed, status='placed').exclude(pk=o.pk).select_related('tenant'))
-    Offer.objects.filter(pk__in=[x.pk for x in others]).update(status='declined', decided_at=now, updated_at=now)
-    bed.offers_open = False
-    bed.save(update_fields=['offers_open', 'updated_at'])
-    b = create_hold(o.tenant, bed, o.move_in_on, o.months, key=f'offer-{o.id}', fp=f'offer-{o.id}', offer=o,
-                    hold_for=timedelta(hours=settings.OFFER_HOLD_HOURS))
-    audit(o.organisation, actor, 'offer.accept', o, after={'booking': b.reference})
-    name = bed.room.property.name
-    notify(o.tenant, 'offer.accepted', f'{name} accepted your offer. Pay the deposit within 24 hours to hold the bed.', org=o.organisation, booking=str(b.id))
-    for x in others:
-        notify(x.tenant, 'offer.declined', f'{name} chose another offer. Similar PGs nearby are open.', org=o.organisation)
-    return b
+    a.status, a.decided_at, a.room = 'accepted', now, room
+    a.save(update_fields=['status', 'decided_at', 'room', 'updated_at'])
+    for m, b in zip(members, bookings):
+        ApplicationMember.objects.filter(pk=m.pk).update(updated_at=now)
+        notify(m.party, 'application.accepted', f'{a.property.name} accepted your application: Room {room.number}, bed {b.bed.label}. Pay your deposit within 24 hours.',
+               org=a.organisation, booking=str(b.id))
+    if room.offers_open and len(beds) == size:  # the room is full now: bidding ends, the other bids are declined
+        close_bidding(room, actor, reason=f'{a.property.name} accepted another bid on Room {room.number}.')
+    audit(a.organisation, actor, 'application.accept', a, after={'room': room.number, 'bookings': [b.reference for b in bookings]})
+    return bookings
 
 
-def open_offers(bed: Bed) -> Bed:
-    """Take sealed offers on a scarce bed until Friday 6 pm."""
-    bed.offers_open, bed.offers_close_at = True, next_friday_6pm()
-    bed.save(update_fields=['offers_open', 'offers_close_at', 'updated_at'])
-    return bed
+def decline(a: Application, actor: Party, reason: str = '') -> Application:
+    if a.status not in ('forming', 'pending'):
+        raise ApiError(409, 'not_open', 'This application is no longer open.')
+    a.status, a.decided_at, a.decline_reason = 'declined', timezone.now(), reason.strip()[:200]
+    a.save(update_fields=['status', 'decided_at', 'decline_reason', 'updated_at'])
+    for m in a.members.filter(status='joined').select_related('party'):
+        notify(m.party, 'application.declined', f'{a.property.name} said no{": " + a.decline_reason if a.decline_reason else ""}. Similar PGs nearby are open.', org=a.organisation)
+    audit(a.organisation, actor, 'application.decline', a, after={'reason': a.decline_reason})
+    return a
 
 
-# ---- visits ----------------------------------------------------------------------------------------------
+def open_bidding(room: Room, actor: Party) -> Room:
+    """Put a room up for bids until Friday 6 pm. It needs a free bed; applications at the listed rent stop for it."""
+    if not free_in_room(room, next_move_in()):
+        raise ApiError(409, 'room_full', f'Room {room.number} has no free bed to bid on.')
+    room.offers_open, room.offers_close_at = True, next_friday_6pm()
+    room.save(update_fields=['offers_open', 'offers_close_at', 'updated_at'])
+    audit(room.organisation, actor, 'room.bidding_open', room)
+    return room
 
-def request_visit(party: Party, prop: Property) -> Visit:
+
+def close_bidding(room: Room, actor: Party, reason: str = '') -> Room:
+    open_bids = list(Application.objects.filter(room=room, status__in=['forming', 'pending'], amount_paise__isnull=False))
+    for a in open_bids:
+        decline(a, actor, reason or f'Bidding on Room {room.number} has closed.')
+    room.offers_open = False
+    room.save(update_fields=['offers_open', 'updated_at'])
+    audit(room.organisation, actor, 'room.bidding_closed', room)
+    return room
+
+
+# ---- tours ------------------------------------------------------------------------------------------------
+
+TOUR_DEFAULT = {'days': [0, 1, 2, 3, 4, 5], 'start': '10:00', 'end': '18:00', 'minutes': 30}
+
+
+def tour_hours(prop: Property) -> dict:
+    return {**TOUR_DEFAULT, **(prop.attributes or {}).get('tour_hours', {})}
+
+
+def tour_slots(prop: Property, days: int = 7) -> list:
+    """Free tour times in the owner's tour hours, from two hours from now, one tour per slot."""
+    h = tour_hours(prop)
+    sh, sm = map(int, h['start'].split(':'))
+    eh, em = map(int, h['end'].split(':'))
+    step = timedelta(minutes=int(h['minutes']))
+    earliest = timezone.now() + timedelta(hours=2)
+    with system():
+        booked = set(Visit.objects.filter(property=prop, status__in=['requested', 'confirmed'], slot__gte=timezone.now()).values_list('slot', flat=True))
+    out = []
+    for i in range(days + 1):
+        d = today() + timedelta(days=i)
+        if d.weekday() not in h['days']:
+            continue
+        t, end = ist(d, sh, sm), ist(d, eh, em)
+        while t + step <= end:
+            if t >= earliest and t not in booked:
+                out.append(t)
+            t += step
+    return out
+
+
+def request_visit(party: Party, prop: Property, slot=None, note: str = '') -> Visit:
     pending = Visit.objects.filter(property=prop, tenant=party, status__in=['requested', 'confirmed'], slot__gte=timezone.now()).first()
-    if pending:  # asking twice doesn't book two visits
+    if pending:  # one upcoming tour per PG; reschedule by cancelling it
         return pending
-    t = today()
-    sat = t + timedelta(days=(5 - t.weekday()) % 7 or 7)
-    v = Visit.objects.create(organisation=prop.organisation, property=prop, tenant=party, slot=ist(sat, 11))
+    slots = tour_slots(prop)
+    if slot is None:
+        if not slots:
+            raise ApiError(409, 'no_slots', 'No tour times are free this week. Message the owner instead.')
+        slot = slots[0]
+    elif slot not in slots:
+        raise ApiError(409, 'slot_taken', 'That time isn’t free any more. Pick another.')
+    v = Visit.objects.create(organisation=prop.organisation, property=prop, tenant=party, slot=slot, note=note.strip()[:200])
+    when = slot.astimezone(ist(today()).tzinfo).strftime('%a %-d %b, %-I:%M %p').replace('AM', 'am').replace('PM', 'pm')
     for o in owners_of(prop.organisation):
-        notify(o, 'visit.new', f'{party.first_name} asked to visit on Saturday at 11 am.', org=prop.organisation, visit=str(v.id))
+        notify(o, 'visit.new', f'{party.first_name} asked for a tour on {when}.', org=prop.organisation, visit=str(v.id))
     return v
 
 

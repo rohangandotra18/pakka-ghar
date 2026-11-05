@@ -4,6 +4,180 @@
  */
 
 export interface paths {
+    "/api/agreements/{booking_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The agreement to read: pages, who has signed */
+        get: operations["apps_booking_agreements_get_doc"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agreements/{booking_id}/pages/{n}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One page as an image (JPEG), by the signed link from the agreement
+         * @description Only the two people on the agreement get links (from GET /agreements/{id}); a link is checked here for its
+         *     booking, page, copy and expiry, so it can't be reused for another page or another agreement.
+         */
+        get: operations["apps_booking_agreements_page"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agreements/{booking_id}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The PDF (the signed copy once both have signed) */
+        get: operations["apps_booking_agreements_pdf"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agreements/{booking_id}/sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign: your typed name and the code */
+        post: operations["apps_booking_agreements_sign_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/agreements/{booking_id}/sign/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send the signing code to your phone */
+        post: operations["apps_booking_agreements_sign_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply to stay: a room or any room, alone or with roommates, at the rent or as a bid */
+        post: operations["apps_booking_api_create_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Applications you made or joined */
+        get: operations["apps_booking_api_my_applications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{app_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change your bid or stay length */
+        patch: operations["apps_booking_api_change_application"];
+        trace?: never;
+    };
+    "/api/applications/{app_id}/members/{member_id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Drop a roommate, or leave */
+        post: operations["apps_booking_api_remove_member"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/applications/{app_id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw Application */
+        post: operations["apps_booking_api_withdraw_application"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/logout": {
         parameters: {
             query?: never;
@@ -64,7 +238,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Hold a bed for 10 minutes while the deposit is paid */
+        /** Your held bed at this PG, after the owner accepted your application */
         post: operations["apps_booking_api_book"];
         delete?: never;
         options?: never;
@@ -117,23 +291,6 @@ export interface paths {
         put?: never;
         /** Start the deposit payment (UPI, into escrow) */
         post: operations["apps_booking_api_deposit"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/bookings/{booking_id}/sign": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Aadhaar eSign by the resident */
-        post: operations["apps_booking_api_sign"];
         delete?: never;
         options?: never;
         head?: never;
@@ -225,6 +382,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/invites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Roommate invitations sent to your number */
+        get: operations["apps_booking_api_invites"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/invites/{member_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Join or turn down a roommate invitation */
+        post: operations["apps_booking_api_answer_invite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/kyc/digilocker/complete": {
         parameters: {
             query?: never;
@@ -285,6 +476,23 @@ export interface paths {
         };
         /** One PG */
         get: operations["apps_property_api_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/listings/{slug}/tour-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Free tour times this week */
+        get: operations["apps_booking_api_tour_slots"];
         put?: never;
         post?: never;
         delete?: never;
@@ -365,7 +573,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/offers": {
+    "/api/owner/agreement-template": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Your own agreement, if you uploaded one */
+        get: operations["apps_booking_agreements_get_template"];
+        put?: never;
+        /** Upload your own agreement (PDF); new bookings use it */
+        post: operations["apps_booking_agreements_upload_template"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/owner/agreement-template/remove": {
         parameters: {
             query?: never;
             header?: never;
@@ -374,23 +600,23 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Place or change a sealed offer (listed rent to +15%) */
-        post: operations["apps_booking_api_place_offer"];
+        /** Go back to the standard agreement */
+        post: operations["apps_booking_agreements_remove_template"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/api/offers/mine": {
+    "/api/owner/applications": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** My Offers */
-        get: operations["apps_booking_api_my_offers"];
+        /** Requests to stay and bids, best bids first */
+        get: operations["apps_booking_owner_api_applications"];
         put?: never;
         post?: never;
         delete?: never;
@@ -399,7 +625,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/offers/{offer_id}": {
+    "/api/owner/applications/{app_id}/accept": {
         parameters: {
             query?: never;
             header?: never;
@@ -408,9 +634,26 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post?: never;
-        /** Withdraw */
-        delete: operations["apps_booking_api_withdraw"];
+        /** Accept: beds are held 24 hours for each person */
+        post: operations["apps_booking_owner_api_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/owner/applications/{app_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline */
+        post: operations["apps_booking_owner_api_decline"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -427,23 +670,6 @@ export interface paths {
         get: operations["apps_booking_owner_api_beds"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/owner/beds/{bed_id}/offers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Take sealed offers on a free bed (until Friday 6 pm), or stop */
-        post: operations["apps_booking_owner_api_toggle_offers"];
         delete?: never;
         options?: never;
         head?: never;
@@ -535,40 +761,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/owner/offers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Offers */
-        get: operations["apps_booking_owner_api_offers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/owner/offers/{offer_id}/accept": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Accept one sealed offer; the rest are declined */
-        post: operations["apps_booking_owner_api_accept"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/owner/payout": {
         parameters: {
             query?: never;
@@ -580,6 +772,41 @@ export interface paths {
         put?: never;
         /** Where rent is paid; checked with a ₹1 test deposit */
         post: operations["apps_property_api_payout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/owner/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Photos */
+        get: operations["apps_property_photos_list_photos"];
+        put?: never;
+        /** Add a photo taken just now at the building */
+        post: operations["apps_property_photos_add_listing_photo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/owner/photos/{photo_id}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove Photo */
+        post: operations["apps_property_photos_remove_photo"];
         delete?: never;
         options?: never;
         head?: never;
@@ -724,23 +951,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/owner/residents/{booking_id}/sign": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** The owner's Aadhaar eSign */
-        post: operations["apps_booking_owner_api_owner_sign"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/owner/rooms": {
         parameters: {
             query?: never;
@@ -773,6 +983,23 @@ export interface paths {
         head?: never;
         /** Change a room's rent per bed (applies to new bookings only) */
         patch: operations["apps_booking_owner_api_room_rent"];
+        trace?: never;
+    };
+    "/api/owner/rooms/{number}/bidding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put a room up for bids until Friday 6 pm, or stop */
+        post: operations["apps_booking_owner_api_toggle_bidding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/owner/rooms/{number}/meter": {
@@ -877,6 +1104,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/owner/tour-hours": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** When tenants can book tours */
+        put: operations["apps_booking_owner_api_tour_hours"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/owner/visits/{visit_id}/confirm": {
         parameters: {
             query?: never;
@@ -956,6 +1200,23 @@ export interface paths {
         put?: never;
         /** The resident confirms it's fixed */
         post: operations["apps_maintenance_api_confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/requests/{ticket_id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a photo of the problem, taken just now in your room */
+        post: operations["apps_property_photos_add_ticket_photo"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1124,7 +1385,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Ask to visit; the owner confirms in the app */
+        /** Book a tour at one of the free times */
         post: operations["apps_booking_api_visit"];
         delete?: never;
         options?: never;
@@ -1139,7 +1400,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Your visit requests, newest first */
+        /** Your tours, newest first */
         get: operations["apps_booking_api_my_visits"];
         put?: never;
         post?: never;
@@ -1158,7 +1419,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Cancel a visit you asked for */
+        /** Cancel a tour you asked for */
         post: operations["apps_booking_api_cancel_visit"];
         delete?: never;
         options?: never;
@@ -1187,6 +1448,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AcceptIn */
+        AcceptIn: {
+            /**
+             * Room
+             * @default
+             */
+            room: string;
+        };
+        /** AgreementDocOut */
+        AgreementDocOut: {
+            /** Booking Id */
+            booking_id: string;
+            /** My Role */
+            my_role: string;
+            /** Page Urls */
+            page_urls: string[];
+            /** Pages */
+            pages: number;
+            /** Sha256 */
+            sha256: string;
+            /** Signatures */
+            signatures: components["schemas"]["SignatureOut"][];
+            /** Signed */
+            signed: boolean;
+            /** Signed Pages */
+            signed_pages: number;
+            /** Source */
+            source: string;
+        };
         /** AgreementOut */
         AgreementOut: {
             /** Certificate */
@@ -1201,6 +1491,125 @@ export interface components {
             terms: {
                 [key: string]: unknown;
             };
+        };
+        /** AnswerIn */
+        AnswerIn: {
+            /** Accept */
+            accept: boolean;
+        };
+        /** ApplicantOut */
+        ApplicantOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Lead */
+            is_lead: boolean;
+            /** Name */
+            name: string;
+            /** Past Stays */
+            past_stays: number;
+            /** Score */
+            score: number | null;
+            /** Status */
+            status: string;
+            /** Verified */
+            verified: boolean;
+            /** Works At */
+            works_at: string;
+        };
+        /** ApplicationOut */
+        ApplicationOut: {
+            /** Amount Paise */
+            amount_paise: number | null;
+            /** Closes At */
+            closes_at: string | null;
+            /** Count */
+            count: number;
+            /** Decline Reason */
+            decline_reason: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Lead */
+            is_lead: boolean;
+            /** Listing */
+            listing: string;
+            /** Max Paise */
+            max_paise: number | null;
+            /** Members */
+            members: components["schemas"]["MemberOut"][];
+            /** Message */
+            message: string;
+            /** Min Paise */
+            min_paise: number | null;
+            /** Months */
+            months: number;
+            /**
+             * Move In On
+             * Format: date
+             */
+            move_in_on: string;
+            /** My Booking Id */
+            my_booking_id: string | null;
+            /** Name */
+            name: string;
+            /** Rank */
+            rank: number | null;
+            /** Rent Paise */
+            rent_paise: number;
+            /** Room */
+            room: string | null;
+            /** Room Kind */
+            room_kind: string;
+            /** Status */
+            status: string;
+        };
+        /** ApplicationsOut */
+        ApplicationsOut: {
+            /** Applications */
+            applications: components["schemas"]["OwnerApplicationOut"][];
+            /** Bidding */
+            bidding: components["schemas"]["BiddingRoomOut"][];
+            /** Decided */
+            decided: components["schemas"]["OwnerApplicationOut"][];
+        };
+        /** ApplyIn */
+        ApplyIn: {
+            /** Amount Paise */
+            amount_paise?: number | null;
+            /** Listing */
+            listing: string;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /**
+             * Months
+             * @default 11
+             */
+            months: number;
+            /** Move In On */
+            move_in_on?: string | null;
+            /**
+             * Room
+             * @default
+             */
+            room: string;
+            /**
+             * Room Kind
+             * @default
+             */
+            room_kind: string;
+            /**
+             * Roommates
+             * @default []
+             */
+            roommates: string[];
         };
         /** AssignIn */
         AssignIn: {
@@ -1225,6 +1634,26 @@ export interface components {
             /** Who */
             who: string | null;
         };
+        /** BiddingIn */
+        BiddingIn: {
+            /** Open */
+            open: boolean;
+        };
+        /** BiddingRoomOut */
+        BiddingRoomOut: {
+            /** Cap Paise */
+            cap_paise: number;
+            /** Closes At */
+            closes_at: string | null;
+            /** Free */
+            free: number;
+            /** Kind */
+            kind: string;
+            /** Number */
+            number: string;
+            /** Rent Paise */
+            rent_paise: number;
+        };
         /** BoardOut */
         BoardOut: {
             /** Free */
@@ -1247,6 +1676,8 @@ export interface components {
         /** BookingOut */
         BookingOut: {
             agreement: components["schemas"]["AgreementOut"];
+            /** Application Id */
+            application_id: string | null;
             /** Area */
             area: string;
             /** Bed */
@@ -1273,8 +1704,6 @@ export interface components {
             move_in_on: string;
             /** Name */
             name: string;
-            /** Offer Id */
-            offer_id: string | null;
             /** Police */
             police: string;
             /** Reference */
@@ -1285,6 +1714,32 @@ export interface components {
             room: string;
             /** Status */
             status: string;
+        };
+        /** ChangeIn */
+        ChangeIn: {
+            /** Amount Paise */
+            amount_paise?: number | null;
+            /** Months */
+            months?: number | null;
+        };
+        /** ConfirmIn */
+        ConfirmIn: {
+            /** Challenge Id */
+            challenge_id: string;
+            /** Code */
+            code: string;
+            /** Pages Read */
+            pages_read: number;
+            /** Typed Name */
+            typed_name: string;
+        };
+        /** DeclineIn */
+        DeclineIn: {
+            /**
+             * Reason
+             * @default
+             */
+            reason: string;
         };
         /** DeleteIn */
         DeleteIn: {
@@ -1374,6 +1829,36 @@ export interface components {
             rated_by: number;
             /** Score */
             score: number | null;
+        };
+        /** InviteOut */
+        InviteOut: {
+            /** Amount Paise */
+            amount_paise: number | null;
+            /**
+             * Application Id
+             * Format: uuid
+             */
+            application_id: string;
+            /** From Name */
+            from_name: string;
+            /** Listing */
+            listing: string;
+            /**
+             * Member Id
+             * Format: uuid
+             */
+            member_id: string;
+            /** Months */
+            months: number;
+            /**
+             * Move In On
+             * Format: date
+             */
+            move_in_on: string;
+            /** Name */
+            name: string;
+            /** Room */
+            room: string | null;
         };
         /** InvoiceLineOut */
         InvoiceLineOut: {
@@ -1470,11 +1955,14 @@ export interface components {
             name: string;
             /** Notice Months */
             notice_months: number;
-            offers: components["schemas"]["OfferStatsOut"] | null;
+            /** Photos */
+            photos: components["schemas"]["ListingPhotoOut"][];
             /** Rating */
             rating: number | null;
             /** Rent Paise */
             rent_paise: number;
+            /** Rooms */
+            rooms: components["schemas"]["RoomCardOut"][];
             /** Stays */
             stays: number;
             /** Tariff Paise */
@@ -1484,10 +1972,23 @@ export interface components {
             /** Watching */
             watching: number;
         };
-        /** ListingRef */
-        ListingRef: {
-            /** Listing */
-            listing: string;
+        /** ListingPhotoOut */
+        ListingPhotoOut: {
+            /** Caption */
+            caption: string;
+            /** Id */
+            id: string;
+            /** Room */
+            room: string | null;
+            /**
+             * Taken At
+             * Format: date-time
+             */
+            taken_at: string;
+            /** Thumb */
+            thumb: string;
+            /** Url */
+            url: string;
         };
         /** MeOut */
         MeOut: {
@@ -1516,6 +2017,26 @@ export interface components {
             verified: boolean;
             /** Works At */
             works_at: string;
+        };
+        /** MemberOut */
+        MemberOut: {
+            /** Booking Id */
+            booking_id: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Is Lead */
+            is_lead: boolean;
+            /** Name */
+            name: string;
+            /** Phone Last4 */
+            phone_last4: string;
+            /** Status */
+            status: string;
+            /** Verified */
+            verified: boolean;
         };
         /** MembershipOut */
         MembershipOut: {
@@ -1608,6 +2129,8 @@ export interface components {
             listing: string;
             /** Name */
             name: string;
+            /** Note */
+            note: string;
             /**
              * Slot
              * Format: date-time
@@ -1664,100 +2187,6 @@ export interface components {
             /** Title */
             title: string;
         };
-        /** OfferIn */
-        OfferIn: {
-            /** Amount Paise */
-            amount_paise: number;
-            /** Listing */
-            listing: string;
-            /**
-             * Months
-             * @default 11
-             */
-            months: number;
-        };
-        /** OfferOut */
-        OfferOut: {
-            /** Amount Paise */
-            amount_paise: number;
-            /** Bed */
-            bed: number;
-            /** Booking Id */
-            booking_id: string | null;
-            /** Cap Paise */
-            cap_paise: number;
-            /** Closes At */
-            closes_at: string | null;
-            /** Count */
-            count: number;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Listed Paise */
-            listed_paise: number;
-            /** Listing */
-            listing: string;
-            /** Max Paise */
-            max_paise: number | null;
-            /** Min Paise */
-            min_paise: number | null;
-            /** Months */
-            months: number;
-            /**
-             * Move In On
-             * Format: date
-             */
-            move_in_on: string;
-            /** Name */
-            name: string;
-            /** Rank */
-            rank: number | null;
-            /** Room */
-            room: string;
-            /** Status */
-            status: string;
-        };
-        /** OfferStatsOut */
-        OfferStatsOut: {
-            /** Cap Paise */
-            cap_paise: number;
-            /** Closes At */
-            closes_at: string | null;
-            /** Count */
-            count: number;
-            /** Max Paise */
-            max_paise: number | null;
-            /** Min Paise */
-            min_paise: number | null;
-        };
-        /** OffersBoardOut */
-        OffersBoardOut: {
-            /** Accepted */
-            accepted: string | null;
-            /** Bed */
-            bed: number | null;
-            /** Bed Id */
-            bed_id: number | null;
-            /** Cap Paise */
-            cap_paise: number;
-            /** Closes At */
-            closes_at: string | null;
-            /** Listed Paise */
-            listed_paise: number;
-            /** Offers */
-            offers: components["schemas"]["OwnerOfferOut"][];
-            /** Open */
-            open: boolean;
-            /** Room */
-            room: string | null;
-        };
-        /** OffersToggleIn */
-        OffersToggleIn: {
-            /** Open */
-            open: boolean;
-        };
         /** OtpStartIn */
         OtpStartIn: {
             /** Phone */
@@ -1790,15 +2219,26 @@ export interface components {
              */
             device: string;
         };
-        /** OwnerOfferOut */
-        OwnerOfferOut: {
+        /** OwnerApplicationOut */
+        OwnerApplicationOut: {
             /** Amount Paise */
-            amount_paise: number;
+            amount_paise: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Fits */
+            fits: string[];
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /** Members */
+            members: components["schemas"]["ApplicantOut"][];
+            /** Message */
+            message: string;
             /** Months */
             months: number;
             /**
@@ -1806,14 +2246,16 @@ export interface components {
              * Format: date
              */
             move_in_on: string;
-            /** Name */
-            name: string;
-            /** Past Stays */
-            past_stays: number;
-            /** Score */
-            score: number | null;
-            /** Verified */
-            verified: boolean;
+            /** Rent Paise */
+            rent_paise: number;
+            /** Room */
+            room: string | null;
+            /** Room Kind */
+            room_kind: string;
+            /** Size */
+            size: number;
+            /** Status */
+            status: string;
         };
         /** PaymentOut */
         PaymentOut: {
@@ -1877,6 +2319,29 @@ export interface components {
              * Format: date-time
              */
             submitted_at: string;
+        };
+        /** PhotoOut */
+        PhotoOut: {
+            /** Caption */
+            caption: string;
+            /** Distance M */
+            distance_m: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Room */
+            room: string | null;
+            /**
+             * Taken At
+             * Format: date-time
+             */
+            taken_at: string;
+            /** Thumb */
+            thumb: string;
+            /** Url */
+            url: string;
         };
         /** PinIn */
         PinIn: {
@@ -2082,10 +2547,41 @@ export interface components {
         RoomBoardOut: {
             /** Beds */
             beds: components["schemas"]["BedOut"][];
+            /** Bidding */
+            bidding: boolean;
+            /** Bids */
+            bids: number;
             /** Full */
             full: boolean;
             /** Number */
             number: string;
+        };
+        /** RoomCardOut */
+        RoomCardOut: {
+            /** Beds */
+            beds: number;
+            /** Bidding */
+            bidding: boolean;
+            /** Bids */
+            bids: number;
+            /** Cap Paise */
+            cap_paise: number;
+            /** Closes At */
+            closes_at: string | null;
+            /** Free */
+            free: number;
+            /** Kind */
+            kind: string;
+            /** Kind Label */
+            kind_label: string;
+            /** Max Bid Paise */
+            max_bid_paise: number | null;
+            /** Min Bid Paise */
+            min_bid_paise: number | null;
+            /** Number */
+            number: string;
+            /** Rent Paise */
+            rent_paise: number;
         };
         /** RoomOut */
         RoomOut: {
@@ -2146,6 +2642,38 @@ export interface components {
              */
             reason: string;
         };
+        /** SignatureOut */
+        SignatureOut: {
+            /** Name */
+            name: string;
+            /** Role */
+            role: string;
+            /** Signed At */
+            signed_at: string;
+        };
+        /** SlotsOut */
+        SlotsOut: {
+            /** Hours */
+            hours: {
+                [key: string]: unknown;
+            };
+            /** Slots */
+            slots: string[];
+        };
+        /** StartIn */
+        StartIn: {
+            /** Pages Read */
+            pages_read: number;
+        };
+        /** StartOut */
+        StartOut: {
+            /** Challenge Id */
+            challenge_id: string;
+            /** Dev Code */
+            dev_code?: string | null;
+            /** Phone Last4 */
+            phone_last4: string;
+        };
         /** StatementOut */
         StatementOut: {
             /** Deductions Paise */
@@ -2200,6 +2728,15 @@ export interface components {
             /** Since */
             since: string;
         };
+        /** TemplateOut */
+        TemplateOut: {
+            /** Name */
+            name: string;
+            /** Pages */
+            pages: number;
+            /** Uploaded At */
+            uploaded_at: string;
+        };
         /** TicketOut */
         TicketOut: {
             /** Assignee */
@@ -2213,6 +2750,11 @@ export interface components {
             category: string;
             /** Id */
             id: string;
+            /**
+             * Photos
+             * @default []
+             */
+            photos: string[];
             /** Ref */
             ref: string;
             /** Room */
@@ -2233,6 +2775,8 @@ export interface components {
         };
         /** TodayOut */
         TodayOut: {
+            /** Applications */
+            applications: number;
             /** Beds Filled */
             beds_filled: number;
             /** Beds Total */
@@ -2269,18 +2813,31 @@ export interface components {
             /** Text */
             text: string;
         };
-        /** VisitOut */
-        VisitOut: {
+        /** TourHoursIn */
+        TourHoursIn: {
+            /** Days */
+            days: number[];
+            /** End */
+            end: string;
             /**
-             * Id
-             * Format: uuid
+             * Minutes
+             * @default 30
              */
-            id: string;
+            minutes: number;
+            /** Start */
+            start: string;
+        };
+        /** TourIn */
+        TourIn: {
+            /** Listing */
+            listing: string;
             /**
-             * Slot
-             * Format: date-time
+             * Note
+             * @default
              */
-            slot: string;
+            note: string;
+            /** Slot */
+            slot?: string | null;
         };
     };
     responses: never;
@@ -2291,6 +2848,239 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    apps_booking_agreements_get_doc: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgreementDocOut"];
+                };
+            };
+        };
+    };
+    apps_booking_agreements_page: {
+        parameters: {
+            query?: {
+                k?: string;
+                signed?: boolean;
+            };
+            header?: never;
+            path: {
+                booking_id: string;
+                n: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_booking_agreements_pdf: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_booking_agreements_sign_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AgreementDocOut"];
+                };
+            };
+        };
+    };
+    apps_booking_agreements_sign_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                booking_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StartOut"];
+                };
+            };
+        };
+    };
+    apps_booking_api_create_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+        };
+    };
+    apps_booking_api_my_applications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"][];
+                };
+            };
+        };
+    };
+    apps_booking_api_change_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+        };
+    };
+    apps_booking_api_remove_member: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                app_id: string;
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+        };
+    };
+    apps_booking_api_withdraw_application: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+        };
+    };
     apps_identity_api_logout: {
         parameters: {
             query?: never;
@@ -2447,28 +3237,6 @@ export interface operations {
             };
         };
     };
-    apps_booking_api_sign: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                booking_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BookingOut"];
-                };
-            };
-        };
-    };
     apps_booking_api_do_stamp: {
         parameters: {
             query?: never;
@@ -2584,6 +3352,52 @@ export interface operations {
             };
         };
     };
+    apps_booking_api_invites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InviteOut"][];
+                };
+            };
+        };
+    };
+    apps_booking_api_answer_invite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationOut"];
+                };
+            };
+        };
+    };
     apps_identity_api_kyc_complete: {
         parameters: {
             query?: never;
@@ -2672,6 +3486,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListingOut"];
+                };
+            };
+        };
+    };
+    apps_booking_api_tour_slots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SlotsOut"];
                 };
             };
         };
@@ -2788,7 +3624,27 @@ export interface operations {
             };
         };
     };
-    apps_booking_api_place_offer: {
+    apps_booking_agreements_get_template: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"] | null;
+                };
+            };
+        };
+    };
+    apps_booking_agreements_upload_template: {
         parameters: {
             query?: never;
             header?: never;
@@ -2797,7 +3653,18 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OfferIn"];
+                "multipart/form-data": {
+                    /**
+                     * File
+                     * Format: binary
+                     */
+                    file: string;
+                    /**
+                     * Name
+                     * @default
+                     */
+                    name?: string;
+                };
             };
         };
         responses: {
@@ -2807,12 +3674,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OfferOut"];
+                    "application/json": components["schemas"]["TemplateOut"];
                 };
             };
         };
     };
-    apps_booking_api_my_offers: {
+    apps_booking_agreements_remove_template: {
         parameters: {
             query?: never;
             header?: never;
@@ -2827,18 +3694,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OfferOut"][];
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
     };
-    apps_booking_api_withdraw: {
+    apps_booking_owner_api_applications: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                offer_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -2849,7 +3716,59 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OfferOut"];
+                    "application/json": components["schemas"]["ApplicationsOut"];
+                };
+            };
+        };
+    };
+    apps_booking_owner_api_accept: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcceptIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationsOut"];
+                };
+            };
+        };
+    };
+    apps_booking_owner_api_decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeclineIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationsOut"];
                 };
             };
         };
@@ -2862,32 +3781,6 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["BoardOut"];
-                };
-            };
-        };
-    };
-    apps_booking_owner_api_toggle_offers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                bed_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OffersToggleIn"];
-            };
-        };
         responses: {
             /** @description OK */
             200: {
@@ -3006,48 +3899,6 @@ export interface operations {
             };
         };
     };
-    apps_booking_owner_api_offers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OffersBoardOut"];
-                };
-            };
-        };
-    };
-    apps_booking_owner_api_accept: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                offer_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OffersBoardOut"];
-                };
-            };
-        };
-    };
     apps_property_api_payout: {
         parameters: {
             query?: never;
@@ -3068,6 +3919,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PropertyOut"];
+                };
+            };
+        };
+    };
+    apps_property_photos_list_photos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoOut"][];
+                };
+            };
+        };
+    };
+    apps_property_photos_add_listing_photo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Accuracy M */
+                    accuracy_m: number;
+                    /**
+                     * Caption
+                     * @default
+                     */
+                    caption?: string;
+                    /**
+                     * Device
+                     * @default
+                     */
+                    device?: string;
+                    /**
+                     * File
+                     * Format: binary
+                     */
+                    file: string;
+                    /** Lat */
+                    lat: number;
+                    /** Lng */
+                    lng: number;
+                    /**
+                     * Room
+                     * @default
+                     */
+                    room?: string;
+                    /**
+                     * Taken At
+                     * Format: date-time
+                     */
+                    taken_at: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoOut"];
+                };
+            };
+        };
+    };
+    apps_property_photos_remove_photo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                photo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoOut"][];
                 };
             };
         };
@@ -3298,28 +4247,6 @@ export interface operations {
             };
         };
     };
-    apps_booking_owner_api_owner_sign: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                booking_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ResidentOut"];
-                };
-            };
-        };
-    };
     apps_property_api_add_rooms: {
         parameters: {
             query?: never;
@@ -3356,6 +4283,32 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RentIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardOut"];
+                };
+            };
+        };
+    };
+    apps_booking_owner_api_toggle_bidding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BiddingIn"];
             };
         };
         responses: {
@@ -3502,6 +4455,32 @@ export interface operations {
             };
         };
     };
+    apps_booking_owner_api_tour_hours: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TourHoursIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     apps_booking_owner_api_confirm_visit: {
         parameters: {
             query?: never;
@@ -3608,6 +4587,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+        };
+    };
+    apps_property_photos_add_ticket_photo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Accuracy M */
+                    accuracy_m: number;
+                    /**
+                     * Device
+                     * @default
+                     */
+                    device?: string;
+                    /**
+                     * File
+                     * Format: binary
+                     */
+                    file: string;
+                    /** Lat */
+                    lat: number;
+                    /** Lng */
+                    lng: number;
+                    /**
+                     * Taken At
+                     * Format: date-time
+                     */
+                    taken_at: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PhotoOut"];
                 };
             };
         };
@@ -3823,7 +4850,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ListingRef"];
+                "application/json": components["schemas"]["TourIn"];
             };
         };
         responses: {
@@ -3833,7 +4860,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VisitOut"];
+                    "application/json": components["schemas"]["MyVisitOut"];
                 };
             };
         };

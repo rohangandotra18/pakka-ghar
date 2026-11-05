@@ -9,7 +9,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from ninja import Router, Schema
 
-from apps.booking.models import Booking, Offer, Rating, Visit
+from apps.booking.models import Application, ApplicationMember, Booking, Rating, Visit
 from apps.core.api_support import ApiError, audit, party_of
 from apps.core.models import LedgerLine, Membership, Notification
 from apps.core.rls import system
@@ -41,8 +41,9 @@ def export(request):
                       'from': b.stay_period.lower.isoformat(), 'to': _iso(b.stay_period.upper), 'rent_paise': b.rent_paise,
                       'deposit_paise': b.deposit_paise, 'deposit_outcome': b.deposit_outcome}
                      for b in Booking.objects.filter(guest=p).select_related('bed__room__property')],
-        'offers': [{'pg': o.bed.room.property.name, 'amount_paise': o.amount_paise, 'months': o.months, 'status': o.status,
-                    'created_at': o.created_at.isoformat()} for o in Offer.objects.filter(tenant=p).select_related('bed__room__property')],
+        'applications': [{'pg': a.property.name, 'room': a.room.number if a.room else None, 'bid_paise': a.amount_paise, 'months': a.months,
+                          'move_in_on': a.move_in_on.isoformat(), 'status': a.status, 'created_at': a.created_at.isoformat()}
+                         for a in Application.objects.filter(lead=p).select_related('property', 'room')],
         'visits': [{'pg': v.property.name, 'slot': v.slot.isoformat(), 'status': v.status} for v in Visit.objects.filter(tenant=p).select_related('property')],
         'invoices': [{'number': i.number, 'period': i.period.isoformat(), 'status': i.status, 'total_paise': i.total_paise}
                      for i in Invoice.objects.filter(party=p).prefetch_related('lines')],
@@ -83,7 +84,9 @@ def delete(request, body: DeleteIn):
             raise ApiError(409, 'bill_open', 'You have an unpaid bill.')
         if Membership.objects.filter(party=p).exists():
             raise ApiError(409, 'owns_pg', 'You manage a PG. Hand it over or close it with the trust team first.')
-        Offer.objects.filter(tenant=p, status='placed').update(status='withdrawn', decided_at=timezone.now())
+        Application.objects.filter(lead=p, status__in=['forming', 'pending']).update(status='withdrawn', decided_at=timezone.now())
+        ApplicationMember.objects.filter(party=p, status__in=['invited', 'joined'], application__status__in=['forming', 'pending']).update(status='left')
+        ApplicationMember.objects.filter(party=p).update(phone='del-' + p.id.hex[:12])
         Visit.objects.filter(tenant=p, status='requested').update(status='cancelled')
         Notification.objects.filter(party=p).delete()
         OtpChallenge.objects.filter(phone=p.phone).delete()
