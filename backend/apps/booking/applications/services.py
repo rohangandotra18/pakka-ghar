@@ -252,7 +252,7 @@ def accept(a: Application, actor: Party, room_number: str = '') -> list[Booking]
     a.save(update_fields=['status', 'decided_at', 'room', 'updated_at'])
     for m, b in zip(members, bookings):
         ApplicationMember.objects.filter(pk=m.pk).update(updated_at=now)
-        notify(m.party, 'application.accepted', f'{a.property.name} accepted your application: Room {room.number}, bed {b.bed.label}. Pay your deposit within 24 hours.',
+        notify(m.party, 'application.accepted', f'{a.property.name} accepted you and signed: Room {room.number}, bed {b.bed.label}. Sign and pay the deposit within 24 hours to book it.',
                org=a.organisation, booking=str(b.id))
     if room.offers_open and len(beds) == size:  # the room is full now: bidding ends, the other bids are declined
         close_bidding(room, actor, reason=f'{a.property.name} accepted another bid on Room {room.number}.')

@@ -634,8 +634,25 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Accept: beds are held 24 hours for each person */
+        /** Accept and sign: each person’s bed is held 24 hours for them to sign and pay */
         post: operations["apps_booking_applications_owner_api_accept"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/owner/applications/{app_id}/accept/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send the code that signs your side of the agreement when you accept */
+        post: operations["apps_booking_applications_owner_api_accept_start"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1206,6 +1223,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/requests/{ticket_id}/not-fixed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** The resident says it isn't fixed: back to the owner */
+        post: operations["apps_maintenance_api_not_fixed"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/requests/{ticket_id}/photos": {
         parameters: {
             query?: never;
@@ -1450,11 +1484,24 @@ export interface components {
     schemas: {
         /** AcceptIn */
         AcceptIn: {
+            /** Challenge Id */
+            challenge_id: string;
+            /** Code */
+            code: string;
             /**
              * Room
              * @default
              */
             room: string;
+        };
+        /** AcceptStartOut */
+        AcceptStartOut: {
+            /** Challenge Id */
+            challenge_id: string;
+            /** Dev Code */
+            dev_code?: string | null;
+            /** Phone Last4 */
+            phone_last4: string;
         };
         /** AgreementDocOut */
         AgreementDocOut: {
@@ -1708,6 +1755,8 @@ export interface components {
             name: string;
             /** Police */
             police: string;
+            /** Police Missing */
+            police_missing: string[];
             /** Reference */
             reference: string;
             /** Rent Paise */
@@ -1732,7 +1781,10 @@ export interface components {
             code: string;
             /** Pages Read */
             pages_read: number;
-            /** Typed Name */
+            /**
+             * Typed Name
+             * @default
+             */
             typed_name: string;
         };
         /** DeclineIn */
@@ -3754,6 +3806,28 @@ export interface operations {
             };
         };
     };
+    apps_booking_applications_owner_api_accept_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                app_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptStartOut"];
+                };
+            };
+        };
+    };
     apps_booking_applications_owner_api_decline: {
         parameters: {
             query?: never;
@@ -4577,6 +4651,28 @@ export interface operations {
         };
     };
     apps_maintenance_api_confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+        };
+    };
+    apps_maintenance_api_not_fixed: {
         parameters: {
             query?: never;
             header?: never;

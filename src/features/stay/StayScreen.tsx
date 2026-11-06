@@ -52,6 +52,7 @@ export default function Stay() {
       <T v="sm">{moved ? `Since ${st.since} · agreement for ${b.months} months` : `Moving in on ${dayMonth(b.move_in_on)} · agreement for ${b.months} months`}</T>
       {st.leaves_on && <Note tone="soft">Notice given. You leave on {dayMonth(st.leaves_on)}; the owner has been told.</Note>}
       {!moved && <Note tone="ok">Booked. Your deposit is in escrow{b.agreement.stamped ? ' and the agreement is signed and e-stamped' : ''}. First rent is due by {st.first_due_on ? dayMonth(st.first_due_on) : 'the 5th'}.</Note>}
+      {!moved && b.police_missing.length > 0 && <Btn small kind="secondary" label="Add your details for the police form" onPress={() => router.push(`/book/${b.listing}`)} />}
       <Card>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}><T v="bodyBold">{month}</T>{!moved ? <Badge label={`Due ${st.first_due_on ? dayMonth(st.first_due_on) : '5th'}`} tone="warn" /> : paid ? <Badge label="Paid" tone="ok" /> : <Badge label={`Due ${dayMonth(bill!.due_on)}`} tone="warn" />}</View>
         <Row left="Rent" right={inr(rent)} />

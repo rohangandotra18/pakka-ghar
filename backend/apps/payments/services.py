@@ -191,6 +191,8 @@ def create_payment(b: Booking, purpose: str, invoice: Invoice | None = None, met
     if purpose == 'deposit':
         if b.status != 'hold':
             raise ApiError(409, 'not_held', 'This bed is no longer held. Start the booking again.')
+        if not b.agreement.tenant_signed_at:
+            raise ApiError(409, 'sign_first', 'Sign the agreement first. You pay once you have both agreed.')
         amount = b.deposit_paise
     else:
         if not invoice or invoice.status == 'paid':
@@ -262,9 +264,13 @@ def _confirm_after_deposit(b: Booking, pay: Payment) -> None:
         except IntegrityError:  # the hold lapsed and someone else took the bed: give the money back
             _refund_deposit(b, pay, 'bed taken after hold expired', 'Your hold ran out and the bed was taken. Your deposit is being refunded.')
             return
+        from apps.booking.bookings.services import stamp
         from apps.booking.common import owners_of
+        b.refresh_from_db()
+        if b.agreement.tenant_signed_at and b.agreement.owner_signed_at:
+            stamp(b, b.guest)   # e-stamped straight away: no separate step for the resident
         for o in owners_of(b.organisation):
-            notify(o, 'booking.confirmed', f'{b.guest.first_name} paid the deposit for Room {b.bed.room.number}.', org=b.organisation, booking=str(b.id))
+            notify(o, 'booking.confirmed', f'{b.guest.first_name} signed and paid the deposit: Room {b.bed.room.number} is booked.', org=b.organisation, booking=str(b.id))
 
 
 def sign_webhook(raw: bytes) -> str:

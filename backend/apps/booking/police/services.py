@@ -28,6 +28,16 @@ def _packet_inputs(b: Booking) -> tuple[dict, dict]:
     return tenant, owner_d
 
 
+def police_missing(b: Booking) -> list[str]:
+    """What the police form still needs from the resident (never saved here, so it is always current)."""
+    tenant, owner = _packet_inputs(b)
+    try:
+        build_packet(b.police.jurisdiction, tenant, owner)
+    except MissingFields as e:
+        return [m for m in e.missing if m in tenant]
+    return []
+
+
 def prepare_police(b: Booking) -> PoliceVerification:
     pv = b.police
     tenant, owner = _packet_inputs(b)

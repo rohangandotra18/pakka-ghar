@@ -24,11 +24,21 @@ export type Schemas = components['schemas'];
 let currentToken: string | null = null;
 export function setToken(t: string | null) { currentToken = t; }
 export function getToken() { return currentToken; }
+/* Set by the session store: told when the server refuses a token (signed out on another device, account closed),
+   so the app drops that sign-in instead of failing every request. */
+let unauthorized: ((token: string) => void) | null = null;
+export function onUnauthorized(cb: ((token: string) => void) | null) { unauthorized = cb; }
+export function tokenRefused(token: string) { unauthorized?.(token); }
 
 const auth: Middleware = {
   onRequest({ request }) {
     if (currentToken && !request.headers.has('Authorization')) request.headers.set('Authorization', `Bearer ${currentToken}`);
     return request;
+  },
+  onResponse({ request, response }) {
+    const sent = request.headers.get('Authorization')?.replace(/^Bearer /, '');
+    if (response.status === 401 && sent) tokenRefused(sent);
+    /* returns nothing: openapi-fetch keeps the response as it is (React Native's isn't a `Response` it accepts back) */
   },
 };
 

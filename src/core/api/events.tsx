@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useStore } from '../session/store';
-import { API_BASE } from './client';
+import { API_BASE, tokenRefused } from './client';
 
 /* Live updates: the server streams one event per notification (an offer arrives, rent is paid, a repair is
    assigned). React Native's fetch can't stream, but XMLHttpRequest reports progress, so read the stream with it.
@@ -39,7 +39,10 @@ export function LiveEvents() {
         }
         if (changed) refresh();
       };
-      x.onloadend = () => { if (!stopped) retry = setTimeout(connect, 3000); };
+      x.onloadend = () => {
+        if (x.status === 401) { tokenRefused(token); return; }   // signed out elsewhere: stop, and ask to sign in again
+        if (!stopped) retry = setTimeout(connect, 3000);
+      };
       x.send();
     };
     connect();

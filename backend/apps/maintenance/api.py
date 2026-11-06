@@ -119,7 +119,28 @@ def confirm(request, ticket_id: UUID):
         raise ApiError(409, 'not_fixed', 'This request is not marked fixed yet.')
     t.status, t.confirmed_at = 'Confirmed', timezone.now()
     t.save(update_fields=['status', 'confirmed_at', 'updated_at'])
+    _tell_owners(t, f'{t.raised_by.first_name} confirmed the {t.category.lower()} repair in Room {t.room.number} is fixed.')
     return ticket_out(t)
+
+
+@router.post('/requests/{ticket_id}/not-fixed', response=TicketOut, summary="The resident says it isn't fixed: back to the owner")
+def not_fixed(request, ticket_id: UUID):
+    party = party_of(request)
+    t = Ticket.objects.select_for_update(of=('self',)).filter(pk=ticket_id, raised_by=party).select_related('room', 'raised_by').first()
+    if not t or t.status != 'Fixed':
+        raise ApiError(409, 'not_fixed', 'This request is not marked fixed yet.')
+    t.status, t.fixed_at = 'Assigned', None   # still with whoever was sent; the owner marks it fixed again
+    t.save(update_fields=['status', 'fixed_at', 'updated_at'])
+    audit(t.organisation, party, 'ticket.reopen', t)
+    _tell_owners(t, f'{t.raised_by.first_name} says the {t.category.lower()} repair in Room {t.room.number} isn’t fixed yet.')
+    return ticket_out(t)
+
+
+def _tell_owners(t: Ticket, title: str) -> None:
+    with system():
+        owners = owners_of(t.organisation)
+    for o in owners:
+        notify(o, 'ticket.update', title, org=t.organisation, ticket=str(t.id))
 
 
 # ---- owner ----------------------------------------------------------------------------------------------

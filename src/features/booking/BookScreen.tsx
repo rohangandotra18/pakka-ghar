@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { Loading, Back, Btn, Card, Note, Screen, T, C } from '@/design';
+import { useState } from 'react';
+import { Loading, Back, Btn, Card, Field, Note, Screen, T, C } from '@/design';
 import { api, idem, inr, ok, type Schemas, useAction, useQuery } from '@/core/api';
 
 type Booking = Schemas['BookingOut'];
@@ -11,8 +12,9 @@ const time = (iso: string) => {
 };
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' });
 
-/* Booking: the bed is held while the deposit goes into escrow by UPI, then both sides read and sign the agreement (typed name + one-time code),
-   e-stamp, and the police-verification form for the owner. */
+/* Confirm and pay: the owner signed when they accepted. The resident reads and signs the agreement with one code,
+   then pays the deposit into escrow by UPI; paying confirms the booking and e-stamps the agreement. Before move-in,
+   the few details the police form still needs are asked here. */
 export default function Book() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { act, busy } = useAction();
@@ -26,13 +28,14 @@ export default function Book() {
     return st && st.booking.listing === id ? st.booking : null;
   }, [id]);
   const b: Booking | null = existing.data ?? null;
+  const [police, setPolice] = useState<Record<string, string>>({});
 
   const p = listing.data;
   if (!p || existing.data === undefined) return <Screen><Back /><Loading error={listing.error ?? existing.error} retry={listing.reload} /></Screen>;
   const rent = b?.rent_paise ?? p.free_bed?.rent_paise ?? p.rent_paise;
   /* an offer raises the rent, never the deposit: it stays at one month of the listed rent */
   const deposit = b?.deposit_paise ?? (p.free_bed?.rent_paise ?? p.rent_paise) * p.deposit_months;
-  const paid = !!b?.deposit_paid, signed = !!b?.agreement.tenant_signed, ownerSigned = !!b?.agreement.owner_signed, stamped = !!b?.agreement.stamped;
+  const paid = !!b?.deposit_paid, signed = !!b?.agreement.tenant_signed, ownerSigned = !!b?.agreement.owner_signed;
 
   const payDeposit = () => act(async () => {
     if (!b) return;
@@ -40,7 +43,24 @@ export default function Book() {
     /* a release build opens the UPI app here; until a payment partner is connected its confirmation is simulated */
     await ok(api.POST('/api/dev/payments/{payment_id}/capture', { params: { path: { payment_id: pay.id }, query: { method: 'upi' } } }));
     existing.setData(await ok(api.GET('/api/bookings/{booking_id}', { params: { path: { booking_id: b.id } } })));
-  }, 'Deposit paid and held in escrow.');
+  }, 'Booked. Your deposit is in escrow and the agreement is e-stamped.');
+
+  /* the police form's missing fields, as the profile fields that fill them */
+  const POLICE: Record<string, { key: string; label: string; placeholder?: string; keyboard?: 'phone-pad' }> = {
+    father_or_guardian_name: { key: 'guardian_name', label: 'Father’s or guardian’s name' },
+    date_of_birth: { key: 'date_of_birth', label: 'Date of birth (YYYY-MM-DD)', placeholder: 'e.g. 2004-03-12' },
+    permanent_address: { key: 'home_address', label: 'Home address', placeholder: 'Permanent address' },
+    previous_address: { key: 'home_address', label: 'Home address', placeholder: 'Permanent address' },
+    emergency_contact: { key: 'emergency_contact', label: 'Emergency contact', placeholder: 'A parent or guardian’s mobile', keyboard: 'phone-pad' },
+    workplace_or_college: { key: 'works_at', label: 'College or workplace' },
+    occupation: { key: 'works_at', label: 'College or workplace' },
+  };
+  const asks = [...new Map((b?.police_missing ?? []).filter(m => POLICE[m]).map(m => [POLICE[m].key, POLICE[m]])).values()];
+  const savePolice = () => act(async () => {
+    if (!b) return;
+    await ok(api.PATCH('/api/me', { body: police }));
+    existing.setData(await ok(api.GET('/api/bookings/{booking_id}', { params: { path: { booking_id: b.id } } })));
+  }, 'Saved. The owner can submit your police verification now.');
 
   const step = (done: boolean, title: string, sub: string, last?: boolean) => (
     <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 9, borderBottomWidth: last ? 0 : 1, borderBottomColor: C.line }}>
@@ -49,35 +69,38 @@ export default function Book() {
     </View>
   );
   if (!b) return (
-    <Screen><Back /><T v="h2">Apply first</T><T v="sm">At {p.name}, the owner picks who stays. Apply, alone or with roommates; once they accept, your bed is held for 24 hours and you pay the deposit here.</T>
-      <Btn label="Apply to stay" onPress={() => router.replace(`/apply/${id}`)} /></Screen>
+    <Screen><Back /><T v="h2">Request a bed first</T><T v="sm">At {p.name}, the owner picks who stays. Send a request, alone or with roommates. When they accept, your bed is held for 24 hours for you to sign and pay.</T>
+      <Btn label="Request a bed" onPress={() => router.replace(`/apply/${id}`)} /></Screen>
   );
-  const moveIn = b?.move_in_on ?? p.move_in_on;
+  const moveIn = b.move_in_on ?? p.move_in_on;
+  const booked = b.status === 'confirmed' || b.status === 'active';
   return (
     <Screen>
       <Back />
-      <T v="h2">Book your bed</T>
-      <T v="sm">{p.name} · Room {b.room} · bed {b.bed} · {inr(rent)}/month</T>
-      {b?.status === 'hold' && b.hold_expires_at && <Note tone="soft">This bed is held for you until {time(b.hold_expires_at)}. Pay the deposit to keep it.</Note>}
-      <Card style={{ paddingVertical: 4, gap: 0 }}>
-        {step(true, 'Identity verified', 'Aadhaar via DigiLocker')}
-        {step(paid, `Deposit ${inr(deposit)}`, 'Paid by UPI, held in escrow until you move out')}
-        {step(signed && ownerSigned, 'Agreement signed', signed && !ownerSigned ? 'You signed. Waiting for the owner.' : 'Read every page, then sign with your name and a code')}
-        {step(stamped, 'E-stamped', 'Stamp duty goes to the state; Pakka Ghar charges nothing')}
-        {step(b?.police === 'verified', 'Police verification', b?.police === 'verified' ? 'Verified by the police' : b?.police === 'submitted' ? 'Submitted by the owner, waiting for the police' : 'Form prepared for the owner to submit', true)}
+      <T v="h2">{booked ? 'You’re booked' : 'Confirm and pay'}</T>
+      <T v="sm">{p.name} · Room {b.room} · bed {b.bed}</T>
+      {b.status === 'hold' && b.hold_expires_at && <Note tone="soft">Held for you until {time(b.hold_expires_at)}.</Note>}
+      <Card>
+        <T v="bodyBold">What you’re agreeing to</T>
+        <T v="sm">{b.months} months from {day(moveIn)}{'\n'}Rent {inr(rent)} a month, paid in the app{'\n'}Deposit {inr(deposit)}, held in escrow until you leave{'\n'}One month’s notice · electricity by meter at ₹{(p.tariff_paise / 100).toFixed(2)} a unit{'\n'}No cash, ever</T>
       </Card>
-      {!paid && <Btn label={`Pay ${inr(deposit)} by UPI`} disabled={busy} onPress={payDeposit} />}
-      {paid && !signed && b && <>
-        <Card><T v="bodyBold">PG accommodation agreement</T><T v="sm">{b.months} months from {day(moveIn)} · Rent {inr(rent)} · Deposit {inr(deposit)} · Notice 1 month · Electricity by meter at ₹{(p.tariff_paise / 100).toFixed(2)}/unit · Rent paid only in the app</T></Card>
-        <Btn label="Read and sign the agreement" onPress={() => router.push(`/agreement/${b.id}`)} />
-      </>}
-      {signed && !ownerSigned && b && <>
-        <Note tone="soft">The owner has been asked to sign in their app. You’ll be told here as soon as they do.</Note>
-      </>}
-      {signed && ownerSigned && !stamped && b && <Btn label="Pay ₹100 stamp duty to the state" disabled={busy} onPress={() => act(async () => existing.setData(await ok(api.POST('/api/bookings/{booking_id}/stamp', { params: { path: { booking_id: b.id } } }))), 'E-stamp certificate attached.')} />}
-      {stamped && <>
-        <Note tone="ok">All done. Move in on {day(moveIn)}. Your agreement and receipts are under My stay.</Note>
-        <Btn label="Go to My stay" onPress={() => router.replace('/stay')} />
+      <Card style={{ paddingVertical: 4, gap: 0 }}>
+        {step(ownerSigned, 'Owner signed', 'When they accepted you')}
+        {step(signed, 'You sign', 'Read every page, then confirm with a code')}
+        {step(paid, `Deposit ${inr(deposit)}`, 'One UPI payment; the agreement is e-stamped when it’s paid')}
+        {step(b.police === 'verified' || b.police === 'submitted' || (booked && asks.length === 0), 'Police verification', b.police === 'verified' ? 'Verified by the police' : b.police === 'submitted' ? 'Submitted by the owner' : booked && asks.length ? 'A few details needed, below' : 'Filled in from your Aadhaar; the owner submits it', true)}
+      </Card>
+      {!signed && <Btn label="Read and sign the agreement" onPress={() => router.push(`/agreement/${b.id}`)} />}
+      {signed && !paid && b.status === 'hold' && <Btn label={`Pay ${inr(deposit)} by UPI`} disabled={busy} onPress={payDeposit} />}
+      {booked && asks.length > 0 && <Card>
+        <T v="bodyBold">For your police verification</T>
+        <T v="sm">Police in the Tricity ask owners to verify every resident. These go only to {p.name}.</T>
+        {asks.map(a => <Field key={a.key} label={a.label} placeholder={a.placeholder} keyboard={a.keyboard} value={police[a.key] ?? ''} onChangeText={t => setPolice(x => ({ ...x, [a.key]: t }))} />)}
+        <Btn label="Save" disabled={busy || asks.some(a => !(police[a.key] ?? '').trim())} onPress={savePolice} />
+      </Card>}
+      {booked && <>
+        <Note tone="ok">Move in on {day(moveIn)}. Your agreement and receipts are under My stay.</Note>
+        <Btn kind="secondary" label="Go to My stay" onPress={() => router.replace('/stay')} />
       </>}
     </Screen>
   );

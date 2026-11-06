@@ -38,3 +38,14 @@ export async function uploadShot(path: string, shot: OnSiteShot, fields: Record<
 
 /* Photo paths from the API are relative to the server. */
 export const mediaUrl = (path: string) => (path.startsWith('http') ? path : `${API_BASE}${path}`);
+
+/* Where the phone is right now, for pinning a building while standing at it. */
+export async function whereAmI(): Promise<{ lat: number; lng: number } | null> {
+  const loc = await Location.requestForegroundPermissionsAsync();
+  if (!loc.granted) throw new ApiError(0, 'location', 'Allow location to pin the building from where you’re standing.');
+  const p = await Promise.race([
+    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High }).catch(() => null),
+    new Promise<null>(r => setTimeout(() => r(null), 12000)),
+  ]);
+  return p ? { lat: p.coords.latitude, lng: p.coords.longitude } : null;
+}

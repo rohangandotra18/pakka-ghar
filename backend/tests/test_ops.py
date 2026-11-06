@@ -162,3 +162,21 @@ def test_two_repairs_raised_at_once_both_go_through(world, monkeypatch):
     monkeypatch.setattr(repairs, 'next_number', lambda org: next(stale, None) or real(org))
     second = tenant.post('/requests', {'category': 'Plumbing', 'text': 'Shower blocked'})
     assert second.status_code == 200 and second.json()['ref'] != first['ref']
+
+
+def test_a_resident_can_say_a_repair_isnt_fixed_yet(world):
+    from apps.core.models import Notification
+
+    from .factories import stay
+    from .helpers import bed
+    with system():
+        stay(bed(world['b'], '204', 1), world['simran'], date(2026, 8, 1))
+    tenant, owner = world['api'](world['simran']), world['api'](world['owner_b'])
+    t = tenant.post('/requests', {'category': 'Plumbing', 'text': 'Tap leaking'}).json()
+    assert tenant.post(f"/requests/{t['id']}/not-fixed").json()['code'] == 'not_fixed'     # only once marked fixed
+    owner.post(f"/owner/tickets/{t['id']}/assign", {'assignee': 'Raju plumber'})
+    owner.post(f"/owner/tickets/{t['id']}/fixed")
+    assert tenant.post(f"/requests/{t['id']}/not-fixed").json()['status'] == 'Assigned'
+    assert read(lambda: Notification.objects.filter(party=world['owner_b'], kind='ticket.update').count()) == 1
+    assert owner.post(f"/owner/tickets/{t['id']}/fixed").json()['status'] == 'Fixed'           # the owner can mark it again
+    assert tenant.post(f"/requests/{t['id']}/confirm").json()['status'] == 'Confirmed'

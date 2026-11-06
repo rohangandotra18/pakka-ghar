@@ -25,7 +25,10 @@ export default function Requests() {
           <T>{r.text}</T>
           {!r.to_pakka_ghar && <View style={{ flexDirection: 'row', gap: 4 }}>{STAGES.map((st, i) => <View key={st} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= STAGES.indexOf(r.status) ? C.accent : C.line }} />)}</View>}
           <T v="sm">{r.to_pakka_ghar ? 'Sent to the Pakka Ghar trust team, not the owner' : r.assignee ? `Assigned to ${r.assignee}` : 'Waiting for the owner'}</T>
-          {r.status === 'Fixed' && !r.to_pakka_ghar && <Btn small label="Confirm it's fixed" disabled={busy} onPress={() => act(() => ok(api.POST('/api/requests/{ticket_id}/confirm', { params: { path: { ticket_id: r.id } } })), 'Thanks. The request is closed.')} />}
+          {r.status === 'Fixed' && !r.to_pakka_ghar && <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Btn small style={{ flex: 1 }} label="Confirm it's fixed" disabled={busy} onPress={() => act(() => ok(api.POST('/api/requests/{ticket_id}/confirm', { params: { path: { ticket_id: r.id } } })), 'Thanks. The request is closed.')} />
+            <Btn small kind="secondary" style={{ flex: 1 }} label="Not fixed yet" disabled={busy} onPress={() => act(() => ok(api.POST('/api/requests/{ticket_id}/not-fixed', { params: { path: { ticket_id: r.id } } })), 'Sent back to the owner.')} />
+          </View>}
         </Card>
       ))}
     </Screen>

@@ -8,7 +8,7 @@ const STEP = 10000; // ₹100
 const KINDS: Record<string, string> = { single: 'Single', double: 'Double', triple: 'Triple' };
 const MAX_BY_KIND: Record<string, number> = { single: 1, double: 2, triple: 3 };
 
-/* Apply to stay: a specific room or any room, alone or with up to two roommates. On a room that's up for bids,
+/* Request a bed: a specific room or any room, alone or with up to two roommates. On a room that's up for bids,
    the application carries a sealed bid between the rent and 15% over it. */
 export default function Apply() {
   const { id, room: preset } = useLocalSearchParams<{ id: string; room?: string }>();
@@ -42,7 +42,7 @@ export default function Apply() {
   return (
     <Screen>
       <Back />
-      <T v="h2">{bidding ? `Bid on Room ${room}` : 'Apply to stay'}</T>
+      <T v="h2">{bidding ? `Bid on Room ${room}` : 'Request a bed'}</T>
       <T v="sm">{p.name} · move in from {new Date(p.move_in_on).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}</T>
 
       <T v="label">Which room</T>
@@ -89,7 +89,7 @@ export default function Apply() {
         placeholder="Where you study or work, when you'd move in, anything they should know" placeholderTextColor={C.muted}
         style={{ minHeight: 80, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.surface, padding: 12, fontFamily: F.semi, fontSize: 15, color: C.ink, textAlignVertical: 'top' }} />
 
-      <Btn label={bidding ? `Place bid of ${inr(amount)}` : mates.length ? `Apply for ${people} beds` : 'Send application'}
+      <Btn label={bidding ? `Place bid of ${inr(amount)}` : mates.length ? `Request ${people} beds` : 'Send request'}
         disabled={busy || tooMany || mates.some(m => m.replace(/\D/g, '').length < 10)} onPress={submit} />
       <T v="sm">The owner sees your verified ID, your rental history and this note. Pakka Ghar is free.</T>
     </Screen>

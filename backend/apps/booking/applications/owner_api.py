@@ -67,9 +67,12 @@ def owner_application_out(a: Application) -> dict:
                         'works_at': m.party.works_at if m.party else '', 'score': rec['score'], 'past_stays': rec['past_stays'],
                         'status': m.status, 'is_lead': m.is_lead})
     size = len([m for m in members if m['status'] == 'joined'])
-    fits = [] if a.room_id or a.status != 'pending' else [r.number for r in svc.rooms_that_fit(a.property, size, a.move_in_on, a.room_kind)]
+    fit_rooms = [] if a.room_id or a.status != 'pending' else svc.rooms_that_fit(a.property, size, a.move_in_on, a.room_kind)
+    fits = [r.number for r in fit_rooms]
+    # an "any room" request pays the rent of the room it's put in: show the first that fits
+    rent = a.amount_paise or (a.room.rent_paise if a.room else (fit_rooms[0].rent_paise if fit_rooms else 0))
     return {'id': a.id, 'room': a.room.number if a.room else None, 'room_kind': a.room_kind or (a.room.kind if a.room else ''),
-            'amount_paise': a.amount_paise, 'rent_paise': a.amount_paise or (a.room.rent_paise if a.room else 0), 'months': a.months,
+            'amount_paise': a.amount_paise, 'rent_paise': rent, 'months': a.months,
             'move_in_on': a.move_in_on, 'message': a.message, 'status': a.status, 'size': size, 'members': members, 'fits': fits,
             'created_at': a.created_at}
 
@@ -98,11 +101,50 @@ def _app(request, app_id) -> Application:
 
 class AcceptIn(Schema):
     room: str = ''    # for an "any room" application: which room to put them in
+    challenge_id: str
+    code: str
 
 
-@router.post('/owner/applications/{app_id}/accept', response=ApplicationsOut, summary='Accept: beds are held 24 hours for each person')
+class AcceptStartOut(Schema):
+    challenge_id: str
+    phone_last4: str
+    dev_code: str | None = None
+
+
+def _ready_to_accept(request, a: Application) -> None:
+    from apps.property.models import PayoutAccount
+    if a.status != 'pending':
+        raise ApiError(409, 'not_open', 'This application isn’t waiting for you.')
+    if not PayoutAccount.objects.filter(organisation=a.organisation).exists():
+        raise ApiError(409, 'payout_first', 'Add the bank account rent is paid into, then accept.')
+
+
+@router.post('/owner/applications/{app_id}/accept/start', response=AcceptStartOut,
+             summary='Send the code that signs your side of the agreement when you accept')
+def accept_start(request, app_id: UUID):
+    from django.conf import settings
+
+    from apps.core.rls import system
+    from apps.identity.services import start_otp
+    _ready_to_accept(request, _app(request, app_id))
+    with system():
+        ch, code = start_otp(request.party.phone)
+    return {'challenge_id': str(ch.id), 'phone_last4': request.party.phone[-4:], 'dev_code': code if settings.DEV_ECHO_OTP else None}
+
+
+@router.post('/owner/applications/{app_id}/accept', response=ApplicationsOut,
+             summary='Accept and sign: each person’s bed is held 24 hours for them to sign and pay')
 def accept(request, app_id: UUID, body: AcceptIn):
-    svc.accept(_app(request, app_id), request.party, body.room)
+    from apps.core.middleware import client_ip
+
+    from ..agreements.signing import record_signature, use_code
+    from ..models import Agreement
+    a = _app(request, app_id)
+    _ready_to_accept(request, a)
+    ch = use_code(request.party, body.challenge_id, body.code)
+    for b in svc.accept(a, request.party, body.room):
+        ag = Agreement.objects.select_related('booking').get(booking=b)
+        record_signature(ag, request.party, 'owner', ch, ag.pages, client_ip(request) or None, request.headers.get('User-Agent', ''))
     return applications(request)
 
 

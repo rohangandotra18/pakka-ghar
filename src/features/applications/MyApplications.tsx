@@ -26,7 +26,7 @@ export function MyApplications() {
           </View>
         </Card>
       ))}
-      {live.length > 0 && <T v="label">Your applications</T>}
+      {live.length > 0 && <T v="label">Your requests</T>}
       {live.map(a => {
         /* once accepted, what matters is this person's own held bed: paid, still held, or the 24 hours ran out */
         const lapsed = a.status === 'accepted' && ['expired', 'cancelled'].includes(a.my_booking_status ?? '');
@@ -39,10 +39,10 @@ export function MyApplications() {
             {a.amount_paise != null && a.status === 'pending' && <T v="sm">{a.count} bid{a.count === 1 ? '' : 's'} on this room · yours is {a.rank === 1 ? 'the highest' : `number ${a.rank}`} on rent</T>}
             {others.length > 0 && <T v="sm">With {others.map(m => (m.status === 'invited' ? `••${m.phone_last4} (invite sent)` : `${m.name} (${m.status === 'joined' ? 'joined' : m.status === 'declined' ? 'said no' : m.status})`)).join(', ')}</T>}
             {a.status === 'declined' && a.decline_reason ? <T v="sm">“{a.decline_reason}”</T> : null}
-            {a.status === 'accepted' && a.my_booking_status === 'hold' && <Btn label="Pay deposit and sign" onPress={() => router.push(`/book/${a.listing}`)} />}
+            {a.status === 'accepted' && a.my_booking_status === 'hold' && <Btn label="Sign and pay" onPress={() => router.push(`/book/${a.listing}`)} />}
             {lapsed && <>
-              <T v="sm">The deposit wasn’t paid within 24 hours, so the bed was released. Apply again if it’s still free.</T>
-              <Btn small kind="secondary" label="Apply again" onPress={() => router.push(`/apply/${a.listing}`)} />
+              <T v="sm">The deposit wasn’t paid within 24 hours, so the bed was released. Request it again if it’s still free.</T>
+              <Btn small kind="secondary" label="Request again" onPress={() => router.push(`/apply/${a.listing}`)} />
             </>}
             {a.is_lead && ['forming', 'pending'].includes(a.status) && <>
               {others.filter(m => m.status === 'declined').map(m => (

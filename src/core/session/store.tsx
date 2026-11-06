@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as SecureStore from './storage';
-import { api, ok, setToken, type Schemas } from '../api/client';
+import { api, ok, onUnauthorized, setToken, type Schemas } from '../api/client';
 
 /* The app's own state: which side is on screen, the signed-in person for each side, toasts, and a version
    number that tells every screen to reload after a change. Everything else lives on the server. */
@@ -55,6 +55,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const [t, o] = await Promise.all([check(tenant, KEY.tenant), check(owner, KEY.owner)]);
       setS({ role, tenant: t, owner: o, booted: true });
     })();
+  }, []);
+
+  /* a token the server stops accepting mid-use is dropped, so the person is asked to sign in again */
+  useEffect(() => {
+    onUnauthorized(token => {
+      setS(p => {
+        const role = p.tenant?.token === token ? 'tenant' : p.owner?.token === token ? 'owner' : null;
+        if (!role) return p;
+        SecureStore.deleteItem(KEY[role]).catch(() => {});
+        return { ...p, [role]: null };
+      });
+    });
+    return () => onUnauthorized(null);
   }, []);
 
   useEffect(() => { setToken(s.role === 'owner' ? s.owner?.token ?? null : s.tenant?.token ?? null); }, [s.role, s.tenant, s.owner]);

@@ -51,7 +51,7 @@ export default function PGDetail() {
                 <T v="sm">{inr(r.rent_paise)} a bed · {r.free} of {r.beds} free</T>
                 {r.bidding && <T v="sm" style={{ color: C.warn }}>Up for bids until {closes(r.closes_at)}{r.bids ? ` · ${r.bids} bid${r.bids > 1 ? 's' : ''}` : ''}</T>}
               </View>}
-              right={!live ? <Chip label={r.bidding ? 'Bid' : 'Apply'} onPress={() => go(r.bidding ? 'offer' : 'book', `/apply/${p.id}?room=${r.number}`)} /> : undefined} />
+              right={!live ? <Chip label={r.bidding ? 'Bid' : 'Request'} onPress={() => go(r.bidding ? 'offer' : 'book', `/apply/${p.id}?room=${r.number}`)} /> : undefined} />
           ))}
         </List>
       )}
@@ -63,10 +63,10 @@ export default function PGDetail() {
         <Row left="Fees" right="None, Pakka Ghar is free" last />
       </List>
       {live
-        ? <Btn label={live.status === 'accepted' ? 'Accepted: pay your deposit' : 'See your application'} onPress={() => router.push(live.status === 'accepted' ? `/book/${p.id}` : '/stay')} />
-        : p.rooms.length > 0 && <Btn label="Apply to stay" onPress={() => go('book', `/apply/${p.id}`)} />}
+        ? <Btn label={live.status === 'accepted' ? 'Accepted: sign and pay' : 'See your request'} onPress={() => router.push(live.status === 'accepted' ? `/book/${p.id}` : '/stay')} />
+        : p.rooms.length > 0 && <Btn label="Request a bed" onPress={() => go('book', `/apply/${p.id}`)} />}
       <Btn kind="secondary" label="Schedule a tour" onPress={() => go('visit', `/tour/${p.id}`)} />
-      <T v="sm">Apply alone or with roommates. The owner sees your verified record and accepts; then you pay the deposit in the app. Pakka Ghar is free: no brokerage, no fees.</T>
+      <T v="sm">Request a bed alone or with roommates. The owner sees your verified record and accepts; then you sign and pay the deposit in one go. Pakka Ghar is free: no brokerage, no fees.</T>
       {p.photos.length > 0 && map}
     </Screen>
   );

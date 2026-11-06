@@ -13,6 +13,7 @@ export default function Today() {
     if (action === 'send_bills') return act(() => ok(api.POST('/api/owner/bills/send')), 'Bills sent. Residents see their meter reading and pay with rent.');
     const [kind, id] = action.split(':');
     if (kind === 'sign') return router.push(`/agreement/${id}`);
+    if (kind === 'police') return act(() => ok(api.POST('/api/owner/residents/{booking_id}/police/submit', { params: { path: { booking_id: id } } })), 'Police verification submitted.');
     if (kind === 'visit') return act(() => ok(api.POST('/api/owner/visits/{visit_id}/confirm', { params: { path: { visit_id: id } } })), 'Visit confirmed. They have been told.');
   };
   return (

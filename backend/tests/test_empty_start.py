@@ -8,6 +8,7 @@ from apps.maintenance.models import TrustReport
 from apps.property.models import Property
 
 from .conftest import Api, read
+from .helpers import accept
 
 
 def sign_in(phone):
@@ -34,7 +35,6 @@ def test_new_owner_to_first_booking(db):
     owner.post('/owner/rooms', {'kind': 'double', 'rooms': 2, 'rent_paise': 850000})
     owner.put('/owner/property/pin', {'lat': 30.7415, 'lng': 76.7900})
     owner.post('/owner/documents/sale_deed?file_name=deed.pdf')
-    owner.post('/owner/payout', {'bank_name': 'SBI', 'account_number': '30012345678', 'ifsc': 'SBIN0001234'})
     owner.post('/owner/no-cash-pledge')
     assert owner.post('/owner/property/submit').json()['status'] == 'submitted'
     assert owner.get('/staff/queue').status_code == 403                # owners aren't staff
@@ -49,9 +49,13 @@ def test_new_owner_to_first_booking(db):
     assert app['status'] == 'pending'
     queue = owner.get('/owner/applications').json()['applications']
     assert [a['id'] for a in queue] == [app['id']] and queue[0]['fits'] == ['101', '102']
-    owner.post(f"/owner/applications/{app['id']}/accept", {'room': '102'})
+    assert accept(owner, app['id'], '102').json()['code'] == 'payout_first'     # the bank is asked for at the first accept
+    owner.post('/owner/payout', {'bank_name': 'SBI', 'account_number': '30012345678', 'ifsc': 'SBIN0001234'})
+    assert accept(owner, app['id'], '102').status_code == 200
     b = tenant.post('/bookings', {'listing': 'gill-girls-pg'}, idem=uuid.uuid4().hex).json()
     assert (b['room'], b['rent_paise'], b['status']) == ('102', 850000, 'hold')
+    assert b['agreement']['owner_signed'] and not b['agreement']['tenant_signed']
+    assert set(b['police_missing']) >= {'father_or_guardian_name', 'date_of_birth'}   # asked before move-in, not at sign-up
 
 
 def test_confirmed_cash_report_pauses_the_listing(world):

@@ -359,7 +359,6 @@ def submit(request):
     p = _prop(request)
     party_of(request)
     missing = [m for m, ok in [('the map pin', p.lat is not None), ('the no-cash promise', p.organisation.no_cash_pledged_at),
-                               ('a payout account', PayoutAccount.objects.filter(organisation=p.organisation).exists()),
                                ('ownership papers', OwnershipDocument.objects.filter(property=p, kind__in=['sale_deed', 'lease'], status__in=['uploaded', 'accepted']).exists())] if not ok]
     if missing:
         raise ApiError(422, 'incomplete', 'Still needed: ' + ', '.join(missing) + '.')

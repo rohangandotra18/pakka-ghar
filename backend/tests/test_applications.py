@@ -12,6 +12,7 @@ from apps.core.rls import system
 from apps.property.models import Photo
 
 from .conftest import Api, read
+from .helpers import accept
 from .factories import person
 
 
@@ -33,7 +34,7 @@ def test_roommates_join_then_each_gets_a_bed_in_the_same_room(world):
     assert joined['status'] == 'pending'
     q = owner.get('/owner/applications').json()['applications']
     assert q[0]['size'] == 2 and {m['name'] for m in q[0]['members']} == {'Simran Kaur', 'Aman Verma'}
-    owner.post(f"/owner/applications/{a['id']}/accept", {})
+    accept(owner, a['id'])
     holds = read(lambda: list(Booking.objects.filter(application_id=a['id']).values_list('guest__name', 'bed__room__number', 'status')))
     assert sorted(holds) == [('Aman Verma', '204', 'hold'), ('Simran Kaur', '204', 'hold')]
     assert {x['my_booking_id'] is not None for x in _mine(aman)} == {True}        # each sees their own bed to pay for
@@ -83,10 +84,10 @@ def test_bids_are_sealed_capped_and_the_best_wins_the_room(world):
     assert world['api'](world['unverified']).post('/applications', {'listing': 'sidhu', 'room': '104', 'amount_paise': 950000}).status_code in (403, 422)
     q = owner.get('/owner/applications').json()
     assert [a['amount_paise'] for a in q['applications']] == [1030000, 1000000]   # best bid first
-    owner.post(f"/owner/applications/{lo['id']}/accept", {})
+    accept(owner, lo['id'])
     b = read(lambda: Booking.objects.get(guest=world['simran']))
     assert b.rent_paise == 1030000 and b.deposit_paise == 900000                   # a bid never raises the deposit
-    owner.post(f"/owner/applications/{hi['id']}/accept", {})                       # the other free bed in the double
+    accept(owner, hi['id'])                       # the other free bed in the double
     assert read(lambda: Booking.objects.filter(bed__room__number='101').count()) == 2
     assert not Api().get('/listings/sidhu').json()['hot']                          # room full: bidding over
 
@@ -238,4 +239,4 @@ def test_a_paused_pg_takes_no_new_tenants(world):
     assert world['api'](world['aman']).post('/applications', {'listing': 'sidhu'}).json()['code'] == 'paused'
     assert Api().get('/listings/sidhu/tour-slots').json()['slots'] == []
     assert world['api'](world['aman']).post('/visits', {'listing': 'sidhu'}).json()['code'] == 'paused'
-    assert world['api'](world['owner_a']).post(f"/owner/applications/{a['id']}/accept", {}).json()['code'] == 'paused'
+    assert accept(world['api'](world['owner_a']), a['id']).json()['code'] == 'paused'

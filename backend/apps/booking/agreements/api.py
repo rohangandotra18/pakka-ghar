@@ -136,7 +136,7 @@ def sign_start(request, booking_id: str, body: StartIn):
 class ConfirmIn(Schema):
     challenge_id: str
     code: str
-    typed_name: str
+    typed_name: str = ''   # optional: the code proves who signs
     pages_read: int
 
 

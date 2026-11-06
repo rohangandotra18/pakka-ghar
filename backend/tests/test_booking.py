@@ -12,7 +12,7 @@ from apps.core.ledger import balance
 from apps.core.rls import system
 
 from .conftest import read
-from .helpers import accepted, bed, period
+from .helpers import accepted, sign, bed, period
 
 
 def _booking(b, guest, start, status='confirmed', months=11, **kw):
@@ -53,6 +53,7 @@ def test_booking_flow_deposit_into_escrow(world):
     assert r.status_code == 200, r.content
     bk = r.json()
     assert bk['status'] == 'hold' and bk['deposit_paise'] == 900000
+    sign(api, bk['id'])
     pay = api.post(f"/bookings/{bk['id']}/deposit", idem='d1').json()
     from apps.payments.services import simulate_capture
     from apps.payments.models import Payment
@@ -87,6 +88,7 @@ def test_booking_needs_an_accepted_application(world):
 def test_cancel_reverses_the_deposit_with_a_contra_entry(world):
     api = accepted(world, world['simran'], world['owner_a'])
     bk = _book(api).json()
+    sign(api, bk['id'])
     pay = api.post(f"/bookings/{bk['id']}/deposit", idem='d2').json()
     from apps.payments.models import Payment
     from apps.payments.services import simulate_capture
@@ -106,6 +108,7 @@ def test_a_deposit_that_lands_after_cancelling_is_refunded(world):
     from apps.payments.services import simulate_capture
     api = accepted(world, world['simran'], world['owner_a'])
     bk = _book(api).json()
+    sign(api, bk['id'])
     pay = api.post(f"/bookings/{bk['id']}/deposit", idem='d3').json()
     assert api.post(f"/bookings/{bk['id']}/cancel").json()['status'] == 'cancelled'
     with system():
@@ -131,6 +134,7 @@ def test_ending_a_stay_before_moving_in_is_refused(world):
     from apps.payments.services import simulate_capture
     api = accepted(world, world['simran'], world['owner_a'])
     bk = _book(api).json()
+    sign(api, bk['id'])
     pay = api.post(f"/bookings/{bk['id']}/deposit", idem='d9').json()
     with system():
         simulate_capture(Payment.objects.get(pk=pay['id']))

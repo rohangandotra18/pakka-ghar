@@ -9,6 +9,7 @@ from apps.core.rls import system
 from apps.payments import services as pay
 
 from .. import common
+from ..police.services import police_missing
 from ..models import Booking
 from . import services as svc
 
@@ -47,6 +48,7 @@ class BookingOut(Schema):
     deposit_paid: bool
     agreement: AgreementOut
     police: str
+    police_missing: list[str]   # details the resident still has to add for the police form
     application_id: UUID | None
 
 
@@ -59,7 +61,8 @@ def booking_out(b: Booking) -> dict:
             'deposit_paid': b.payments.filter(purpose='deposit', status='captured').exists(),
             'agreement': {'tenant_signed': bool(a.tenant_signed_at), 'owner_signed': bool(a.owner_signed_at),
                           'stamped': bool(a.stamped_at), 'certificate': a.stamp_certificate, 'terms': a.terms},
-            'police': b.police.status, 'application_id': b.application_id}
+            'police': b.police.status, 'police_missing': police_missing(b) if b.police.status == 'not_started' else [],
+            'application_id': b.application_id}
 
 
 def _mine(request, booking_id) -> Booking:

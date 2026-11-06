@@ -3,13 +3,54 @@
     "schemas": {
       "AcceptIn": {
         "properties": {
+          "challenge_id": {
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
           "room": {
             "default": "",
             "title": "Room",
             "type": "string"
           }
         },
+        "required": [
+          "challenge_id",
+          "code"
+        ],
         "title": "AcceptIn",
+        "type": "object"
+      },
+      "AcceptStartOut": {
+        "properties": {
+          "challenge_id": {
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "dev_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dev Code"
+          },
+          "phone_last4": {
+            "title": "Phone Last4",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "phone_last4"
+        ],
+        "title": "AcceptStartOut",
         "type": "object"
       },
       "AgreementDocOut": {
@@ -697,6 +738,13 @@
             "title": "Police",
             "type": "string"
           },
+          "police_missing": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Police Missing",
+            "type": "array"
+          },
           "reference": {
             "title": "Reference",
             "type": "string"
@@ -731,6 +779,7 @@
           "deposit_paid",
           "agreement",
           "police",
+          "police_missing",
           "application_id"
         ],
         "title": "BookingOut",
@@ -779,6 +828,7 @@
             "type": "integer"
           },
           "typed_name": {
+            "default": "",
             "title": "Typed Name",
             "type": "string"
           }
@@ -786,7 +836,6 @@
         "required": [
           "challenge_id",
           "code",
-          "typed_name",
           "pages_read"
         ],
         "title": "ConfirmIn",
@@ -5266,7 +5315,45 @@
             "TokenAuth": []
           }
         ],
-        "summary": "Accept: beds are held 24 hours for each person",
+        "summary": "Accept and sign: each person\u2019s bed is held 24 hours for them to sign and pay",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/applications/{app_id}/accept/start": {
+      "post": {
+        "operationId": "apps_booking_applications_owner_api_accept_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "app_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "App Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptStartOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Send the code that signs your side of the agreement when you accept",
         "tags": [
           "owner"
         ]
@@ -6638,6 +6725,44 @@
           }
         ],
         "summary": "The resident confirms it's fixed",
+        "tags": [
+          "requests"
+        ]
+      }
+    },
+    "/api/requests/{ticket_id}/not-fixed": {
+      "post": {
+        "operationId": "apps_maintenance_api_not_fixed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Ticket Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "The resident says it isn't fixed: back to the owner",
         "tags": [
           "requests"
         ]

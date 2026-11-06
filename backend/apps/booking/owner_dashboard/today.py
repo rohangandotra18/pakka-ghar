@@ -6,9 +6,10 @@ from apps.core.api_support import IST, add_months, month_start, party_of, today
 from apps.maintenance.models import Ticket
 from apps.payments import services as pay
 from apps.payments.models import ElectricityRun, Invoice
-from apps.property.models import Bed
+from apps.property.models import Bed, PayoutAccount
 
 from .. import common
+from ..police.services import police_missing
 from ..models import Application, Booking, Visit
 
 router = Router(tags=['owner'])
@@ -54,6 +55,8 @@ def today_view(request):
     for room in p.rooms.filter(offers_open=True):
         n = pending.filter(room=room, amount_paise__isnull=False).count()
         todos.append({'key': f'bids-{room.number}', 'text': f'Room {room.number} is up for bids: {n} bid{"s" if n != 1 else ""} so far', 'label': 'Review', 'route': '/applications'})
+    if (stays or offers) and not PayoutAccount.objects.filter(organisation=p.organisation).exists():
+        todos.append({'key': 'payout', 'text': 'Add the bank account rent is paid into before you accept anyone', 'label': 'Add', 'route': '/onboarding/owner?step=payouts'})
     if stays:
         todos.append({'key': 'applications', 'text': f'{stays} request{"s" if stays != 1 else ""} to stay', 'label': 'Review', 'route': '/applications'})
     if open_t:
@@ -63,9 +66,12 @@ def today_view(request):
         todos.append({'key': f'sign-{b.id}', 'text': f'{b.guest.name} signed the agreement. Your signature is next.', 'label': 'Read & sign', 'route': f'/agreement/{b.id}'})
     for b in current + list(Booking.objects.filter(bed__room__property=p, status='confirmed').select_related('guest', 'police')):
         st = b.police.status
-        if st != 'verified':
-            todos.append({'key': f'police-{b.id}', 'text': f'{b.guest.name}: police verification {"submitted, awaiting police" if st == "submitted" else "not started"}',
-                          'label': 'View' if st == 'submitted' else 'Fix', 'route': f'/resident/{b.id}'})
+        if st == 'submitted':
+            todos.append({'key': f'police-{b.id}', 'text': f'{b.guest.name}: police verification submitted, awaiting police', 'label': 'View', 'route': f'/resident/{b.id}'})
+        elif st == 'not_started' and not police_missing(b):   # the form is complete: one tap sends it
+            todos.append({'key': f'police-{b.id}', 'text': f'{b.guest.name}: police form ready', 'label': 'Submit', 'action': f'police:{b.id}'})
+        elif st == 'not_started':
+            todos.append({'key': f'police-{b.id}', 'text': f'{b.guest.name}: waiting for their details for the police form', 'label': 'View', 'route': f'/resident/{b.id}'})
     for b in Booking.objects.filter(bed__room__property=p, status='ended', deposit_outcome='Deposit refund in progress').select_related('guest'):
         todos.append({'key': f'deposit-{b.id}', 'text': f'{b.guest.name} moved out: settle the deposit', 'label': 'Settle', 'route': f'/resident/{b.id}'})
     for v in Visit.objects.filter(property=p, status='requested', slot__gte=timezone.now()).select_related('tenant'):
