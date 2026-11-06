@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Loading, Back, Badge, Btn, Card, Chip, Chips, Field, Note, Screen, Stars, T } from '@/design';
+import { Loading, Back, Badge, Btn, Card, Chip, Chips, Field, Note, Screen, Stars, T, dayHour } from '@/design';
 import { api, inr, ok, type Schemas, useAction, useQuery } from '@/core/api';
 
 type App = Schemas['OwnerApplicationOut'];
-const closes = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('en-IN', { weekday: 'long', hour: 'numeric', hour12: true }).toLowerCase() : 'Friday 6 pm');
+const closes = (iso?: string | null) => (iso ? dayHour(iso) : 'Friday 6 pm');
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
 /* The owner's inbox: requests to stay (alone or with roommates) and sealed bids on rooms up for bids, best bids

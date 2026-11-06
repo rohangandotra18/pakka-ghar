@@ -22,7 +22,7 @@ class SlotsOut(Schema):
 @router.get('/listings/{slug}/tour-slots', response=SlotsOut, auth=OPTIONAL, tags=['listings'], summary='Free tour times this week')
 def tour_slots(request, slug: str):
     p = common.listing_by_slug(slug)
-    return {'slots': svc.tour_slots(p), 'hours': svc.tour_hours(p)}
+    return {'slots': svc.tour_slots(p) if p.status == 'published' else [], 'hours': svc.tour_hours(p)}
 
 
 class TourIn(Schema):
@@ -70,5 +70,5 @@ def cancel_visit(request, visit_id: UUID):
 @router.post('/visits', response=MyVisitOut, summary='Book a tour at one of the free times')
 def visit(request, body: TourIn):
     party = party_of(request)
-    v = svc.request_visit(party, common.listing_by_slug(body.listing), body.slot, body.note)
+    v = svc.request_visit(party, common.listing_by_slug(body.listing, taking_new=True), body.slot, body.note)
     return visit_out(v)

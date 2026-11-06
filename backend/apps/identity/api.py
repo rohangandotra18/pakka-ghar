@@ -98,17 +98,47 @@ class ProfileIn(Schema):
     emergency_contact: str | None = None
 
 
+LIMITS = {'name': 80, 'works_at': 120, 'guardian_name': 80, 'home_address': 300}
+
+
+def _check_profile(p, d: dict) -> None:
+    """These details go on the police verification form, so they have to be real values."""
+    from datetime import date as _date
+
+    from apps.core.api_support import today
+    for k, n in LIMITS.items():
+        if k in d and len(d[k]) > n:
+            raise ApiError(422, 'too_long', f'Keep {k.replace("_", " ")} under {n} characters.')
+    if 'name' in d and len(d['name']) < 2:
+        raise ApiError(422, 'name_needed', 'Enter your full name.')
+    if d.get('date_of_birth'):
+        try:
+            dob = _date.fromisoformat(d['date_of_birth'])
+        except ValueError:
+            raise ApiError(422, 'bad_date', 'Enter your date of birth as YYYY-MM-DD.') from None
+        age = (today() - dob).days / 365.25
+        if not 15 <= age <= 100:
+            raise ApiError(422, 'bad_date', 'Check your date of birth.')
+        d['date_of_birth'] = dob.isoformat()
+    if d.get('emergency_contact'):
+        ph = services.normalise_phone(d['emergency_contact'])   # raises with a clear message if it isn't a mobile number
+        if ph == p.phone:
+            raise ApiError(422, 'own_number', 'Give someone else’s number for emergencies, like a parent’s.')
+        d['emergency_contact'] = ph
+
+
 @router.patch('/me', response=MeOut, summary='Update name, college or work, and the police-form details')
 def update_me(request, body: ProfileIn):
     p = party_of(request)
-    d = body.model_dump(exclude_none=True)
+    d = {k: v.strip() if isinstance(v, str) else v for k, v in body.model_dump(exclude_none=True).items()}
+    _check_profile(p, d)
     if 'looking_for' in d and d['looking_for'] not in ('Boys', 'Girls', 'Co-ed'):
         raise ApiError(422, 'bad_choice', 'Choose Boys, Girls or Co-ed.')
     for k in ('name', 'works_at', 'looking_for', 'move_in_on'):
         if k in d:
             setattr(p, k, d.pop(k))
     if d:
-        p.profile = {**(p.profile or {}), **{k: v.strip() for k, v in d.items()}}
+        p.profile = {**(p.profile or {}), **d}
     p.save()
     return me_out(p)
 

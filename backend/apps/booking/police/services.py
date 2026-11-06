@@ -40,6 +40,8 @@ def prepare_police(b: Booking) -> PoliceVerification:
 
 
 def submit_police(b: Booking, actor: Party) -> PoliceVerification:
+    if b.status not in ('confirmed', 'active'):
+        raise ApiError(409, 'not_booked', 'Police verification is for a confirmed booking or a current resident.')
     pv = prepare_police(b)
     if 'missing' in pv.packet:
         raise ApiError(422, 'police_form_incomplete', 'The police form still needs: ' + ', '.join(pv.packet['missing']).replace('_', ' ') + '.')

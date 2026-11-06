@@ -80,3 +80,47 @@ def test_reset_data_needs_debug_and_yes(db):
     with system():
         assert Property.objects.count() == 0
     call_command('reset_data')  # refuses without --yes; must not raise
+
+
+def test_changing_what_was_verified_sends_a_live_pg_back_for_checking(world):
+    """After approval, the details the trust team checked (name, address, place, the pin) can't silently change:
+    editing them sends the PG back for a check. Meals and the tariff stay editable."""
+    from apps.property.models import Property
+    owner = world['api'](world['owner_a'])
+    assert owner.patch('/owner/property', {'meals': '2 meals'}).json()['status'] == 'published'
+    p = read(lambda: Property.objects.get(slug='sidhu'))
+    assert owner.put('/owner/property/pin', {'lat': float(p.lat) + 0.0004, 'lng': float(p.lng)}).json()['status'] == 'published'  # ~45 m
+    assert owner.patch('/owner/property', {'address': 'Somewhere else 9'}).json()['status'] == 'submitted'
+    assert read(lambda: Property.objects.get(slug='sidhu').status) == 'submitted'
+    assert read(lambda: Property.objects.get(slug='sidhu').attributes['recheck']) == 'changed address'
+
+
+def test_moving_the_pin_far_sends_a_live_pg_back_for_checking(world):
+    from apps.property.models import Property
+    owner = world['api'](world['owner_a'])
+    p = read(lambda: Property.objects.get(slug='sidhu'))
+    assert owner.put('/owner/property/pin', {'lat': float(p.lat) + 0.01, 'lng': float(p.lng)}).json()['status'] == 'submitted'  # ~1 km
+
+
+def test_a_too_long_value_is_a_clear_422_not_a_server_error(world):
+    r = world['api'](world['owner_a']).patch('/owner/property', {'address': 'x' * 500})
+    assert r.status_code == 422 and r.json()['code'] == 'too_long'
+    assert read(lambda: Property.objects.get(slug='sidhu').address) != 'x' * 500
+
+
+def test_search_refuses_a_place_that_isnt_one(world):
+    for qs in ('lat=nan&lng=76.7', 'lat=95&lng=76.7', 'lat=30.7', 'lng=76.7&lat=30.7&radius_km=nan'):
+        r = Api().get(f'/listings?{qs}')
+        assert r.status_code == 422, qs
+    assert Api().get('/listings?q=' + 'sector ' * 50).status_code == 200
+
+
+def test_a_confirmed_cash_report_also_pauses_a_pg_under_recheck(world):
+    call_command('make_staff', '+91 99999 00000')
+    staff = sign_in('99999 00000')
+    world['api'](world['owner_a']).patch('/owner/property', {'address': 'Somewhere else 9'})   # back for a check
+    world['api'](world['simran']).post('/requests', {'category': 'Asked to pay in cash', 'text': 'Owner wants cash', 'listing': 'sidhu'})
+    rid = staff.get('/staff/queue').json()['reports'][0]['id']
+    staff.post(f'/staff/reports/{rid}/resolve', {'outcome': 'confirmed'})
+    assert read(lambda: Property.objects.get(slug='sidhu').status) == 'paused'
+    assert staff.post('/staff/properties/sidhu/approve').status_code == 409

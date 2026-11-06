@@ -58,6 +58,7 @@ class ApplicationOut(Schema):
     rank: int | None
     closes_at: datetime | None
     my_booking_id: UUID | None
+    my_booking_status: str | None   # hold, confirmed, active, expired (the 24 hours ran out), cancelled, ended
 
 
 def member_out(m) -> dict:
@@ -76,7 +77,7 @@ def application_out(a, me=None) -> dict:
             'rent_paise': a.amount_paise or (room.rent_paise if room else 0), 'months': a.months, 'move_in_on': a.move_in_on,
             'message': a.message, 'status': a.status, 'decline_reason': a.decline_reason, 'is_lead': bool(me and a.lead_id == me.id),
             'members': members, **svc.standing(a), 'closes_at': room.offers_close_at if room and room.offers_open else None,
-            'my_booking_id': mine.id if mine else None}
+            'my_booking_id': mine.id if mine else None, 'my_booking_status': mine.status if mine else None}
 
 
 def _visible_application(party, app_id):
@@ -93,7 +94,7 @@ def _visible_application(party, app_id):
 @router.post('/applications', response=ApplicationOut, summary='Apply to stay: a room or any room, alone or with roommates, at the rent or as a bid')
 def create_application(request, body: ApplyIn):
     party = party_of(request)
-    a = svc.apply(party, common.listing_by_slug(body.listing), room_number=body.room, room_kind=body.room_kind, amount_paise=body.amount_paise,
+    a = svc.apply(party, common.listing_by_slug(body.listing, taking_new=True), room_number=body.room, room_kind=body.room_kind, amount_paise=body.amount_paise,
                   months=body.months, move_in=body.move_in_on, message=body.message, roommates=body.roommates)
     return application_out(a, party)
 

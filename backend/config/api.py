@@ -4,7 +4,7 @@ import json
 import time
 
 from django.conf import settings
-from django.db import IntegrityError, connection, transaction
+from django.db import DataError, IntegrityError, connection, transaction
 from django.db.models import Max
 from django.http import StreamingHttpResponse
 from ninja import NinjaAPI, Router, Schema, Status
@@ -62,6 +62,13 @@ def on_api_error(request, exc: ApiError):
 def on_integrity(request, exc):
     transaction.set_rollback(True)
     return api.create_response(request, {'code': 'conflict', 'message': 'That clashes with something already saved. Refresh and try again.'}, status=409)
+
+
+@api.exception_handler(DataError)
+def on_data_error(request, exc):
+    """A value too long for its column (or out of range) is the caller's mistake, not a server error."""
+    transaction.set_rollback(True)
+    return api.create_response(request, {'code': 'too_long', 'message': 'One of the details is too long. Shorten it and try again.'}, status=422)
 
 
 # one router per feature; each lives with its feature's code

@@ -1,6 +1,7 @@
 """Tours: free times from the owner's tour hours, one tour per slot."""
 from datetime import timedelta
 
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from apps.booking.common import owners_of
@@ -53,7 +54,11 @@ def request_visit(party: Party, prop: Property, slot=None, note: str = '') -> Vi
         slot = slots[0]
     elif slot not in slots:
         raise ApiError(409, 'slot_taken', 'That time isn’t free any more. Pick another.')
-    v = Visit.objects.create(organisation=prop.organisation, property=prop, tenant=party, slot=slot, note=note.strip()[:200])
+    try:
+        with transaction.atomic():
+            v = Visit.objects.create(organisation=prop.organisation, property=prop, tenant=party, slot=slot, note=note.strip()[:200])
+    except IntegrityError:   # someone took it a moment ago
+        raise ApiError(409, 'slot_taken', 'That time was just taken. Pick another.') from None
     when = slot.astimezone(ist(today()).tzinfo).strftime('%a %-d %b, %-I:%M %p').replace('AM', 'am').replace('PM', 'pm')
     for o in owners_of(prop.organisation):
         notify(o, 'visit.new', f'{party.first_name} asked for a tour on {when}.', org=prop.organisation, visit=str(v.id))

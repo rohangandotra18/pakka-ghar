@@ -128,3 +128,37 @@ def test_the_website_may_call_the_api(db, settings):
     settings.DEBUG = False
     assert c.get('/api/listings', HTTP_ORIGIN='https://pakkaghar.in')['Access-Control-Allow-Origin'] == 'https://pakkaghar.in'
     assert c.get('/api/listings', HTTP_ORIGIN='http://localhost:8081').get('Access-Control-Allow-Origin') is None
+
+
+def test_api_traffic_releases_lapsed_holds_without_celery(world):
+    """With no scheduler running, the next API request frees a bed whose hold ran out."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.booking.middleware import ReleaseLapsedHolds
+
+    from .helpers import accepted
+    tenant = accepted(world, world['simran'], world['owner_a'])
+    bid = tenant.get('/applications/mine').json()[0]['my_booking_id']
+    with system():
+        Booking.objects.filter(pk=bid).update(hold_expires_at=timezone.now() - timedelta(minutes=1))
+    ReleaseLapsedHolds.last = 0.0
+    Api().get('/listings')
+    assert read(lambda: Booking.objects.get(pk=bid).status) == 'expired'
+
+
+def test_two_repairs_raised_at_once_both_go_through(world, monkeypatch):
+    """Both residents computed the same next repair number; the second takes the number after instead of failing."""
+    from apps.maintenance import api as repairs
+
+    from .factories import stay
+    from .helpers import bed
+    with system():
+        stay(bed(world['b'], '204', 1), world['simran'], date(2026, 8, 1))
+    tenant = world['api'](world['simran'])
+    first = tenant.post('/requests', {'category': 'Plumbing', 'text': 'Tap leaking'}).json()
+    real, stale = repairs.next_number, iter([int(first['ref'].split('-')[1])])
+    monkeypatch.setattr(repairs, 'next_number', lambda org: next(stale, None) or real(org))
+    second = tenant.post('/requests', {'category': 'Plumbing', 'text': 'Shower blocked'})
+    assert second.status_code == 200 and second.json()['ref'] != first['ref']

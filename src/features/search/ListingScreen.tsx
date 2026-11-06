@@ -1,12 +1,12 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { Image, ScrollView, View } from 'react-native';
 import { MapView } from '@/shared';
-import { Loading, Back, Badge, Btn, Chip, Dot, List, Note, Row, Screen, Stars, T, C, GENDER_COLOR, R } from '@/design';
+import { Loading, Back, Badge, Btn, Chip, Dot, List, Note, Row, Screen, Stars, T, C, GENDER_COLOR, R, dayHour } from '@/design';
 import { api, inr, ok, useQuery } from '@/core/api';
 import { mediaUrl } from '@/core/device';
 import { useStore } from '@/core/session';
 
-const closes = (iso?: string | null) => (iso ? new Date(iso).toLocaleString('en-IN', { weekday: 'long', hour: 'numeric', hour12: true }).toLowerCase() : 'Friday 6 pm');
+const closes = (iso?: string | null) => (iso ? dayHour(iso) : 'Friday 6 pm');
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
 export default function PGDetail() {

@@ -1,4 +1,5 @@
 """Owner API: money in, reminders, and the year statement."""
+import re
 from datetime import date
 from uuid import UUID
 
@@ -90,6 +91,8 @@ def remind(request, invoice_id: UUID):
     inv = Invoice.objects.filter(pk=invoice_id, booking__bed__room__property=p).select_related('party').first()
     if not inv:
         raise ApiError(404, 'not_found', 'No such bill.')
+    if inv.status == 'paid':
+        raise ApiError(409, 'already_paid', 'This bill is already paid.')
     if not Reminder.objects.filter(invoice=inv, created_at__date=today()).exists():
         Reminder.objects.create(organisation=p.organisation, invoice=inv)
         from apps.core.api_support import notify
@@ -118,6 +121,8 @@ class StatementOut(Schema):
 def statement(request, fy: str | None = None):
     p = common.owner_property(request)
     fy = fy or fy_label(today())
+    if not re.fullmatch(r'20\d{2}-\d{2}', fy) or int(fy[5:]) != (int(fy[:4]) + 1) % 100:
+        raise ApiError(422, 'bad_year', 'Ask for a financial year like 2026-27.')
     start = date(int(fy[:4]), 4, 1)
     end = date(start.year + 1, 4, 1)
     lines = LedgerLine.objects.filter(organisation=p.organisation, journal__created_at__date__gte=start, journal__created_at__date__lt=end)

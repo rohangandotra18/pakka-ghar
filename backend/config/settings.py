@@ -31,6 +31,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'apps.core.middleware.RequestLog',
     'apps.core.middleware.Cors',
+    'apps.booking.middleware.ReleaseLapsedHolds',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

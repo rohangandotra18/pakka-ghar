@@ -79,3 +79,14 @@ def test_search_cost_does_not_grow_with_pgs(db):
     with CaptureQueriesContext(connection) as many:
         assert len(Api().get('/listings?lat=30.7543&lng=76.7713').json()) == 12
     assert len(many.captured_queries) == len(few.captured_queries) <= 20
+
+
+def test_police_form_details_are_checked(world):
+    api = world['api'](world['simran'])
+    assert api.patch('/me', {'date_of_birth': 'twelve march'}).json()['code'] == 'bad_date'
+    assert api.patch('/me', {'date_of_birth': '2024-01-01'}).json()['code'] == 'bad_date'        # a toddler
+    assert api.patch('/me', {'emergency_contact': '12345'}).json()['code'] == 'bad_phone'
+    assert api.patch('/me', {'emergency_contact': world['simran'].phone[3:]}).json()['code'] == 'own_number'
+    assert api.patch('/me', {'home_address': 'x' * 400}).json()['code'] == 'too_long'
+    ok = api.patch('/me', {'date_of_birth': '2004-03-12', 'emergency_contact': '98765 11111', 'name': '  Simran Kaur '})
+    assert ok.status_code == 200 and ok.json()['name'] == 'Simran Kaur'

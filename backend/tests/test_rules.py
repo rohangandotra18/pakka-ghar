@@ -88,3 +88,53 @@ def test_stay_end_to_end_bill_notice_and_move_out(world):
     bid = h['items'][0]['booking_id']
     r = owner.post(f'/owner/residents/{bid}/move-out', {'deduction_paise': 200000, 'reason': 'a broken chair', 'rating': 5}).json()
     assert r['deposit_outcome'] == '₹2,000 kept for a broken chair' and r['deposit_held_paise'] == 0
+
+
+def test_notice_never_runs_past_the_agreement(world):
+    """With ten days left on the agreement, notice ends the stay on the agreement's last day, not a month later
+    (which would also run into the next resident's booking of the bed)."""
+    from datetime import timedelta
+
+    from apps.core.api_support import today
+    with system():
+        end = today() + timedelta(days=10)
+        stay(bed(world['b'], '204', 1), world['simran'], date(2026, 1, 1), end=end)
+    s = world['api'](world['simran']).post('/stay/notice').json()['stay']
+    assert s['leaves_on'] == end.isoformat()
+
+
+def test_reminders_only_for_unpaid_bills_and_the_year_statement(world):
+    with system():
+        stay(bed(world['b'], '204', 1), world['simran'], date(2026, 8, 1))
+    tenant, owner = world['api'](world['simran']), world['api'](world['owner_b'])
+    tenant.get('/stay')                                       # this month's bill exists once the stay is read
+    row = owner.get('/owner/money').json()['rows'][0]
+    assert owner.post(f"/owner/money/{row['invoice_id']}/remind").status_code == 200
+    pid = tenant.post('/stay/pay', idem='p9').json()['id']
+    with system():
+        pay.simulate_capture(Payment.objects.get(pk=pid))
+    assert owner.post(f"/owner/money/{row['invoice_id']}/remind").json()['code'] == 'already_paid'
+    assert owner.get('/owner/statement?fy=2026-27').status_code == 200
+    for bad in ('abc', '2026', '2026-29'):
+        assert owner.get(f'/owner/statement?fy={bad}').json()['code'] == 'bad_year'
+
+
+def test_owner_can_rate_after_settling_the_deposit_separately(world):
+    with system():
+        stay(bed(world['b'], '204', 1), world['simran'], date(2026, 8, 1))
+    api = world['api'](world['simran'])
+    h = api.post('/stay/end', {'aspects': {'Cleanliness': 4, 'Food': 4, 'Owner response': 4, 'Value': 4}}).json()
+    bid = h['items'][0]['booking_id']
+    owner = world['api'](world['owner_b'])
+    # the deposit factory row has no ledger entry, so post one the way a captured deposit would
+    from apps.booking.models import Booking
+    from apps.core.ledger import post
+    with system():
+        b = Booking.objects.get(pk=bid)
+        post(b.organisation, 'deposit_captured', 'Deposit', [('escrow', None, b.deposit_paise), ('deposit_liability', b.guest, -b.deposit_paise)])
+    assert owner.post(f'/owner/residents/{bid}/move-out', {}).status_code == 200                   # settle only
+    r = owner.post(f'/owner/residents/{bid}/move-out', {'rating': 4})                            # rate later
+    assert r.status_code == 200, r.content
+    assert owner.post(f'/owner/residents/{bid}/move-out', {}).json()['code'] == 'nothing_held'   # can't settle twice
+    assert owner.post(f'/owner/residents/{bid}/police/submit').json()['code'] == 'not_booked'
+    assert [x['score'] for x in api.get('/me/data').json()['ratings_received']] == [4.0]   # owners' ratings of you are yours to see

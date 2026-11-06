@@ -1555,6 +1555,8 @@ export interface components {
             move_in_on: string;
             /** My Booking Id */
             my_booking_id: string | null;
+            /** My Booking Status */
+            my_booking_status: string | null;
             /** Name */
             name: string;
             /** Rank */
@@ -2312,6 +2314,11 @@ export interface components {
             payout: boolean;
             /** Pinned */
             pinned: boolean;
+            /**
+             * Recheck
+             * @default
+             */
+            recheck: string;
             /** Rooms */
             rooms: number;
             /**

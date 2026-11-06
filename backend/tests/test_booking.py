@@ -97,3 +97,43 @@ def test_cancel_reverses_the_deposit_with_a_contra_entry(world):
     kinds = read(lambda: sorted(Journal.objects.values_list('kind', flat=True)))
     assert kinds == ['deposit_captured', 'deposit_captured_reversal']
     assert read(lambda: balance(world['org_a'], 'escrow')) == 0
+
+
+def test_a_deposit_that_lands_after_cancelling_is_refunded(world):
+    """The tenant cancels while their UPI payment is still in flight; when the capture arrives, the money goes
+    straight back instead of sitting in escrow against a cancelled booking."""
+    from apps.payments.models import Payment
+    from apps.payments.services import simulate_capture
+    api = accepted(world, world['simran'], world['owner_a'])
+    bk = _book(api).json()
+    pay = api.post(f"/bookings/{bk['id']}/deposit", idem='d3').json()
+    assert api.post(f"/bookings/{bk['id']}/cancel").json()['status'] == 'cancelled'
+    with system():
+        simulate_capture(Payment.objects.get(pk=pay['id']))
+    assert read(lambda: Payment.objects.get(pk=pay['id']).status) == 'refunded'
+    assert read(lambda: balance(world['org_a'], 'escrow')) == 0
+    assert read(lambda: Booking.objects.get(pk=bk['id']).status) == 'cancelled'
+
+
+def test_the_owner_hears_when_a_tenant_cancels(world):
+    from apps.core.models import Notification
+    api = accepted(world, world['simran'], world['owner_a'])
+    bk = _book(api).json()
+    api.post(f"/bookings/{bk['id']}/cancel")
+    titles = read(lambda: list(Notification.objects.filter(party=world['owner_a'], kind='booking.cancelled').values_list('title', flat=True)))
+    assert len(titles) == 1 and 'cancelled' in titles[0] and 'free again' in titles[0]
+
+
+def test_ending_a_stay_before_moving_in_is_refused(world):
+    """Before move-in the way out is cancelling, which refunds the deposit in full. Ending and rating would leave the
+    deposit for the owner to settle, with deductions, for a stay that never happened."""
+    from apps.payments.models import Payment
+    from apps.payments.services import simulate_capture
+    api = accepted(world, world['simran'], world['owner_a'])
+    bk = _book(api).json()
+    pay = api.post(f"/bookings/{bk['id']}/deposit", idem='d9').json()
+    with system():
+        simulate_capture(Payment.objects.get(pk=pay['id']))
+    r = api.post('/stay/end', {'aspects': {'Cleanliness': 1, 'Food': 1, 'Owner response': 1, 'Value': 1}})
+    assert r.status_code == 409 and r.json()['code'] == 'not_moved_in'
+    assert read(lambda: Booking.objects.get(pk=bk['id']).status) == 'confirmed'

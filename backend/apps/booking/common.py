@@ -12,11 +12,14 @@ def owners_of(org) -> list[Party]:
     return [m.party for m in Membership.objects.filter(organisation=org, role__in=['owner', 'manager']).select_related('party')]
 
 
-def listing_by_slug(slug: str) -> Property:
-    """A published PG by its slug, or 404."""
+def listing_by_slug(slug: str, taking_new: bool = False) -> Property:
+    """A listed PG by its slug, or 404. With taking_new, only a live PG: a paused one (after a confirmed cash report)
+    takes no new applications, bids or tours, though bookings already under way can finish."""
     p = Property.objects.filter(slug=slug).exclude(status='draft').first()
     if not p:
         raise ApiError(404, 'not_found', 'No such PG.')
+    if taking_new and p.status != 'published':
+        raise ApiError(409, 'paused', f'{p.name} isn’t taking new tenants right now.')
     return p
 
 

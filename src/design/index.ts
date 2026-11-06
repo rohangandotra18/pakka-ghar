@@ -7,3 +7,4 @@ export * from './icons';
 export * from './Otp';
 export * from './Loading';
 export * from './TabBar';
+export * from './format';

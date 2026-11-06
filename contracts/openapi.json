@@ -274,6 +274,17 @@
             ],
             "title": "My Booking Id"
           },
+          "my_booking_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "My Booking Status"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -333,7 +344,8 @@
           "max_paise",
           "rank",
           "closes_at",
-          "my_booking_id"
+          "my_booking_id",
+          "my_booking_status"
         ],
         "title": "ApplicationOut",
         "type": "object"
@@ -2196,6 +2208,11 @@
           "pinned": {
             "title": "Pinned",
             "type": "boolean"
+          },
+          "recheck": {
+            "default": "",
+            "title": "Recheck",
+            "type": "string"
           },
           "rooms": {
             "title": "Rooms",

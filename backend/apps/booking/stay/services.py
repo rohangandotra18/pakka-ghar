@@ -24,6 +24,8 @@ def give_notice(b: Booking, party: Party) -> Booking:
         return b
     t = today()
     leave = t + timedelta(days=30 * b.bed.room.property.notice_months)
+    if b.stay_period.upper:   # never past the agreement's own end (the bed may be booked from then)
+        leave = min(leave, b.stay_period.upper.astimezone(ist(t).tzinfo).date())
     b.notice_given_on = t
     b.stay_period = DateTimeTZRange(b.stay_period.lower, ist(leave))
     b.save(update_fields=['notice_given_on', 'stay_period', 'updated_at'])
@@ -40,13 +42,15 @@ def leaves_on(b: Booking) -> date | None:
 def end_and_rate(b: Booking, party: Party, aspects: dict[str, int], deposit_on_time: bool | None, comment: str) -> Booking:
     if b.status not in ('active', 'confirmed'):
         raise ApiError(409, 'no_stay', 'There is no stay to end.')
+    if b.stay_period.lower > timezone.now():  # never moved in: that is a cancel, with the deposit back in full
+        raise ApiError(409, 'not_moved_in', 'You haven’t moved in yet. Cancel the booking instead and the deposit comes back in full.')
     if set(aspects) != set(ASPECTS) or not all(1 <= int(v) <= 5 for v in aspects.values()):
         raise ApiError(422, 'rate_all', 'Rate all four, from 1 to 5 stars.')
     score = Decimal(sum(int(v) for v in aspects.values()) / len(aspects)).quantize(Decimal('0.1'))
     Rating.objects.create(organisation=b.organisation, booking=b, tenant=party, direction='tenant_to_pg',
                           aspects=aspects, score=score, comment=comment[:2000], deposit_on_time=deposit_on_time)
     now = timezone.now()
-    b.status = 'ended' if b.stay_period.lower <= now else 'cancelled'
+    b.status = 'ended'
     b.ended_on = today()
     b.stay_period = DateTimeTZRange(b.stay_period.lower, max(now, b.stay_period.lower + timedelta(seconds=1)))
     b.deposit_outcome = 'Deposit refund in progress'

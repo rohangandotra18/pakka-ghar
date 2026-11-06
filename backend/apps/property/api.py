@@ -81,7 +81,10 @@ def search(request, lat: float | None = None, lng: float | None = None, radius_k
            gender: str | None = None, q: str | None = None):
     if not 0 < radius_km <= 25:
         raise ApiError(422, 'bad_radius', 'Radius must be between 0 and 25 km.')
-    return services.search(lat, lng, radius_km, gender, (q or '').strip() or None)
+    if (lat is None) != (lng is None) or (lat is not None and not (-90 <= lat <= 90 and -180 <= lng <= 180)):  # also refuses NaN
+        raise ApiError(422, 'bad_place', 'Send both lat and lng, as a real place.')
+    q = ' '.join((q or '').split()[:6])[:100]  # a few words is a search; more is noise
+    return services.search(lat, lng, radius_km, gender, q or None)
 
 
 @router.get('/listings/{slug}', response=ListingOut, auth=OPTIONAL, summary='One PG')
@@ -265,7 +268,28 @@ def edit_property(request, body: PropertyIn):
         setattr(p, k, v)
     p.save()
     audit(p.organisation, request.party, 'property.edit', p, before, changes)
+    changed = {k for k in changes if before[k] != changes[k]}
+    if changed & CHECKED_DETAILS:
+        _recheck(request, p, 'changed ' + ', '.join(sorted(changed & CHECKED_DETAILS)))
     return property_out(p)
+
+
+# What the trust team verified. Changing any of these on a live PG sends it back for a check, so a verified
+# listing can't be switched to another building or name.
+CHECKED_DETAILS = {'name', 'address', 'area', 'city'}
+PIN_MOVE_RECHECK_M = 150
+
+
+def _recheck(request, p, why: str) -> None:
+    if p.status != 'published':
+        return   # a draft or one already waiting is checked anyway
+    p.status = 'submitted'
+    p.attributes = {**(p.attributes or {}), 'recheck': why}
+    p.save(update_fields=['status', 'attributes', 'updated_at'])
+    audit(p.organisation, request.party, 'property.recheck', p, after={'why': why})
+    from apps.core.api_support import notify
+    notify(request.party, 'property.recheck', f'{p.name} is with the trust team again because you {why}. Residents aren’t affected; new tenants see it once it’s checked.',
+           org=p.organisation)
 
 
 class PinIn(Schema):
@@ -279,9 +303,15 @@ def pin(request, body: PinIn):
         raise ApiError(422, 'outside_tricity', 'That point is outside Chandigarh, Mohali and Panchkula.')
     p = _prop(request)
     before = {'lat': str(p.lat), 'lng': str(p.lng)}
+    moved_m = None
+    if p.lat is not None and p.lng is not None:
+        from .photos import km
+        moved_m = km(float(p.lat), float(p.lng), body.lat, body.lng) * 1000
     p.lat, p.lng = Decimal(f'{body.lat:.6f}'), Decimal(f'{body.lng:.6f}')
     p.save(update_fields=['lat', 'lng', 'updated_at'])
     audit(p.organisation, request.party, 'property.pin', p, before, {'lat': str(p.lat), 'lng': str(p.lng)})
+    if moved_m is not None and moved_m > PIN_MOVE_RECHECK_M:
+        _recheck(request, p, f'moved the pin {moved_m:,.0f} m')
     return property_out(p)
 
 

@@ -172,6 +172,11 @@ class Visit(OrgModel):
     note = models.CharField(max_length=200, blank=True)            # from the tenant ("coming with my father")
     decided_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        # one live tour per time slot at a PG, even when two tenants pick it at the same moment
+        constraints = [models.UniqueConstraint(fields=['property', 'slot'], condition=Q(status__in=['requested', 'confirmed']),
+                                               name='one_live_tour_per_slot')]
+
 
 class Rating(OrgModel):
     """End-of-stay ratings. Each side's rating stays hidden until both have rated, or 14 days pass."""

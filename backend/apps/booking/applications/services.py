@@ -205,6 +205,12 @@ def _maybe_ready(a: Application) -> None:
         _tell_owners_new(a)
 
 
+def refresh_after_leaving(a: Application) -> None:
+    """Someone left (or closed their account): if everyone still on it has joined, it now goes to the owner."""
+    a.refresh_from_db()
+    _maybe_ready(a)
+
+
 def standing(a: Application) -> dict:
     """For a bid: how many bids on the room, their range, and where this one sits. Bids are sealed: no names."""
     if not (a.is_bid and a.room_id):
@@ -220,6 +226,8 @@ def standing(a: Application) -> dict:
 def accept(a: Application, actor: Party, room_number: str = '') -> list[Booking]:
     if a.status != 'pending':
         raise ApiError(409, 'not_open', 'This application isn’t waiting for you.')
+    if a.property.status != 'published':
+        raise ApiError(409, 'paused', f'{a.property.name} is paused, so it can’t take new tenants. Contact the trust team.')
     members = [m for m in a.members.select_related('party') if m.status == 'joined']
     for m in members:
         if not m.party.verified:

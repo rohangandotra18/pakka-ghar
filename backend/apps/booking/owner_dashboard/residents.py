@@ -118,7 +118,10 @@ class SettleIn(Schema):
 @router.post('/owner/residents/{booking_id}/move-out', response=ResidentOut, summary='Settle the deposit and rate the resident')
 def move_out(request, booking_id: UUID, body: SettleIn):
     b = _booking(request, booking_id)
-    stay_svc.settle_deposit(b, request.party, body.deduction_paise, body.reason)
+    held = -balance(b.organisation, 'deposit_liability', b.guest)
+    # settling and rating can happen together or separately: a rating after the deposit went back is still welcome
+    if held > 0 or not body.rating:
+        stay_svc.settle_deposit(b, request.party, body.deduction_paise, body.reason)
     if body.rating:
         stay_svc.owner_rates(b, request.party, body.rating)
     return resident_out(b)

@@ -32,6 +32,10 @@ AI_OR_EDITOR = ('dall', 'midjourney', 'stable diffusion', 'firefly', 'imagen', '
                 'photoshop', 'lightroom', 'gimp', 'snapseed', 'picsart', 'canva', 'facetune', 'remini')
 
 
+CAMERA_FORMATS = {'JPEG', 'MPO'}
+MAX_PIXELS = 64_000_000   # above any phone camera's normal output
+
+
 def km(lat1, lng1, lat2, lng2) -> float:
     r = math.pi / 180
     h = math.sin((lat2 - lat1) * r / 2) ** 2 + math.cos(lat1 * r) * math.cos(lat2 * r) * math.sin((lng2 - lng1) * r / 2) ** 2
@@ -48,6 +52,12 @@ def _check_and_encode(raw: bytes) -> tuple[bytes, bytes, tuple[int, int]]:
         img = Image.open(io.BytesIO(raw))
     except Exception:  # noqa: BLE001 - anything Pillow can't read isn't a photo
         raise ApiError(422, 'not_a_photo', 'That file isn’t a photo.')
+    # the app's camera always produces a JPEG (MPO is a JPEG with a depth map); screenshots and other files aren't photos
+    if img.format not in CAMERA_FORMATS:
+        raise ApiError(422, 'not_a_photo', 'Take the photo with the camera in the app.')
+    # a small file can still decode to an enormous image; refuse it before it is held in memory
+    if img.size[0] * img.size[1] > MAX_PIXELS:
+        raise ApiError(413, 'too_big', 'That photo is too large. Take it again at normal quality.')
     exif = img.getexif()
     software = ' '.join(str(exif.get(t, '')) for t in (0x0131, 0x013B, 0x9286)).lower()  # Software, Artist, UserComment
     if any(k in software for k in AI_OR_EDITOR):

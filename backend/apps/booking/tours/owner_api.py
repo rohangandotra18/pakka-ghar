@@ -19,6 +19,8 @@ def confirm_visit(request, visit_id: UUID):
     v = Visit.objects.filter(pk=visit_id, property=p).first()
     if not v:
         raise ApiError(404, 'not_found', 'No such visit.')
+    if v.status != 'requested':   # a tour the tenant cancelled (or you declined) can't be brought back
+        raise ApiError(409, 'not_open', 'This tour was cancelled or already answered.')
     v.status = 'confirmed'
     v.save(update_fields=['status', 'updated_at'])
     from apps.core.api_support import notify

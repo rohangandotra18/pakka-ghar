@@ -241,15 +241,26 @@ def capture(pay: Payment, provider_payment_id: str, amount_paise: int, method: s
     return pay
 
 
+def _refund_deposit(b: Booking, pay: Payment, why: str, tell: str) -> None:
+    reverse(pay.journal, f'Deposit refunded: {why} · {b.reference}')
+    Payment.objects.filter(pk=pay.pk).update(status='refunded', updated_at=timezone.now())
+    notify(b.guest, 'booking.lost', tell, org=b.organisation)
+
+
 def _confirm_after_deposit(b: Booking, pay: Payment) -> None:
+    # locked, and read fresh: a cancel running at the same moment must not slip in between the check and the update
+    b = Booking.objects.select_for_update(of=('self',)).select_related('bed__room', 'guest', 'organisation').get(pk=b.pk)
+    if b.status not in ('hold', 'expired'):
+        # cancelled (or otherwise closed) while the payment was in flight: the money must not stay in escrow
+        _refund_deposit(b, pay, f'booking {b.status} before the payment arrived',
+                        'Your deposit arrived after the booking was cancelled, so it is being refunded in full.')
+        return
     if b.status == 'hold' or b.status == 'expired':
         try:
             with transaction.atomic():
                 Booking.objects.filter(pk=b.pk).update(status='confirmed', hold_expires_at=None, updated_at=timezone.now())
         except IntegrityError:  # the hold lapsed and someone else took the bed: give the money back
-            reverse(pay.journal, f'Deposit refunded: bed taken after hold expired · {b.reference}')
-            Payment.objects.filter(pk=pay.pk).update(status='refunded')
-            notify(b.guest, 'booking.lost', 'Your hold ran out and the bed was taken. Your deposit is being refunded.', org=b.organisation)
+            _refund_deposit(b, pay, 'bed taken after hold expired', 'Your hold ran out and the bed was taken. Your deposit is being refunded.')
             return
         from apps.booking.common import owners_of
         for o in owners_of(b.organisation):

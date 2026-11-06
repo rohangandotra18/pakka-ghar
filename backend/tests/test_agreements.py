@@ -101,3 +101,22 @@ def test_only_the_two_parties_can_read_it(world):
     assert tenant.get(link.replace('signed=false', 'signed=true')).status_code == 401
     assert tenant.get(link[:-3] + ('aaa' if link[-3:] != 'aaa' else 'bbb')).status_code == 401
     assert read(lambda: Booking.objects.get(pk=bid).agreement.document.name).startswith('agreements/')
+
+
+def test_a_code_sent_before_cancelling_cannot_sign_afterwards(world):
+    tenant, bid = _paid_booking(world, world['simran'])
+    pages = tenant.get(f'/agreements/{bid}').json()['pages']
+    st = tenant.post(f'/agreements/{bid}/sign/start', {'pages_read': pages}).json()
+    assert tenant.post(f'/bookings/{bid}/cancel').json()['status'] == 'cancelled'
+    r = tenant.post(f'/agreements/{bid}/sign', {'challenge_id': st['challenge_id'], 'code': st['dev_code'], 'typed_name': 'Simran Kaur', 'pages_read': pages})
+    assert r.status_code == 409 and r.json()['code'] == 'not_booked'
+    assert read(lambda: Agreement.objects.get(booking_id=bid).tenant_signed_at) is None
+
+
+def test_the_data_export_includes_your_signatures(world):
+    tenant, bid = _paid_booking(world, world['simran'])
+    pages = tenant.get(f'/agreements/{bid}').json()['pages']
+    assert _sign(tenant, bid, 'Simran Kaur', pages).status_code == 200
+    d = tenant.get('/me/data').json()
+    assert [s['role'] for s in d['signatures']] == ['tenant'] and d['signatures'][0]['typed_name'] == 'Simran Kaur'
+    assert d['groups_joined'] == [] and d['ratings_received'] == []

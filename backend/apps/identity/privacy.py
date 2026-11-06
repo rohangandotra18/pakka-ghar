@@ -5,12 +5,12 @@ Erasure removes what identifies the person: name, phone, ID details, police-form
 codes. Bookings, invoices, payments and the ledger stay, linked to an anonymous id, because tenancy, tax and payment
 records must be kept by law (VERIFY the retention periods with counsel before launch).
 """
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 from ninja import Router, Schema
 
-from apps.booking.models import Application, ApplicationMember, Booking, Rating, Visit
-from apps.core.api_support import ApiError, audit, party_of
+from apps.booking.models import Application, ApplicationMember, Booking, Rating, Signature, Visit
+from apps.core.api_support import ApiError, audit, notify, party_of
 from apps.core.models import LedgerLine, Membership, Notification
 from apps.core.rls import system
 from apps.maintenance.models import Ticket, TrustReport
@@ -55,6 +55,12 @@ def export(request):
                      for t in Ticket.objects.filter(raised_by=p)],
         'reports': [{'category': r.category, 'text': r.text, 'status': r.status, 'created_at': r.created_at.isoformat()}
                     for r in TrustReport.objects.filter(reporter=p)],
+        'groups_joined': [{'pg': m.application.property.name, 'status': m.status, 'joined_at': _iso(m.joined_at)}
+                          for m in ApplicationMember.objects.filter(party=p, is_lead=False).select_related('application__property')],
+        'signatures': [{'role': s.role, 'typed_name': s.typed_name, 'document_sha256': s.document_sha256, 'ip': s.ip,
+                        'device': s.user_agent, 'signed_at': s.signed_at.isoformat()} for s in Signature.objects.filter(party=p)],
+        'ratings_received': [{'score': float(r.score), 'comment': r.comment, 'created_at': r.created_at.isoformat()}
+                             for r in Rating.objects.filter(tenant=p, direction='owner_to_tenant')],
         'notifications': [{'title': n.title, 'created_at': n.created_at.isoformat()} for n in Notification.objects.filter(party=p)],
     }
     return out
@@ -85,9 +91,21 @@ def delete(request, body: DeleteIn):
         if Membership.objects.filter(party=p).exists():
             raise ApiError(409, 'owns_pg', 'You manage a PG. Hand it over or close it with the trust team first.')
         Application.objects.filter(lead=p, status__in=['forming', 'pending']).update(status='withdrawn', decided_at=timezone.now())
-        ApplicationMember.objects.filter(party=p, status__in=['invited', 'joined'], application__status__in=['forming', 'pending']).update(status='left')
-        ApplicationMember.objects.filter(party=p).update(phone='del-' + p.id.hex[:12])
-        Visit.objects.filter(tenant=p, status='requested').update(status='cancelled')
+        # seats are found by account or by number (an invite that was never answered, or turned down, has no account)
+        mine = Q(party=p) | Q(phone=p.phone)
+        seats = list(ApplicationMember.objects.filter(mine, status__in=['invited', 'joined', 'declined'],
+                                                      application__status__in=['forming', 'pending']).select_related('application'))
+        ApplicationMember.objects.filter(pk__in=[m.pk for m in seats]).update(status='left')
+        ApplicationMember.objects.filter(mine).update(phone='del-' + p.id.hex[:12])
+        from apps.booking.applications.services import refresh_after_leaving
+        for m in seats:   # the others may now all have joined: send it to the owner instead of leaving it waiting
+            refresh_after_leaving(m.application)
+        for v in Visit.objects.filter(tenant=p, status__in=['requested', 'confirmed'], slot__gte=timezone.now()).select_related('property'):
+            v.status = 'cancelled'
+            v.save(update_fields=['status', 'updated_at'])
+            from apps.booking.common import owners_of
+            for o in owners_of(v.organisation):
+                notify(o, 'visit.cancelled', 'A tour was cancelled: the tenant closed their account.', org=v.organisation)
         Notification.objects.filter(party=p).delete()
         OtpChallenge.objects.filter(phone=p.phone).delete()
         SessionToken.objects.filter(party=p, revoked_at__isnull=True).update(revoked_at=timezone.now())

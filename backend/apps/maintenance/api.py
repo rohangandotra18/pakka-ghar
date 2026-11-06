@@ -2,6 +2,7 @@
 from datetime import datetime
 from uuid import UUID
 
+from django.db import IntegrityError, transaction
 from django.db.models import Max
 from django.utils import timezone
 from ninja import Router, Schema
@@ -80,11 +81,23 @@ def raise_request(request, body: NewRequestIn):
     return ticket_out(_ticket(b, party, body.category, text))
 
 
-def _ticket(b, party, category: str, text: str) -> Ticket:
+def next_number(org) -> int:
     with system():  # numbering is per owner, across all their residents
-        n = (Ticket.objects.filter(organisation=b.organisation).aggregate(m=Max('number'))['m'] or 200) + 1
-    t = Ticket.objects.create(organisation=b.organisation, number=n, property=b.bed.room.property, room=b.bed.room,
-                              raised_by=party, category=category, text=text)
+        return (Ticket.objects.filter(organisation=org).aggregate(m=Max('number'))['m'] or 200) + 1
+
+
+def _ticket(b, party, category: str, text: str) -> Ticket:
+    # Two residents raising a repair at the same moment get the same next number; the unique constraint catches
+    # it and the second simply takes the number after.
+    for attempt in range(5):
+        try:
+            with transaction.atomic():
+                t = Ticket.objects.create(organisation=b.organisation, number=next_number(b.organisation), property=b.bed.room.property,
+                                          room=b.bed.room, raised_by=party, category=category, text=text)
+            break
+        except IntegrityError:
+            if attempt == 4:
+                raise
     for o in owners_of(b.organisation):
         notify(o, 'ticket.new', f'{party.first_name}: {category.lower()} in Room {b.bed.room.number}.', org=b.organisation, ticket=str(t.id))
     return t

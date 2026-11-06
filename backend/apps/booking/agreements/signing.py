@@ -20,20 +20,26 @@ def _norm(s: str) -> str:
     return re.sub(r'\s+', ' ', s or '').strip().lower()
 
 
-def start_signing(a: Agreement, party: Party, role: str, pages_read: int) -> tuple:
-    from apps.identity.services import start_otp
+def _check_can_sign(a: Agreement, role: str, pages_read: int) -> None:
+    """Checked when the code is sent and again when it is used: the booking can be cancelled in between."""
     b = a.booking
+    b.refresh_from_db(fields=['status'])
     if not a.document:
         raise ApiError(409, 'no_document', 'The agreement isn’t ready yet.')
     if pages_read < a.pages:
         raise ApiError(409, 'read_all', f'Read all {a.pages} pages before signing.')
-    if role == 'tenant':
-        if b.status not in ('confirmed', 'active'):
-            raise ApiError(409, 'pay_deposit_first', 'Pay the deposit before signing.')
-    elif not a.tenant_signed_at:
+    if b.status not in ('confirmed', 'active'):
+        raise ApiError(409, 'pay_deposit_first' if b.status == 'hold' else 'not_booked',
+                       'Pay the deposit before signing.' if b.status == 'hold' else 'This booking is no longer going ahead.')
+    if role != 'tenant' and not a.tenant_signed_at:
         raise ApiError(409, 'tenant_signs_first', 'The resident signs first.')
     if a.signatures.filter(role=role).exists():
         raise ApiError(409, 'already_signed', 'Already signed.')
+
+
+def start_signing(a: Agreement, party: Party, role: str, pages_read: int) -> tuple:
+    from apps.identity.services import start_otp
+    _check_can_sign(a, role, pages_read)
     with system():
         ch, code = start_otp(party.phone)
     return ch, code
@@ -44,8 +50,7 @@ def confirm_signing(a: Agreement, party: Party, role: str, challenge_id, code: s
     from apps.identity.models import OtpChallenge
     if _norm(typed_name) != _norm(party.name):
         raise ApiError(422, 'name_mismatch', f'Type your full name exactly as on your account: {party.name}.')
-    if pages_read < a.pages:
-        raise ApiError(409, 'read_all', f'Read all {a.pages} pages before signing.')
+    _check_can_sign(a, role, pages_read)
     with system():
         ch = OtpChallenge.objects.select_for_update().filter(pk=challenge_id, phone=party.phone).first()
         if not ch or ch.consumed_at or ch.expires_at < timezone.now():
@@ -57,8 +62,6 @@ def confirm_signing(a: Agreement, party: Party, role: str, challenge_id, code: s
             raise ApiError(400, 'wrong_code', 'That code is not right.', commit=True)
         ch.consumed_at = timezone.now()
         ch.save(update_fields=['consumed_at'])
-    if a.signatures.filter(role=role).exists():
-        raise ApiError(409, 'already_signed', 'Already signed.')
     Signature.objects.create(organisation=a.organisation, agreement=a, party=party, role=role, typed_name=typed_name.strip()[:120],
                              document_sha256=a.document_sha256, pages_read=pages_read, otp_challenge=ch.id, ip=ip or None,
                              user_agent=user_agent[:200])

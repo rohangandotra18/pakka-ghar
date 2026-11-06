@@ -177,6 +177,11 @@ scripts/dev-db.sh                         # local Postgres 16 (first run creates
 .venv/bin/python -m pytest                # the test suite
 ```
 
+In production, run the API with `gunicorn -c gunicorn.conf.py config.wsgi` (in `backend/`). It uses threaded
+workers because every open app keeps a live-events stream for up to five minutes. Size `WEB_WORKERS` x
+`WEB_THREADS` to the database's connection limit, and run Celery beat (with `REDIS_URL`) for hold expiry and
+monthly bills. API traffic also releases lapsed holds, so free beds are right even if beat stops.
+
 Then `npx expo start` at the root: press `i` for the iPhone simulator, `a` for Android, `w` for the website
 (http://localhost:8081). The app finds the API on Metro's host at port 8000 (set `EXPO_PUBLIC_API_URL` to
 override). For the Android emulator, also run `adb reverse tcp:8000 tcp:8000`.

@@ -41,6 +41,7 @@ class PendingProperty(Schema):
     payout: bool
     no_cash_pledged: bool
     submitted_at: datetime
+    recheck: str = ''          # why a live PG came back (e.g. "changed address"); empty for a first check
 
 
 class ReportOut(Schema):
@@ -65,7 +66,8 @@ def _pending(p: Property) -> dict:
             'beds': sum(r.beds.count() for r in p.rooms.all()),
             'documents': {d.kind: d.status for d in p.documents.all()},
             'payout': PayoutAccount.objects.filter(organisation=p.organisation).exists(),
-            'no_cash_pledged': p.organisation.no_cash_pledged_at is not None, 'submitted_at': p.updated_at}
+            'no_cash_pledged': p.organisation.no_cash_pledged_at is not None, 'submitted_at': p.updated_at,
+            'recheck': (p.attributes or {}).get('recheck', '')}
 
 
 def _report(r: TrustReport) -> dict:
@@ -100,7 +102,7 @@ def approve(request, slug: str):
             raise ApiError(409, 'incomplete', 'It needs a map pin and at least one room before it can go live.')
         now = timezone.now()
         p.status, p.published_at = 'published', now
-        p.attributes = {k: v for k, v in (p.attributes or {}).items() if k != 'review_note'}
+        p.attributes = {k: v for k, v in (p.attributes or {}).items() if k not in ('review_note', 'recheck')}
         p.save(update_fields=['status', 'published_at', 'attributes', 'updated_at'])
         org = p.organisation
         org.verified_at = org.verified_at or now
@@ -150,7 +152,7 @@ def resolve(request, report_id: UUID, body: ResolveIn):
         r.status = body.outcome
         r.save(update_fields=['status', 'updated_at'])
         p = r.property
-        if body.outcome == 'confirmed' and r.category == 'Asked to pay in cash' and p and p.status == 'published':
+        if body.outcome == 'confirmed' and r.category == 'Asked to pay in cash' and p and p.status in ('published', 'submitted'):  # also mid-recheck, so approval can't republish it
             p.status = 'paused'
             p.save(update_fields=['status', 'updated_at'])
             audit(p.organisation, who, 'property.pause', p, after={'report': str(r.id)})
