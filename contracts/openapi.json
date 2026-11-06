@@ -813,6 +813,24 @@
         "title": "ChangeIn",
         "type": "object"
       },
+      "ComingOut": {
+        "properties": {
+          "on": {
+            "title": "On",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "on",
+          "text"
+        ],
+        "title": "ComingOut",
+        "type": "object"
+      },
       "ConfirmIn": {
         "properties": {
           "challenge_id": {
@@ -1101,6 +1119,40 @@
           "rated_by"
         ],
         "title": "HistoryOut",
+        "type": "object"
+      },
+      "HomeBedOut": {
+        "properties": {
+          "bed": {
+            "title": "Bed",
+            "type": "integer"
+          },
+          "room": {
+            "title": "Room",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "who": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Who"
+          }
+        },
+        "required": [
+          "room",
+          "bed",
+          "state"
+        ],
+        "title": "HomeBedOut",
         "type": "object"
       },
       "InstantIn": {
@@ -1859,6 +1911,29 @@
           "reminded"
         ],
         "title": "MoneyRow",
+        "type": "object"
+      },
+      "MonthOut": {
+        "properties": {
+          "collected_paise": {
+            "title": "Collected Paise",
+            "type": "integer"
+          },
+          "due_paise": {
+            "title": "Due Paise",
+            "type": "integer"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period",
+          "collected_paise",
+          "due_paise"
+        ],
+        "title": "MonthOut",
         "type": "object"
       },
       "MyVisitOut": {
@@ -3678,6 +3753,14 @@
             "title": "Applications",
             "type": "integer"
           },
+          "beds": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/HomeBedOut"
+            },
+            "title": "Beds",
+            "type": "array"
+          },
           "beds_filled": {
             "title": "Beds Filled",
             "type": "integer"
@@ -3686,9 +3769,35 @@
             "title": "Beds Total",
             "type": "integer"
           },
+          "collected_paise": {
+            "default": 0,
+            "title": "Collected Paise",
+            "type": "integer"
+          },
+          "coming": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ComingOut"
+            },
+            "title": "Coming",
+            "type": "array"
+          },
+          "free_next_month": {
+            "default": 0,
+            "title": "Free Next Month",
+            "type": "integer"
+          },
           "greeting": {
             "title": "Greeting",
             "type": "string"
+          },
+          "months": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/MonthOut"
+            },
+            "title": "Months",
+            "type": "array"
           },
           "offers_open": {
             "title": "Offers Open",
@@ -3704,6 +3813,11 @@
           },
           "property": {
             "title": "Property",
+            "type": "string"
+          },
+          "property_area": {
+            "default": "",
+            "title": "Property Area",
             "type": "string"
           },
           "property_status": {
@@ -3731,6 +3845,16 @@
             },
             "title": "Todos",
             "type": "array"
+          },
+          "unpaid_count": {
+            "default": 0,
+            "title": "Unpaid Count",
+            "type": "integer"
+          },
+          "unpaid_paise": {
+            "default": 0,
+            "title": "Unpaid Paise",
+            "type": "integer"
           }
         },
         "required": [
@@ -3784,6 +3908,11 @@
           },
           "text": {
             "title": "Text",
+            "type": "string"
+          },
+          "tone": {
+            "default": "normal",
+            "title": "Tone",
             "type": "string"
           }
         },

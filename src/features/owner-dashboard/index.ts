@@ -4,3 +4,4 @@ export { default as BedsScreen } from './BedsScreen';
 export { default as MoneyScreen } from './MoneyScreen';
 export { default as ResidentsScreen } from './ResidentsScreen';
 export { default as ResidentScreen } from './ResidentScreen';
+export { default as MoreScreen } from './MoreScreen';

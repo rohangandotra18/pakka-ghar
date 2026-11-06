@@ -1807,6 +1807,13 @@ export interface components {
             /** Months */
             months?: number | null;
         };
+        /** ComingOut */
+        ComingOut: {
+            /** On */
+            on: string;
+            /** Text */
+            text: string;
+        };
         /** ConfirmIn */
         ConfirmIn: {
             /** Challenge Id */
@@ -1917,6 +1924,17 @@ export interface components {
             rated_by: number;
             /** Score */
             score: number | null;
+        };
+        /** HomeBedOut */
+        HomeBedOut: {
+            /** Bed */
+            bed: number;
+            /** Room */
+            room: string;
+            /** State */
+            state: string;
+            /** Who */
+            who?: string | null;
         };
         /** InstantIn */
         InstantIn: {
@@ -2220,6 +2238,15 @@ export interface components {
             room: string;
             /** Units */
             units: number;
+        };
+        /** MonthOut */
+        MonthOut: {
+            /** Collected Paise */
+            collected_paise: number;
+            /** Due Paise */
+            due_paise: number;
+            /** Period */
+            period: string;
         };
         /** MyVisitOut */
         MyVisitOut: {
@@ -2903,12 +2930,37 @@ export interface components {
         TodayOut: {
             /** Applications */
             applications: number;
+            /**
+             * Beds
+             * @default []
+             */
+            beds: components["schemas"]["HomeBedOut"][];
             /** Beds Filled */
             beds_filled: number;
             /** Beds Total */
             beds_total: number;
+            /**
+             * Collected Paise
+             * @default 0
+             */
+            collected_paise: number;
+            /**
+             * Coming
+             * @default []
+             */
+            coming: components["schemas"]["ComingOut"][];
+            /**
+             * Free Next Month
+             * @default 0
+             */
+            free_next_month: number;
             /** Greeting */
             greeting: string;
+            /**
+             * Months
+             * @default []
+             */
+            months: components["schemas"]["MonthOut"][];
             /** Offers Open */
             offers_open: number;
             /** Open Requests */
@@ -2917,6 +2969,11 @@ export interface components {
             owner_name: string;
             /** Property */
             property: string;
+            /**
+             * Property Area
+             * @default
+             */
+            property_area: string;
             /** Property Status */
             property_status: string;
             /** Rent Unpaid */
@@ -2925,6 +2982,16 @@ export interface components {
             review_note: string | null;
             /** Todos */
             todos: components["schemas"]["TodoOut"][];
+            /**
+             * Unpaid Count
+             * @default 0
+             */
+            unpaid_count: number;
+            /**
+             * Unpaid Paise
+             * @default 0
+             */
+            unpaid_paise: number;
         };
         /** TodoOut */
         TodoOut: {
@@ -2938,6 +3005,11 @@ export interface components {
             route?: string | null;
             /** Text */
             text: string;
+            /**
+             * Tone
+             * @default normal
+             */
+            tone: string;
         };
         /** TourHoursIn */
         TourHoursIn: {

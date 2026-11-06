@@ -22,7 +22,10 @@ export default function OwnerOnboarding() {
   const { s, signIn, updateMe, toast, refresh, ownerReady } = useStore();
   const me = s.owner?.me;
   const { step } = useLocalSearchParams<{ step?: string }>();
-  const [at, setI] = useState(step === 'payouts' ? PAYOUTS : me ? (me.verified ? 2 : 1) : 0);
+  /* opened from More to change one thing: go straight to it, and come back when done */
+  const JUMP: Record<string, number> = { details: 2, rooms: 3, photos: 4, payouts: PAYOUTS, meters: METERS, agreement: AGREEMENT };
+  const editing = !!step && step in JUMP;
+  const [at, setI] = useState(editing ? JUMP[step!] : me ? (me.verified ? 2 : 1) : 0);
   const i = me ? at : 0;   // a sign-in the server no longer accepts starts again at the phone code
   const [phone, setPhone] = useState('');
   const [challenge, setChallenge] = useState<{ id: string; code: string } | null>(null);
@@ -36,7 +39,8 @@ export default function OwnerOnboarding() {
   const f = { ...BLANK, owner: me?.name ?? '', ...(p ? { name: p.name, address: p.address, area: p.area, city: p.city, gender: p.gender, meals: p.meals } : {}), ...edits };
   const set = (k: keyof typeof BLANK) => (v: string) => setEdits(x => ({ ...x, [k]: v }));
   const city = CITIES[(f.city in CITIES ? f.city : 'chandigarh') as City];
-  const next = () => setI(n => Math.min(DONE, n + 1));
+  const back = () => (router.canGoBack() ? router.back() : router.replace('/more'));
+  const next = () => (editing ? back() : setI(n => Math.min(DONE, n + 1)));
   const run = async (fn: () => Promise<unknown>, done?: string) => {
     setBusy(true);
     try { await fn(); if (done) toast(done); refresh(); return true; } catch (e) { toast(e instanceof ApiError ? e.message : 'Something went wrong. Try again.'); return false; } finally { setBusy(false); }
@@ -56,9 +60,9 @@ export default function OwnerOnboarding() {
 
   return (
     <Screen>
-      {i < DONE && <Back label={i === 0 ? 'Back' : 'Previous'} onPress={i === 0 ? undefined : () => setI(i - 1)} />}
-      {i > DONE && step !== 'payouts' && <Back label="Back" onPress={() => setI(DONE)} />}
-      {i < DONE && <Steps i={i} labels={STEPS} />}
+      {i < DONE && <Back label={i === 0 || editing ? 'Back' : 'Previous'} onPress={i === 0 ? undefined : editing ? back : () => setI(i - 1)} />}
+      {i > DONE && <Back label="Back" onPress={() => (editing ? back() : setI(DONE))} />}
+      {i < DONE && !editing && <Steps i={i} labels={STEPS} />}
       {i === 0 && <>
         <T v="h2">Your mobile number</T>
         <Field label="Mobile number" value={phone} onChangeText={t => { setPhone(t); setChallenge(null); }} keyboard="phone-pad" placeholder="10-digit mobile number" />
@@ -110,7 +114,7 @@ export default function OwnerOnboarding() {
           <MapView height={260} center={p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : city} zoom={p.lat != null ? 17 : 13} onPick={onPick} picked={p.lat != null && p.lng != null ? { lat: p.lat, lng: p.lng } : null} />
           <T v="sm">{p.lat != null ? 'Pinned. Tap the map to nudge it onto the entrance.' : 'Or tap the map on your building’s entrance.'}</T>
         </>}
-        <Btn label={p ? 'Continue' : 'Save and pin the building'} disabled={busy || !f.name.trim() || !f.address.trim() || !f.area.trim() || (!!p && p.lat == null)} onPress={async () => {
+        <Btn label={p ? (editing ? 'Save' : 'Continue') : 'Save and pin the building'} disabled={busy || !f.name.trim() || !f.address.trim() || !f.area.trim() || (!!p && p.lat == null)} onPress={async () => {
           const body = { name: f.name.trim(), address: f.address.trim(), area: f.area.trim(), city: f.city, gender: f.gender, meals: f.meals };
           const okd = await run(async () => {
             if (f.owner.trim() !== me?.name) updateMe('owner', await ok(api.PATCH('/api/me', { body: { name: f.owner.trim() } })));
@@ -140,7 +144,7 @@ export default function OwnerOnboarding() {
           <Row left="Notice" right={`${p?.notice_months ?? 1} month`} last />
         </List>
         <T v="sm">{rooms.reduce((a, r) => a + r.beds, 0)} beds in all.</T>
-        <Btn label="Continue" disabled={!rooms.length} onPress={next} />
+        <Btn label={editing ? 'Done' : 'Continue'} disabled={!rooms.length} onPress={next} />
       </>}
       {i === 4 && <>
         <T v="h2">Photos and papers</T>
@@ -156,7 +160,7 @@ export default function OwnerOnboarding() {
           ))}
         </List>
         <T v="sm">Leasing the building? Upload a lease that allows subletting instead.</T>
-        <Btn label="Continue" onPress={next} />
+        <Btn label={editing ? 'Done' : 'Continue'} onPress={next} />
       </>}
       {i === 5 && <>
         <T v="h2">Send it for checking</T>
@@ -186,7 +190,7 @@ export default function OwnerOnboarding() {
           <Btn kind="secondary" label="Check with a ₹1 test deposit" disabled={busy || !f.bank.trim() || !f.account.trim() || f.ifsc.trim().length !== 11} onPress={() => save(() => ok(api.POST('/api/owner/payout', { body: { bank_name: f.bank, account_number: f.account, ifsc: f.ifsc } })))} />
         </>}
         <T v="sm">Rent reaches you the next working day. Deposits stay in escrow until move-out.</T>
-        <Btn label="Done" disabled={!p?.payout} onPress={() => (step === 'payouts' ? router.replace('/today') : setI(DONE))} />
+        <Btn label="Done" disabled={!p?.payout} onPress={() => (editing ? back() : setI(DONE))} />
       </>}
       {i === METERS && <>
         <T v="h2">Electricity meters</T>
@@ -195,13 +199,13 @@ export default function OwnerOnboarding() {
           {rooms.map((r, k) => <Row key={r.number} last={k === rooms.length - 1} left={`Room ${r.number}`} right={r.meter ? <Badge label={`Paired · ${r.meter}`} tone="ok" /> : <Chip label="Scan meter QR" onPress={() => save(() => ok(api.POST('/api/owner/rooms/{number}/meter', { params: { path: { number: r.number } } })))} />} />)}
         </List>
         <T v="sm">₹{((p?.tariff_paise ?? 725) / 100).toFixed(2)} per unit. The app won’t let you set it above your electricity company’s tariff (₹{((p?.max_tariff_paise ?? 750) / 100).toFixed(2)}).</T>
-        <Btn label="Done" onPress={() => setI(DONE)} />
+        <Btn label="Done" onPress={() => (editing ? back() : setI(DONE))} />
       </>}
       {i === AGREEMENT && <>
         <T v="h2">Your agreement</T>
         <T v="sm">Use your own rental agreement or the standard one. Either way it’s signed in the app; no printing, no cash.</T>
         <OwnerAgreementTemplate />
-        <Btn label="Done" onPress={() => setI(DONE)} />
+        <Btn label="Done" onPress={() => (editing ? back() : setI(DONE))} />
       </>}
     </Screen>
   );

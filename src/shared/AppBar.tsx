@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Platform, Pressable, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { C, R, SP, T, Wordmark } from '@/design';
 import { useStore } from '@/core/session';
@@ -9,6 +9,9 @@ import { useStore } from '@/core/session';
 export function AppBar() {
   const { s, setRole, canSwitch, ownerReady, signOut } = useStore();
   const [open, setOpen] = useState(false);
+  const { width } = useWindowDimensions();
+  /* on the wide website the owner's sidebar already carries the logo */
+  const sidebar = Platform.OS === 'web' && width >= 900 && s.role === 'owner';
   const me = s.session?.me;
   const first = me?.name ? me.name.split(' ')[0] : '';
   const owner = s.role === 'owner';
@@ -21,7 +24,7 @@ export function AppBar() {
   return (
     <View style={{ marginBottom: 2, zIndex: 10 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Wordmark size={28} />
+        {sidebar ? <View /> : <Wordmark size={28} />}
         <Pressable onPress={me ? () => setOpen(o => !o) : () => router.push({ pathname: '/onboarding/tenant', params: { why: 'signin' } })}
           accessibilityRole="button" accessibilityLabel={me ? `${label}. Account menu` : 'Sign in'} accessibilityState={{ expanded: open }}
           style={{ borderRadius: 999, borderWidth: 1, borderColor: C.line, backgroundColor: C.surface, paddingHorizontal: 11, paddingVertical: 6 }}>

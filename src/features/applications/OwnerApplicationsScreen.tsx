@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
-import { Loading, Back, Badge, Btn, Card, Chip, Chips, Field, Note, Otp, Screen, Stars, T, dayHour } from '@/design';
+import { AppBar } from '@/shared';
+import { Loading, Badge, Btn, Card, Chip, Chips, Field, Note, Otp, Screen, Stars, T, dayHour } from '@/design';
 import { api, ApiError, inr, ok, type Schemas, useAction, useQuery } from '@/core/api';
 
 type App = Schemas['OwnerApplicationOut'];
@@ -36,7 +37,7 @@ export default function Applications() {
     setBankFor(null);
     setSigning({ app: appId, id: r.challenge_id, code: r.dev_code ?? '', last4: r.phone_last4 });
   }, 'Bank account saved.');
-  if (!d) return <Screen><Back /><Loading error={q.error} retry={q.reload} /></Screen>;
+  if (!d) return <Screen><AppBar /><Loading error={q.error} retry={q.reload} /></Screen>;
   const card = (a: App) => {
     const pick = rooms[a.id] ?? a.fits[0];
     return (
@@ -100,8 +101,8 @@ export default function Applications() {
   const stays = d.applications.filter(a => a.amount_paise == null);
   return (
     <Screen>
-      <Back />
-      <T v="h2">Requests to stay</T>
+      <AppBar />
+      <T v="h2">Requests</T>
       {d.bidding.map(r => (
         <Card key={r.number} soft>
           <T v="bodyBold">Room {r.number} is up for bids</T>

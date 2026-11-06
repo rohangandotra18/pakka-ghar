@@ -93,3 +93,15 @@ def test_the_automatic_refund_keeps_only_the_unserved_notice(world):
     settle_overdue_deposits()
     assert read(lambda: Booking.objects.get(pk=b.pk).deposit_outcome).startswith('₹3,000 kept for rent for unserved notice')
     assert read(lambda: balance(world['org_b'], 'deductions_income')) == -300000
+
+
+def test_the_owner_home_has_money_beds_and_whats_coming(world):
+    with system():
+        stay(bed(world['b'], '204', 1), world['simran'], date(2026, 8, 1), rent=900000, notice_on=today(), end=today() + timedelta(days=20))
+    t = world['api'](world['owner_b']).get('/owner/today').json()
+    assert len(t['months']) == 6 and t['months'][-1]['period'] == today().strftime('%Y-%m')
+    assert t['unpaid_paise'] >= 900000 and t['unpaid_count'] == 1
+    assert {'filled', 'leaving', 'free'} >= {b['state'] for b in t['beds']} and any(b['state'] == 'leaving' for b in t['beds'])
+    assert any('leaves Room 204' in c['text'] for c in t['coming'])
+    assert t['free_next_month'] >= 1
+    assert all(x['tone'] in ('urgent', 'soon', 'normal') for x in t['todos'])
