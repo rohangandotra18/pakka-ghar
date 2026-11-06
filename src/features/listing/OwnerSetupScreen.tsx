@@ -66,7 +66,7 @@ export default function OwnerOnboarding() {
           <Otp code={challenge.code || '······'} />
           <Btn label="Verify" disabled={busy} onPress={() => run(async () => {
             const r = await ok(api.POST('/api/auth/otp/verify', { body: { challenge_id: challenge.id, code: challenge.code, device: 'Pakka Ghar app' } }));
-            await signIn('owner', r.token, r.me);
+            await signIn(null, r.token, r.me);
             /* an owner who already has a PG (signing in on another phone or the website) goes straight to it */
             if (r.me.verified && r.me.memberships.length) { router.replace('/today'); return; }
             setI(r.me.verified ? 2 : 1);

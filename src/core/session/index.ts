@@ -1,2 +1,2 @@
-/* Who is signed in on this device (a tenant and/or an owner), toasts, and the refresh signal. */
+/* Who is signed in on this device (one account; the side shown follows it), toasts, and the refresh signal. */
 export * from './store';

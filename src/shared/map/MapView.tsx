@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, 
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { C, R, T } from '@/design';
+import { API_BASE } from '@/core/api';
 import { MAPLIBRE_CSS, MAPLIBRE_JS } from './mapEngine.generated';
 
 /* A real street map: MapLibre GL drawing OpenStreetMap vector tiles (OpenFreeMap, no key needed).
@@ -69,7 +70,7 @@ function apply(s){
   /* move the camera only when what it frames changes, so a new pick never undoes the owner's panning */
   var cam=JSON.stringify([pts,s.zoom,!!s.fit]);if(cam===lastCam)return;lastCam=cam;
   if(s.fit&&pts.length>1){var b=new maplibregl.LngLatBounds(pts[0],pts[0]);pts.forEach(function(q){b.extend(q)});
-    map.fitBounds(b,{padding:{top:44,bottom:30,left:44,right:44},maxZoom:s.zoom||15.5,duration:first?0:450});first=false}
+    map.fitBounds(b,{padding:{top:70,bottom:56,left:70,right:70},maxZoom:s.zoom||15.5,duration:first?0:450});first=false}
   else if(s.center){var o={center:[s.center.lng,s.center.lat],zoom:s.zoom||14};if(first){map.jumpTo(o);first=false}else map.easeTo(Object.assign(o,{duration:450}))}
 }
 window.setMapState=function(s){apply(s)};
@@ -119,7 +120,7 @@ export function MapView({ height = 220, pins = [], center, radiusKm, zoom, fit, 
   }, [onPick, onPinPress]);
   return (
     <View style={{ height, borderRadius: R.lg, overflow: 'hidden', borderWidth: 1, borderColor: onPick ? C.accent : C.line, backgroundColor: C.map }}>
-      <Web key={attempt} ref={ref} source={{ html: HTML, baseUrl: 'https://pakkaghar.app/' }} originWhitelist={['*']} onMessage={onMessage}
+      <Web key={attempt} ref={ref} source={{ html: HTML, baseUrl: `${API_BASE}/` }} originWhitelist={['*']} onMessage={onMessage}
         javaScriptEnabled domStorageEnabled scrollEnabled={false} bounces={false} overScrollMode="never" nestedScrollEnabled
         setSupportMultipleWindows={false} showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false}
         onError={() => setFailed("The map couldn't load. Check your connection.")}

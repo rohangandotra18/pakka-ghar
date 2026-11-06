@@ -1,27 +1,24 @@
-import { useState } from 'react';
 import { Redirect, router } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { Btn, Hero, Screen, T, Logo, C, R, SP } from '@/design';
+import { Btn, Hero, Screen, T, Logo, C, SP } from '@/design';
 import { useStore } from '@/core/session';
 
-/* Welcome: one account, two sides. The choice decides which onboarding runs first. Someone who has been here
-   before goes straight back to their side. */
+/* Welcome: one app for tenants and owners. Signing in decides what you see: an account that runs a PG opens on
+   the owner dashboard, everyone else on Find. Someone signed in never sees this screen. */
 export default function Welcome() {
-  const { s, setRole, ownerReady } = useStore();
-  const [role, setR] = useState<'tenant' | 'owner'>('tenant');
-  if (s.role === 'owner' && ownerReady) return <Redirect href="/today" />;
+  const { s } = useStore();
+  if (s.role === 'owner') return <Redirect href="/today" />;
   if (s.role === 'tenant') return <Redirect href="/find" />;
-  const opt = (r: 'tenant' | 'owner', label: string) => (
-    <Pressable onPress={() => setR(r)} accessibilityRole="radio" accessibilityState={{ checked: role === r }}
-      style={{ borderWidth: 1.5, borderColor: role === r ? C.accent : C.line, backgroundColor: role === r ? C.accentSoft : C.surface, borderRadius: R.md, padding: SP.lg }}>
-      <T v="bodyBold">{label}</T>
-    </Pressable>
-  );
   return (
     <Screen>
       <Hero icon={<Logo size={72} />} title="Find a PG you can trust" body="Verified owners, real rent per bed, and your rent, electricity and agreement in one place. Free for everyone. No cash, ever." />
-      <View style={{ gap: SP.sm }}>{opt('tenant', "I'm looking for a place")}{opt('owner', 'I own a PG or flat')}</View>
-      <Btn label="Get started" onPress={() => { setRole(role); router.replace(role === 'tenant' ? '/find' : '/onboarding/owner'); }} />
+      <View style={{ gap: SP.sm }}>
+        <Btn label="Start looking" onPress={() => router.replace('/find')} />
+        <Btn kind="secondary" label="Sign in" onPress={() => router.push({ pathname: '/onboarding/tenant', params: { why: 'signin' } })} />
+      </View>
+      <Pressable accessibilityRole="button" onPress={() => router.push('/onboarding/owner')} style={{ alignSelf: 'center', padding: SP.sm }}>
+        <T v="smBold" style={{ color: C.accent }}>Own a PG or flat? List it free</T>
+      </Pressable>
     </Screen>
   );
 }

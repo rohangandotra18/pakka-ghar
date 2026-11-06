@@ -8,7 +8,7 @@ import { useStore } from '@/core/session';
    returns them to what they were doing. Two steps: the phone code, then Aadhaar through DigiLocker. Everything the
    police form needs is asked later, before move-in, and only from someone who has booked. */
 const STEPS = ['Mobile number', 'Verify identity'];
-const WHY: Record<string, string> = { book: 'To request a bed', offer: 'To bid on a room', visit: 'To schedule a tour', stay: 'To see your stay' };
+const WHY: Record<string, string> = { book: 'To request a bed', offer: 'To bid on a room', visit: 'To schedule a tour', stay: 'To see your stay', signin: 'To sign in' };
 
 export default function TenantOnboarding() {
   const { s, signIn, updateMe, toast, refresh } = useStore();
@@ -38,7 +38,9 @@ export default function TenantOnboarding() {
   const verifyCode = () => run(async () => {
     if (!challenge) return;
     const r = await ok(api.POST('/api/auth/otp/verify', { body: { challenge_id: challenge.id, code: challenge.code, device: 'Pakka Ghar app' } }));
-    await signIn('tenant', r.token, r.me);
+    await signIn(null, r.token, r.me);
+    /* one sign-in for everyone: an account that runs a PG opens on the owner dashboard */
+    if (r.me.memberships.length) { router.replace('/today'); return; }
     if (r.me.verified) { done(); return; }
     setName(r.me.name ?? '');
     setI(1);
@@ -58,8 +60,8 @@ export default function TenantOnboarding() {
       <Back label={i === 0 ? 'Back' : 'Previous'} onPress={i === 0 ? undefined : () => setI(0)} />
       <Steps i={i} labels={STEPS} />
       {i === 0 && <>
-        <T v="h2">Your mobile number</T>
-        <Note tone="soft">{`${WHY[why ?? ''] ?? 'To book'}, verify once. Browsing never needs an account.`}</Note>
+        <T v="h2">{why === 'signin' ? 'Sign in' : 'Your mobile number'}</T>
+        <Note tone="soft">{why === 'signin' ? 'One account for renting and for running a PG. Browsing never needs one.' : `${WHY[why ?? ''] ?? 'To book'}, verify once. Browsing never needs an account.`}</Note>
         <Field label="Mobile number" value={phone} onChangeText={t => { setPhone(t); setChallenge(null); }} keyboard="phone-pad" placeholder="10-digit mobile number" />
         {challenge ? <>
           <Otp code={challenge.code || '······'} />

@@ -23,7 +23,7 @@ export function useQuery<T>(load: () => Promise<T>, deps: unknown[] = []) {
     }
   }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { run(); }, [run, version, s.role, s.tenant?.token, s.owner?.token, ...deps]);
+  useEffect(() => { run(); }, [run, version, s.role, s.session?.token, ...deps]);
   useFocusEffect(useCallback(() => { if (seq.current) run(); }, [run]));
   return { data, error, reload: run, setData };
 }

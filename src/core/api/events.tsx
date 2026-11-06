@@ -7,7 +7,7 @@ import { API_BASE, tokenRefused } from './client';
    Each event shows as a toast and makes every screen reload. */
 export function LiveEvents() {
   const { s, refresh, toast } = useStore();
-  const token = s.role === 'owner' ? s.owner?.token : s.tenant?.token;
+  const token = s.session?.token;
   useEffect(() => {
     if (!token) return;
     let xhr: XMLHttpRequest | null = null;
