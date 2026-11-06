@@ -63,6 +63,8 @@ class StayOut(Schema):
     first_due_on: date | None
     meter: MeterOut | None
     receipts: int
+    leave_now_charge_paise: int        # rent for unserved notice if you ended the stay today (from the deposit)
+    notice_ends_on: date
 
 
 class StayEnvelope(Schema):
@@ -99,11 +101,13 @@ def stay_out(b: Booking) -> dict:
             inv = pay.charge_month(Booking.objects.get(pk=b.pk), period)
         bill = pay.invoice_out(Invoice.objects.get(pk=inv.pk))
     since, _ = svc.stay_label(b)
+    charge, ends = svc.notice_charge(b)
     return {'booking': booking_out(b), 'lat': float(prop.lat or 0), 'lng': float(prop.lng or 0), 'moved_in': moved, 'since': since,
             'leaves_on': svc.leaves_on(b), 'autopay': b.autopay, 'bill': bill,
             'first_due_on': None if moved else b.stay_period.lower.astimezone(IST).date() + timedelta(days=4),
             'meter': _meter(b) if moved else None,
-            'receipts': b.payments.filter(status='captured').count()}
+            'receipts': b.payments.filter(status='captured').count(),
+            'leave_now_charge_paise': min(charge, b.deposit_paise), 'notice_ends_on': ends}
 
 
 @router.get('/stay', response=StayEnvelope, summary='The current stay: bill, meter, agreement, deposit')

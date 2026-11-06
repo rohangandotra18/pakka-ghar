@@ -1019,6 +1019,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/owner/rooms/{number}/instant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Instant booking on (with the code) or off: verified tenants book this room without waiting */
+        post: operations["apps_booking_applications_owner_api_toggle_instant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/owner/rooms/{number}/instant/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send the code that consents to instant booking: it signs each instant acceptance for you */
+        post: operations["apps_booking_applications_owner_api_instant_start"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/owner/rooms/{number}/meter": {
         parameters: {
             query?: never;
@@ -1884,6 +1918,21 @@ export interface components {
             /** Score */
             score: number | null;
         };
+        /** InstantIn */
+        InstantIn: {
+            /**
+             * Challenge Id
+             * @default
+             */
+            challenge_id: string;
+            /**
+             * Code
+             * @default
+             */
+            code: string;
+            /** On */
+            on: boolean;
+        };
         /** InviteOut */
         InviteOut: {
             /** Amount Paise */
@@ -2551,6 +2600,8 @@ export interface components {
             leaves_on: string | null;
             /** Name */
             name: string;
+            /** Notice Charge Paise */
+            notice_charge_paise: number;
             /** Phone */
             phone: string;
             /** Police */
@@ -2561,6 +2612,8 @@ export interface components {
             rent_paise: number;
             /** Room */
             room: string;
+            /** Settle By */
+            settle_by: string | null;
             /** Since */
             since: string;
             /** Status */
@@ -2612,6 +2665,8 @@ export interface components {
             bids: number;
             /** Full */
             full: boolean;
+            /** Instant */
+            instant: boolean;
             /** Number */
             number: string;
         };
@@ -2629,6 +2684,11 @@ export interface components {
             closes_at: string | null;
             /** Free */
             free: number;
+            /**
+             * Instant
+             * @default false
+             */
+            instant: boolean;
             /** Kind */
             kind: string;
             /** Kind Label */
@@ -2775,6 +2835,8 @@ export interface components {
             first_due_on: string | null;
             /** Lat */
             lat: number;
+            /** Leave Now Charge Paise */
+            leave_now_charge_paise: number;
             /** Leaves On */
             leaves_on: string | null;
             /** Lng */
@@ -2782,6 +2844,11 @@ export interface components {
             meter: components["schemas"]["MeterOut"] | null;
             /** Moved In */
             moved_in: boolean;
+            /**
+             * Notice Ends On
+             * Format: date
+             */
+            notice_ends_on: string;
             /** Receipts */
             receipts: number;
             /** Since */
@@ -4400,6 +4467,54 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BoardOut"];
+                };
+            };
+        };
+    };
+    apps_booking_applications_owner_api_toggle_instant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstantIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BoardOut"];
+                };
+            };
+        };
+    };
+    apps_booking_applications_owner_api_instant_start: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcceptStartOut"];
                 };
             };
         };

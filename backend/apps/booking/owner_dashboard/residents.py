@@ -1,5 +1,5 @@
 """Owner API: residents, their record, police steps and move-out."""
-from datetime import date
+from datetime import date, timedelta
 from uuid import UUID
 
 from ninja import Router, Schema
@@ -67,19 +67,27 @@ class ResidentOut(Schema):
     deposit_outcome: str
     since: str
     leaves_on: date | None
+    notice_charge_paise: int        # rent for notice the resident didn't serve, which may be kept from the deposit
+    settle_by: date | None          # after this day an unsettled deposit is returned automatically
 
 
 def resident_out(b: Booking) -> dict:
     a, pv = b.agreement, b.police
     frm, _ = stay_svc.stay_label(b)
-    agreement = ('Signed · e-stamped' if a.stamped_at else 'Signed by both' if a.owner_signed_at else
+    both = a.owner_signed_at and a.tenant_signed_at
+    agreement = ('Signed · e-stamped' if a.stamped_at else 'Signed by both' if both else
+                 'You signed; waiting for the resident' if a.owner_signed_at else
                  'Waiting for your signature' if a.tenant_signed_at else 'Not signed yet')
+    from ..police.services import police_missing
+    missing = police_missing(b) if pv.status == 'not_started' and b.status in ('hold', 'confirmed', 'active') else []
     return {'booking_id': b.id, 'name': b.guest.name, 'phone': b.guest.phone, 'room': b.bed.room.number, 'status': b.status,
             'identity': 'Aadhaar verified' if b.guest.verified else 'Not verified', 'police': pv.get_status_display(),
-            'police_missing': [m.replace('_', ' ') for m in (pv.packet or {}).get('missing', [])],
+            'police_missing': [m.replace('_', ' ') for m in missing],
             'agreement': agreement, 'rent_paise': b.rent_paise, 'autopay': b.autopay, 'deposit_paise': b.deposit_paise,
             'deposit_held_paise': -balance(b.organisation, 'deposit_liability', b.guest), 'deposit_outcome': b.deposit_outcome,
-            'since': frm, 'leaves_on': stay_svc.leaves_on(b)}
+            'since': frm, 'leaves_on': stay_svc.leaves_on(b),
+            'notice_charge_paise': int((b.attributes or {}).get('notice_charge_paise', 0)),
+            'settle_by': b.ended_on + timedelta(days=stay_svc.DEPOSIT_DAYS) if b.status == 'ended' and b.ended_on else None}
 
 
 def _booking(request, booking_id) -> Booking:

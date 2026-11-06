@@ -29,7 +29,11 @@ export default function Resident() {
       {!ended && pv === 'Not started' && <Btn label="Submit police verification" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/police/submit', path)), 'Police verification submitted.')} />}
       {!ended && pv === 'Submitted' && <Btn label="Police confirmed: mark verified" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/police/verified', path)), 'Police verification: verified.')} />}
       {r.agreement === 'Waiting for your signature' && <Btn label="Read and sign the agreement" onPress={() => router.push(`/agreement/${r.booking_id}`)} />}
-      {ended && r.deposit_held_paise > 0 && <Btn label={`Return ${inr(r.deposit_held_paise)} deposit and rate 5 stars`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: 0, reason: '', rating: 5 } })), 'Deposit returned from escrow. Rating saved.')} />}
+      {ended && r.deposit_held_paise > 0 && <>
+        {r.settle_by && <Note tone="soft">Settle by {new Date(r.settle_by).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}. After that the deposit goes back automatically{r.notice_charge_paise ? `, less ${inr(Math.min(r.notice_charge_paise, r.deposit_held_paise))} for the notice ${r.name.split(' ')[0]} didn’t serve` : ''}.</Note>}
+        {r.notice_charge_paise > 0 && <Btn label={`Keep ${inr(Math.min(r.notice_charge_paise, r.deposit_held_paise))} unserved notice, return ${inr(r.deposit_held_paise - Math.min(r.notice_charge_paise, r.deposit_held_paise))}`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: Math.min(r.notice_charge_paise, r.deposit_held_paise), reason: 'rent for unserved notice', rating: 5 } })), 'Deposit settled. Rating saved.')} />}
+      {ended && r.deposit_held_paise > 0 && <Btn kind={r.notice_charge_paise > 0 ? 'secondary' : 'primary'} label={`Return ${inr(r.deposit_held_paise)} deposit and rate 5 stars`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: 0, reason: '', rating: 5 } })), 'Deposit returned from escrow. Rating saved.')} />}
+      </>}
       <Btn kind="secondary" label="Open the agreement" onPress={() => router.push(`/agreement/${r.booking_id}`)} />
     </Screen>
   );

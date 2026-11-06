@@ -68,8 +68,11 @@ STANDARD = [
     ('2. Rent and bills', 'Rent and metered electricity are paid in the app. A payment made outside the app does not count as paid. '
                           'The owner shares meter readings in the app before billing.'),
     ('3. Deposit', 'The deposit is held in escrow, not by the owner. Within 7 days of move-out the owner either releases it in full '
-                   'or releases it less a deduction for damage beyond normal wear, with a written reason in the app.'),
-    ('4. Notice', 'Either party may end this agreement with one month\'s notice given in the app.'),
+                   'or releases it less a deduction for damage beyond normal wear, with a written reason in the app. If the '
+                   'owner does neither, Pakka Ghar returns it on day 7, less only any rent for unserved notice.'),
+    ('4. Notice', 'Either party may end this agreement with one month\'s notice given in the app. A resident who leaves '
+                  'before the notice ends pays the rent for the days not served, taken from the deposit; days already '
+                  'paid for are not charged twice.'),
     ('5. Police verification', 'The resident gives the details the local police require for tenant verification. The owner '
                                'submits them before or at move-in.'),
     ('6. Repairs', 'The resident reports repairs in the app. The owner arranges repairs that are not caused by the resident.'),

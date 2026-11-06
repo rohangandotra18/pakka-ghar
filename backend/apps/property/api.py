@@ -33,6 +33,7 @@ class RoomCardOut(Schema):
     beds: int
     free: int
     bidding: bool
+    instant: bool = False   # instant booking: a verified tenant books without waiting for the owner
     cap_paise: int
     closes_at: datetime | None
     bids: int

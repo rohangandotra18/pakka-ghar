@@ -39,6 +39,11 @@ class Room(OrgModel):
     # Up for bids: tenants (alone or with roommates) bid up to 15% over the rent; the owner picks.
     offers_open = models.BooleanField(default=False)
     offers_close_at = models.DateTimeField(null=True, blank=True)
+    # Instant booking: a verified tenant's request for this room is accepted at once, signed with the consent the
+    # owner gave by code when switching it on (that code is the signature's proof, as at a normal accept).
+    instant_book = models.BooleanField(default=False)
+    instant_by = models.ForeignKey('core.Party', null=True, blank=True, on_delete=models.PROTECT, related_name='+')
+    instant_consent = models.UUIDField(null=True, blank=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['property', 'number'], name='uniq_room_number')]

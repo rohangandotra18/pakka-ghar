@@ -25,6 +25,7 @@ class RoomBoardOut(Schema):
     number: str
     full: bool
     bidding: bool
+    instant: bool
     bids: int
     beds: list[BedOut]
 
@@ -61,7 +62,7 @@ def beds(request):
                 cells.append({'bed_id': bed.id, 'label': bed.label, 'who': None, 'tag': 'offers' if room.offers_open else 'free',
                               'note': 'Up for bids' if room.offers_open else 'Free · listed'})
         full += all_full
-        rooms.append({'number': room.number, 'full': all_full, 'bidding': room.offers_open, 'beds': cells,
+        rooms.append({'number': room.number, 'full': all_full, 'bidding': room.offers_open, 'instant': room.instant_book, 'beds': cells,
                       'bids': Application.objects.filter(room=room, status='pending', amount_paise__isnull=False).count()})
     return {'free': free, 'rooms': rooms, 'full_rooms': full}
 

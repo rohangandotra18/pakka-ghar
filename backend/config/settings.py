@@ -108,6 +108,7 @@ CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
     'release-expired-holds': {'task': 'apps.booking.tasks.release_expired_holds', 'schedule': 60.0},
+    'settle-overdue-deposits': {'task': 'apps.booking.tasks.settle_overdue_deposits', 'schedule': crontab(minute=15)},
     'charge-rent': {'task': 'apps.payments.tasks.charge_rent_for_month', 'schedule': crontab(minute=5, hour=0, day_of_month=1)},
     'settle-to-banks': {'task': 'apps.payments.tasks.settle_all', 'schedule': crontab(minute=0, hour=10)},
     'purge-expired': {'task': 'apps.core.tasks.purge_expired', 'schedule': crontab(minute=30, hour=3)},

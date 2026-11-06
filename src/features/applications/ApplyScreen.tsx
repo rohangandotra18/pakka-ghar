@@ -32,12 +32,15 @@ export default function Apply() {
   const tooMany = people > room_for;
   const kinds = [...new Set(p.rooms.filter(x => !x.bidding).map(x => x.kind))];
   const submit = () => act(async () => {
-    await ok(api.POST('/api/applications', { body: {
+    const a = await ok(api.POST('/api/applications', { body: {
       listing: id, room, room_kind: room ? '' : kind, amount_paise: bidding ? amount : null, months, message,
       roommates: mates.map(m => m.trim()).filter(Boolean),
     } }));
-    router.replace('/stay');
-  }, mates.length ? 'Sent. Your roommates get an invite; it goes to the owner once they join.' : 'Sent to the owner. You’ll hear in the app.');
+    /* on a room with instant booking the bed is already held and signed by the owner: straight to sign and pay */
+    router.replace(a.status === 'accepted' ? `/book/${id}` : '/stay');
+    return a;
+  }, a => (a.status === 'accepted' ? 'Booked instantly. Sign and pay the deposit to keep it.'
+    : mates.length ? 'Sent. Your roommates get an invite; it goes to the owner once they join.' : 'Sent to the owner. You’ll hear in the app.'));
 
   return (
     <Screen>
@@ -89,7 +92,7 @@ export default function Apply() {
         placeholder="Where you study or work, when you'd move in, anything they should know" placeholderTextColor={C.muted}
         style={{ minHeight: 80, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.surface, padding: 12, fontFamily: F.semi, fontSize: 15, color: C.ink, textAlignVertical: 'top' }} />
 
-      <Btn label={bidding ? `Place bid of ${inr(amount)}` : mates.length ? `Request ${people} beds` : 'Send request'}
+      <Btn label={bidding ? `Place bid of ${inr(amount)}` : mates.length ? `Request ${people} beds` : p.rooms.find(x => x.number === room)?.instant ? 'Book now' : 'Send request'}
         disabled={busy || tooMany || mates.some(m => m.replace(/\D/g, '').length < 10)} onPress={submit} />
       <T v="sm">The owner sees your verified ID, your rental history and this note. Pakka Ghar is free.</T>
     </Screen>

@@ -49,9 +49,10 @@ export default function PGDetail() {
               left={<View style={{ gap: 2 }}>
                 <T v="bodyBold">Room {r.number} · {r.kind_label}</T>
                 <T v="sm">{inr(r.rent_paise)} a bed · {r.free} of {r.beds} free</T>
+                {r.instant && r.free > 0 && <T v="sm" style={{ color: C.ok }}>Instant booking: book now, no waiting for the owner</T>}
                 {r.bidding && <T v="sm" style={{ color: C.warn }}>Up for bids until {closes(r.closes_at)}{r.bids ? ` · ${r.bids} bid${r.bids > 1 ? 's' : ''}` : ''}</T>}
               </View>}
-              right={!live ? <Chip label={r.bidding ? 'Bid' : 'Request'} onPress={() => go(r.bidding ? 'offer' : 'book', `/apply/${p.id}?room=${r.number}`)} /> : undefined} />
+              right={!live ? <Chip label={r.bidding ? 'Bid' : r.instant ? 'Book now' : 'Request'} onPress={() => go(r.bidding ? 'offer' : 'book', `/apply/${p.id}?room=${r.number}`)} /> : undefined} />
           ))}
         </List>
       )}

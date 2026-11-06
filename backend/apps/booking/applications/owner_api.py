@@ -176,3 +176,42 @@ def toggle_bidding(request, number: str, body: BiddingIn):
     elif not body.open and room.offers_open:
         svc.close_bidding(room, request.party, reason=f'{p.name} stopped taking bids on Room {number}. You can apply at the listed rent.')
     return beds(request)
+
+
+def _room(request, number):
+    from apps.property.models import Room
+    room = Room.objects.filter(property=common.owner_property(request), number=number).first()
+    if not room:
+        raise ApiError(404, 'not_found', f'No room {number}.')
+    return room
+
+
+@router.post('/owner/rooms/{number}/instant/start', response=AcceptStartOut,
+             summary='Send the code that consents to instant booking: it signs each instant acceptance for you')
+def instant_start(request, number: str):
+    from django.conf import settings
+
+    from apps.core.rls import system
+    from apps.identity.services import start_otp
+    from apps.property.models import PayoutAccount
+    room = _room(request, number)
+    if room.offers_open:
+        raise ApiError(409, 'bidding_on', f'Room {number} is up for bids. Stop the bidding first.')
+    if not PayoutAccount.objects.filter(organisation=room.organisation).exists():
+        raise ApiError(409, 'payout_first', 'Add the bank account rent is paid into first.')
+    with system():
+        ch, code = start_otp(request.party.phone)
+    return {'challenge_id': str(ch.id), 'phone_last4': request.party.phone[-4:], 'dev_code': code if settings.DEV_ECHO_OTP else None}
+
+
+class InstantIn(Schema):
+    on: bool
+    challenge_id: str = ''
+    code: str = ''
+
+
+@router.post('/owner/rooms/{number}/instant', response=BoardOut,
+             summary='Instant booking on (with the code) or off: verified tenants book this room without waiting')
+def toggle_instant(request, number: str, body: InstantIn):
+    svc.set_instant(_room(request, number), request.party, body.on, body.challenge_id or None, body.code)
+    return beds(request)

@@ -96,7 +96,7 @@ def listings(props: list[Property], near: tuple[float, float] | None = None) -> 
             n_free = sum(1 for bd in free if bd.room_id == r.id)
             st = stats.get(r.id)
             room_cards.append({'number': r.number, 'kind': r.kind, 'kind_label': r.get_kind_display(), 'rent_paise': r.rent_paise,
-                               'beds': sum(1 for bd in beds[p.id] if bd.room_id == r.id), 'free': n_free, 'bidding': r.offers_open,
+                               'beds': sum(1 for bd in beds[p.id] if bd.room_id == r.id), 'free': n_free, 'bidding': r.offers_open, 'instant': r.instant_book and not r.offers_open,
                                'cap_paise': offer_cap_paise(r.rent_paise), 'closes_at': r.offers_close_at if r.offers_open else None,
                                'bids': st['n'] if st else 0, 'min_bid_paise': st['lo'] if st else None, 'max_bid_paise': st['hi'] if st else None})
         lat, lng = float(p.lat or 0), float(p.lng or 0)

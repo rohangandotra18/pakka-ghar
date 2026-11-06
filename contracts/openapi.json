@@ -1103,6 +1103,29 @@
         "title": "HistoryOut",
         "type": "object"
       },
+      "InstantIn": {
+        "properties": {
+          "challenge_id": {
+            "default": "",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "code": {
+            "default": "",
+            "title": "Code",
+            "type": "string"
+          },
+          "on": {
+            "title": "On",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "on"
+        ],
+        "title": "InstantIn",
+        "type": "object"
+      },
       "InviteOut": {
         "properties": {
           "amount_paise": {
@@ -2830,6 +2853,10 @@
             "title": "Name",
             "type": "string"
           },
+          "notice_charge_paise": {
+            "title": "Notice Charge Paise",
+            "type": "integer"
+          },
           "phone": {
             "title": "Phone",
             "type": "string"
@@ -2852,6 +2879,18 @@
           "room": {
             "title": "Room",
             "type": "string"
+          },
+          "settle_by": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settle By"
           },
           "since": {
             "title": "Since",
@@ -2878,7 +2917,9 @@
           "deposit_held_paise",
           "deposit_outcome",
           "since",
-          "leaves_on"
+          "leaves_on",
+          "notice_charge_paise",
+          "settle_by"
         ],
         "title": "ResidentOut",
         "type": "object"
@@ -2999,6 +3040,10 @@
             "title": "Full",
             "type": "boolean"
           },
+          "instant": {
+            "title": "Instant",
+            "type": "boolean"
+          },
           "number": {
             "title": "Number",
             "type": "string"
@@ -3008,6 +3053,7 @@
           "number",
           "full",
           "bidding",
+          "instant",
           "bids",
           "beds"
         ],
@@ -3047,6 +3093,11 @@
           "free": {
             "title": "Free",
             "type": "integer"
+          },
+          "instant": {
+            "default": false,
+            "title": "Instant",
+            "type": "boolean"
           },
           "kind": {
             "title": "Kind",
@@ -3460,6 +3511,10 @@
             "title": "Lat",
             "type": "number"
           },
+          "leave_now_charge_paise": {
+            "title": "Leave Now Charge Paise",
+            "type": "integer"
+          },
           "leaves_on": {
             "anyOf": [
               {
@@ -3490,6 +3545,11 @@
             "title": "Moved In",
             "type": "boolean"
           },
+          "notice_ends_on": {
+            "format": "date",
+            "title": "Notice Ends On",
+            "type": "string"
+          },
           "receipts": {
             "title": "Receipts",
             "type": "integer"
@@ -3510,7 +3570,9 @@
           "bill",
           "first_due_on",
           "meter",
-          "receipts"
+          "receipts",
+          "leave_now_charge_paise",
+          "notice_ends_on"
         ],
         "title": "StayOut",
         "type": "object"
@@ -6279,6 +6341,90 @@
           }
         ],
         "summary": "Put a room up for bids until Friday 6 pm, or stop",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/rooms/{number}/instant": {
+      "post": {
+        "operationId": "apps_booking_applications_owner_api_toggle_instant",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstantIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Instant booking on (with the code) or off: verified tenants book this room without waiting",
+        "tags": [
+          "owner"
+        ]
+      }
+    },
+    "/api/owner/rooms/{number}/instant/start": {
+      "post": {
+        "operationId": "apps_booking_applications_owner_api_instant_start",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "number",
+            "required": true,
+            "schema": {
+              "title": "Number",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptStartOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Send the code that consents to instant booking: it signs each instant acceptance for you",
         "tags": [
           "owner"
         ]
