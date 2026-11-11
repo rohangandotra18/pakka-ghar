@@ -1,0 +1,92 @@
+{
+  "contact_email": "you@example.com",
+  "data_dir": "data",
+  "every_hours": 6,
+  "min_delay_seconds": 3,
+  "timeout_seconds": 60,
+  "retries": 3,
+  "max_download_mb": 40,
+  "sources": {
+    "hrera": {
+      "module": "hrera",
+      "name": "Haryana RERA, Panchkula bench",
+      "enabled": true,
+      "publish": false,
+      "every_hours": 24,
+      "export_districts": ["Panchkula"],
+      "attribution": "Source: Haryana Real Estate Regulatory Authority, Panchkula (haryanarera.gov.in)",
+      "note": "Lists verified 2026-10-29. Terms: reproduction needs permission by email."
+    },
+    "gmada": {
+      "module": "docs",
+      "name": "GMADA (Mohali, Aerocity, IT City, Eco City)",
+      "enabled": true,
+      "publish": false,
+      "download": true,
+      "pages": [
+        "https://gmada.gov.in/en/public-notices",
+        "https://gmada.gov.in/en/information/zoning-layout-plans"
+      ],
+      "hosts": ["gmada.gov.in"],
+      "attribution": "Source: Greater Mohali Area Development Authority (gmada.gov.in)",
+      "note": "Not reachable from outside India; run with --probe first to check the page URLs."
+    },
+    "puda": {
+      "module": "docs",
+      "name": "PUDA (Punjab, incl. Zirakpur and Kharar)",
+      "enabled": true,
+      "publish": false,
+      "download": true,
+      "pages": ["https://puda.punjab.gov.in/?q=zoning-plans"],
+      "hosts": ["puda.punjab.gov.in"],
+      "attribution": "Source: Punjab Urban Planning & Development Authority (puda.punjab.gov.in)",
+      "note": "Not reachable from outside India; run with --probe first."
+    },
+    "hsvp": {
+      "module": "docs",
+      "name": "HSVP (Panchkula sectors)",
+      "enabled": true,
+      "publish": false,
+      "download": false,
+      "pages": ["https://hsvphry.org.in/"],
+      "hosts": ["hsvphry.org.in"],
+      "attribution": "Source: Haryana Shehri Vikas Pradhikaran (hsvphry.org.in)",
+      "note": "Start page only; after a probe, replace with the notices and auction pages."
+    },
+    "chandigarh": {
+      "module": "docs",
+      "name": "Chandigarh Administration and Chandigarh Housing Board",
+      "enabled": true,
+      "publish": false,
+      "download": false,
+      "pages": ["https://chandigarh.gov.in/", "https://chbonline.in/"],
+      "hosts": ["chandigarh.gov.in", "chd.gov.in", "chbonline.in"],
+      "attribution": "Source: Chandigarh Administration / Chandigarh Housing Board",
+      "note": "Start pages only; after a probe, point at the Estate Office notices, collector rates and CHB schemes pages."
+    },
+    "punjab_rera": {
+      "module": "docs",
+      "name": "Punjab RERA",
+      "enabled": true,
+      "publish": false,
+      "download": false,
+      "pages": ["https://rera.punjab.gov.in/"],
+      "hosts": ["rera.punjab.gov.in"],
+      "keywords": ["project", "agent", "registered", "order", "notification", "circular", "mohali", "s.a.s. nagar", "zirakpur", "kharar"],
+      "attribution": "Source: Real Estate Regulatory Authority, Punjab (rera.punjab.gov.in)",
+      "note": "Public pages only. Searches behind a CAPTCHA are not automated."
+    },
+    "igr_punjab": {
+      "module": "docs",
+      "name": "Punjab Revenue: collector rates",
+      "enabled": false,
+      "publish": false,
+      "download": true,
+      "pages": ["https://igrpunjab.gov.in/"],
+      "hosts": ["igrpunjab.gov.in", "punjab.gov.in"],
+      "keywords": ["collector rate", "collector rates", "s.a.s. nagar", "mohali"],
+      "attribution": "Source: Department of Revenue, Punjab",
+      "note": "Off by default: URL unconfirmed. Enable after a probe."
+    }
+  }
+}
