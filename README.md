@@ -29,6 +29,14 @@ backend/.venv/bin/python backend/manage.py export_openapi && npm run api:types  
 (cd backend && .venv/bin/python -m pytest)
 ```
 
+## Tricity public-records fetcher
+
+`tools/tricity-fetcher` collects Haryana RERA and other Tricity public records on a Mac in India. It is standard-library Python, separate from the app and backend. See its [README](tools/tricity-fetcher/README.md). Its installer refuses to run from Desktop, Documents or Downloads, so copy that folder to `~/tricity-fetcher` before installing the hourly job.
+
+```bash
+(cd tools/tricity-fetcher && python3 -m unittest discover -s tests)
+```
+
 ## Next
 
 - Connect the real services in the backend: phone OTP, DigiLocker, Razorpay or Cashfree UPI AutoPay and escrow, Leegality or Digio eSign, and the Qube meter API. Each runs as a local fake today.
