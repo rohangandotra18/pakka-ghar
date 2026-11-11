@@ -1629,6 +1629,10 @@
             "title": "Profile",
             "type": "object"
           },
+          "staff": {
+            "title": "Staff",
+            "type": "boolean"
+          },
           "verified": {
             "title": "Verified",
             "type": "boolean"
@@ -1648,7 +1652,8 @@
           "verified",
           "aadhaar_masked",
           "profile",
-          "memberships"
+          "memberships",
+          "staff"
         ],
         "title": "MeOut",
         "type": "object"
@@ -2457,6 +2462,44 @@
           "lng"
         ],
         "title": "PinIn",
+        "type": "object"
+      },
+      "PlaceOut": {
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lng": {
+            "title": "Lng",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "city",
+          "lat",
+          "lng"
+        ],
+        "title": "PlaceOut",
         "type": "object"
       },
       "ProfileIn": {
@@ -5049,6 +5092,74 @@
               ],
               "title": "Q"
             }
+          },
+          {
+            "in": "query",
+            "name": "bbox",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bbox"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_rent_paise",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Rent Paise"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "in": "query",
+            "name": "free_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Free Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "title": "Limit",
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -5072,7 +5183,7 @@
             "TokenAuth": []
           }
         ],
-        "summary": "Search published PGs near a place",
+        "summary": "Search published PGs near a place or inside a map area",
         "tags": [
           "listings"
         ]
@@ -6896,6 +7007,64 @@
         "summary": "Turn down a visit; the tenant is told",
         "tags": [
           "owner"
+        ]
+      }
+    },
+    "/api/places": {
+      "get": {
+        "operationId": "apps_property_api_places",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 8,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PlaceOut"
+                  },
+                  "title": "Response",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Sectors, colleges, hospitals and markets to jump the map to",
+        "tags": [
+          "listings"
         ]
       }
     },

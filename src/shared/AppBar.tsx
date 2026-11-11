@@ -20,6 +20,7 @@ export function AppBar() {
   const items: { label: string; onPress: () => void }[] = [];
   if (canSwitch) items.push({ label: owner ? 'Switch to tenant side' : 'Switch to owner dashboard', onPress: go(() => { const next = owner ? 'tenant' : 'owner'; setRole(next); router.replace(next === 'owner' ? '/today' : '/find'); }) });
   if (me && !ownerReady) items.push({ label: 'List your PG', onPress: go(() => router.push('/onboarding/owner')) });
+  if (me?.staff) items.push({ label: 'Trust team', onPress: go(() => router.push('/staff')) });
   if (me) items.push({ label: 'Sign out', onPress: go(() => { signOut(); router.replace('/'); }) });
   return (
     <View style={{ marginBottom: 2, zIndex: 10 }}>

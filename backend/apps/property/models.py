@@ -27,7 +27,11 @@ class Property(OrgModel):
     attributes = models.JSONField(default=dict, blank=True)
 
     class Meta:
-        indexes = [models.Index(fields=['status', 'city'])]
+        indexes = [
+            models.Index(fields=['status', 'city']),
+            # the map's "search this area" query: published PGs inside a box of pins
+            models.Index(fields=['lat', 'lng'], condition=models.Q(status='published'), name='property_published_pin'),
+        ]
 
 
 class Room(OrgModel):
@@ -136,3 +140,24 @@ class Photo(OrgModel):
     class Meta:
         constraints = [models.UniqueConstraint(fields=['property', 'sha256'], name='one_copy_of_a_photo')]
         ordering = ['created_at']
+
+
+class Place(models.Model):
+    """A place people search from: a sector, college, hospital, market. Public reference data, identical for everyone,
+    with no personal or owner data, so it has no row-level security (see NO_RLS in tests/test_guardrails.py).
+    Loaded from data/tricity_places.json by `manage.py load_places`."""
+    KINDS = [('sector', 'Sector'), ('college', 'College'), ('hospital', 'Hospital'), ('market', 'Market'),
+             ('transit', 'Transit'), ('landmark', 'Landmark')]
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=120)
+    kind = models.CharField(max_length=10, choices=KINDS)
+    city = models.CharField(max_length=16, choices=CITIES)
+    lat = models.DecimalField(max_digits=9, decimal_places=6)
+    lng = models.DecimalField(max_digits=9, decimal_places=6)
+    aliases = models.TextField(blank=True)                       # extra search words, space or comma separated
+    popular_rank = models.SmallIntegerField(null=True, blank=True)   # 1 = first of the places shown before anyone types; null = ordinary
+    source = models.CharField(max_length=16, default='osm')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['name', 'city'], name='uniq_place_name_city')]
+        ordering = ['name']

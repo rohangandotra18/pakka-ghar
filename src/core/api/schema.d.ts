@@ -457,7 +457,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search published PGs near a place */
+        /** Search published PGs near a place or inside a map area */
         get: operations["apps_property_api_search"];
         put?: never;
         post?: never;
@@ -1200,6 +1200,23 @@ export interface paths {
         put?: never;
         /** Turn down a visit; the tenant is told */
         post: operations["apps_booking_tours_owner_api_decline_visit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sectors, colleges, hospitals and markets to jump the map to */
+        get: operations["apps_property_api_places"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2134,6 +2151,8 @@ export interface components {
             profile: {
                 [key: string]: unknown;
             };
+            /** Staff */
+            staff: boolean;
             /** Verified */
             verified: boolean;
             /** Works At */
@@ -2484,6 +2503,21 @@ export interface components {
             lat: number;
             /** Lng */
             lng: number;
+        };
+        /** PlaceOut */
+        PlaceOut: {
+            /** City */
+            city: string;
+            /** Id */
+            id: number;
+            /** Kind */
+            kind: string;
+            /** Lat */
+            lat: number;
+            /** Lng */
+            lng: number;
+            /** Name */
+            name: string;
         };
         /** ProfileIn */
         ProfileIn: {
@@ -3648,6 +3682,11 @@ export interface operations {
                 radius_km?: number;
                 gender?: string | null;
                 q?: string | null;
+                bbox?: string | null;
+                max_rent_paise?: number | null;
+                kind?: string | null;
+                free_only?: boolean;
+                limit?: number;
             };
             header?: never;
             path?: never;
@@ -4789,6 +4828,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TodayOut"];
+                };
+            };
+        };
+    };
+    apps_property_api_places: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceOut"][];
                 };
             };
         };

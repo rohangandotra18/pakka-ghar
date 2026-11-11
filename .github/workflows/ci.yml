@@ -1,0 +1,126 @@
+# CI: runs the repo's existing checks on every push and pull request.
+#   backend  - migrations are up to date, then the Django test suite (Postgres 16 service)
+#   app      - TypeScript typecheck and Expo lint
+#   contract - committed contracts/openapi.json and src/core/api/schema.d.ts match the code
+#   fetcher  - unit tests for tools/tricity-fetcher (standard library only)
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Settings read these from the environment (backend/config/settings.py).
+  DB_NAME: pakka
+  DB_USER: pakka
+  DB_PASSWORD: pakka
+  DB_HOST: localhost
+  DB_PORT: "5432"
+
+jobs:
+  backend:
+    name: Backend (migrations + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt
+      - name: Create roles and database
+        run: psql -v ON_ERROR_STOP=1 -f backend/scripts/bootstrap_db.sql
+        env:
+          PGHOST: localhost
+          PGPORT: "5432"
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: postgres
+      - name: Check for model changes without a migration
+        working-directory: backend
+        run: python manage.py makemigrations --check --dry-run
+      - name: Run tests
+        working-directory: backend
+        run: python -m pytest
+
+  app:
+    name: App (typecheck + lint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      # postinstall generates src/shared/map/mapEngine.generated.ts, which tsc needs.
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx expo lint
+      # plain-node tests of the map's behaviour and of Find's search rules
+      - run: npm run test:map
+      - run: node src/features/search/findState.test.mjs
+
+  contract:
+    name: Contract (OpenAPI + generated types)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # export_openapi only builds the schema from code; it never opens a database connection.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci
+      - name: Regenerate contract and app types
+        run: |
+          python backend/manage.py export_openapi
+          npm run api:types
+      - name: Fail if committed files are stale
+        run: |
+          if ! git diff --exit-code -- contracts/openapi.json src/core/api/schema.d.ts; then
+            echo "::error::The API contract or generated app types are out of date. Run 'python backend/manage.py export_openapi' and then 'npm run api:types', and commit contracts/openapi.json and src/core/api/schema.d.ts."
+            exit 1
+          fi
+
+  fetcher:
+    name: Tricity fetcher (unit tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run unit tests
+        working-directory: tools/tricity-fetcher
+        run: python3 -m unittest discover -s tests

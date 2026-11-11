@@ -12,6 +12,7 @@ NO_RLS = {
     'core_membership': 'read during sign-in, before any context exists',
     'identity_otpchallenge': 'sign-in codes, hashed; read before the caller is known',
     'identity_sessiontoken': 'session tokens, hashed; read to identify the caller',
+    'property_place': 'public reference list of sectors, colleges and hospitals (OpenStreetMap); no personal or owner data',
     'django_migrations': 'Django',
     'django_content_type': 'Django',
 }

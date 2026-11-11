@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "backend/.venv/bin/python",
+      "runtimeArgs": ["backend/manage.py", "runserver", "8000"],
+      "port": 8000
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
+      "port": 8081
+    }
+  ]
+}

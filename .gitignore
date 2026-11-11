@@ -49,5 +49,6 @@ __pycache__/
 
 # generated on npm install
 src/shared/map/mapEngine.generated.ts
+src/shared/map/mapCss.generated.ts
 backend/.media/
 backend/.private/

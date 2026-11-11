@@ -109,12 +109,13 @@ export function Steps({ i, labels }: { i: number; labels: string[] }) {
 }
 
 /* Pass onChangeText to make it controlled (the value is what gets sent); without it, value is just a starting text. */
-export function Field({ label, value, placeholder, keyboard, onChangeText }: { label: string; value?: string; placeholder?: string; keyboard?: 'default' | 'number-pad' | 'phone-pad'; onChangeText?: (t: string) => void }) {
+export function Field({ label, value, placeholder, keyboard, multiline, onChangeText }: { label: string; value?: string; placeholder?: string; keyboard?: 'default' | 'number-pad' | 'phone-pad'; multiline?: boolean; onChangeText?: (t: string) => void }) {
   return (
     <View style={{ gap: 5 }}>
       <T v="label">{label}</T>
       <TextInput allowFontScaling={false} {...(onChangeText ? { value, onChangeText } : { defaultValue: value })} placeholder={placeholder} placeholderTextColor={C.muted} keyboardType={keyboard}
-        style={s.input} underlineColorAndroid="transparent" selectionColor={C.accent} />
+        multiline={multiline} textAlignVertical={multiline ? 'top' : undefined}
+        style={multiline ? [s.input, { minHeight: 84 }] : s.input} underlineColorAndroid="transparent" selectionColor={C.accent} />
     </View>
   );
 }

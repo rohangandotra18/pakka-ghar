@@ -93,7 +93,8 @@ Punjabi (planned next). Each needs its own scoped brief when it's chosen.
 | 7 | Room bids | Built, backend tested | `tests/test_applications.py`; device run pending |
 | 8, 13 | Tours | Built, tested end to end | tenant booked (web), owner confirmed (Android), 5 Nov |
 | 10, 17, 18 | Dashboards, stay, repairs, move-out | Built, tested on iOS, Android and web | backend tests; device runs 5 Nov |
-| 11–12 | Browse, search, map, sign-up | Built, tested on iOS, Android and web | device runs 5 Nov |
+| 11–12 | Browse, search, map, sign-up | Built, tested on iOS, Android and web; the 11 Nov search rebuild (place search, search this area, filters, clustering) tested on web and the iOS simulator, Android run pending | device runs 5 Nov; `tests/test_search.py`, `npm run test:map`, headless Chrome and iOS simulator runs 11 Nov |
+| 5 | Trust-team console (`/staff`) | Built, tested on web | `tests/test_staff_console.py`; approve, send back and dismiss run in a browser, 11 Nov |
 | 15 | Deposit into escrow | Built with a payment stand-in | paid on web, 5 Nov; real partner pending (§4) |
 | 19–20 | Data export / erasure; isolation | Built, backend tested | `tests/test_privacy_visits.py`, `tests/test_rls.py`, signed page links in `tests/test_agreements.py` |
 | §4 | Providers, legal, tax, hosting | Not started | needs people and contracts |

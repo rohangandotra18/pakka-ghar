@@ -52,7 +52,8 @@ class MeOut(Schema):
     verified: bool
     aadhaar_masked: str
     profile: dict
-    memberships: list[MembershipOut]
+    memberships: list[MembershipOut]    # the PG businesses this person runs (never the trust team's own organisation)
+    staff: bool                         # on the Pakka Ghar trust team
 
 
 class SessionOut(Schema):
@@ -62,10 +63,14 @@ class SessionOut(Schema):
 
 
 def me_out(p) -> dict:
+    # memberships and organisations are not behind row-level security (only the business tables are), so this read
+    # works under the caller's own role, as the sign-in check in api_support._org_for does; no system() needed.
+    ms = list(p.memberships.select_related('organisation').order_by('created_at'))
     return {'id': p.id, 'phone': p.phone, 'name': p.name, 'works_at': p.works_at, 'looking_for': p.looking_for,
             'move_in_on': p.move_in_on, 'verified': p.verified, 'aadhaar_masked': p.aadhaar_masked, 'profile': p.profile or {},
             'memberships': [{'organisation_id': m.organisation_id, 'name': m.organisation.name, 'role': m.role}
-                            for m in p.memberships.select_related('organisation')]}
+                            for m in ms if m.organisation.kind != 'platform'],
+            'staff': any(m.role == 'staff' and m.organisation.kind == 'platform' for m in ms)}
 
 
 @router.post('/auth/otp/verify', response=SessionOut, auth=None, summary='Check the code and get a session token')

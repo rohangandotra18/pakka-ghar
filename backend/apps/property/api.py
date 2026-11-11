@@ -1,4 +1,5 @@
 """Public listings, and the owner's property setup (details, map pin, rooms, meters, papers, payouts)."""
+import math
 import secrets
 from datetime import date, datetime
 from decimal import Decimal
@@ -12,6 +13,7 @@ from apps.jurisdiction.rules import RULES, check_tariff
 from . import services
 from .models import OwnershipDocument, PayoutAccount, Property, Room
 
+ROOM_KINDS = ('single', 'double', 'triple')
 router = Router(tags=['listings'])
 owner = Router(tags=['owner'])
 
@@ -77,15 +79,54 @@ class ListingOut(Schema):
     km: float | None
 
 
-@router.get('/listings', response=list[ListingOut], auth=OPTIONAL, summary='Search published PGs near a place')
+def _bbox(raw: str) -> tuple[float, float, float, float]:
+    bad = ApiError(422, 'bad_bbox', 'The map area must be west,south,east,north in degrees, each side at most 1 degree.')
+    try:
+        west, south, east, north = (float(v) for v in raw.split(','))
+    except ValueError:
+        raise bad
+    if not all(math.isfinite(v) for v in (west, south, east, north)):
+        raise bad
+    if not (-180 <= west < east <= 180 and -90 <= south < north <= 90) or east - west > 1 or north - south > 1:
+        raise bad
+    return west, south, east, north
+
+
+@router.get('/listings', response=list[ListingOut], auth=OPTIONAL, summary='Search published PGs near a place or inside a map area')
 def search(request, lat: float | None = None, lng: float | None = None, radius_km: float = services.RADIUS_KM,
-           gender: str | None = None, q: str | None = None):
+           gender: str | None = None, q: str | None = None, bbox: str | None = None, max_rent_paise: int | None = None,
+           kind: str | None = None, free_only: bool = False, limit: int = 100):
     if not 0 < radius_km <= 25:
         raise ApiError(422, 'bad_radius', 'Radius must be between 0 and 25 km.')
     if (lat is None) != (lng is None) or (lat is not None and not (-90 <= lat <= 90 and -180 <= lng <= 180)):  # also refuses NaN
         raise ApiError(422, 'bad_place', 'Send both lat and lng, as a real place.')
+    area = _bbox(bbox) if bbox is not None else None
+    if max_rent_paise is not None and max_rent_paise <= 0:
+        raise ApiError(422, 'bad_filter', 'The most rent must be more than zero.')
+    if kind is not None and kind not in ROOM_KINDS:
+        raise ApiError(422, 'bad_filter', 'Room type must be single, double or triple.')
+    if not 1 <= limit <= 200:
+        raise ApiError(422, 'bad_filter', 'Ask for between 1 and 200 results.')
     q = ' '.join((q or '').split()[:6])[:100]  # a few words is a search; more is noise
-    return services.search(lat, lng, radius_km, gender, q or None)
+    return services.search(lat, lng, radius_km, gender, q or None, bbox=area, max_rent_paise=max_rent_paise, kind=kind,
+                           free_only=free_only, limit=limit)
+
+
+class PlaceOut(Schema):
+    id: int
+    name: str
+    kind: str
+    city: str
+    lat: float
+    lng: float
+
+
+@router.get('/places', response=list[PlaceOut], auth=OPTIONAL, summary='Sectors, colleges, hospitals and markets to jump the map to')
+def places(request, q: str | None = None, limit: int = 8):
+    if not 1 <= limit <= 20:
+        raise ApiError(422, 'bad_filter', 'Ask for between 1 and 20 places.')
+    found = services.places(q, limit)
+    return [{'id': p.id, 'name': p.name, 'kind': p.kind, 'city': p.city, 'lat': float(p.lat), 'lng': float(p.lng)} for p in found]
 
 
 @router.get('/listings/{slug}', response=ListingOut, auth=OPTIONAL, summary='One PG')

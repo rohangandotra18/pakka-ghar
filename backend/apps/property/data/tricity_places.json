@@ -1,0 +1,3543 @@
+{
+ "metadata": {
+  "source": "© OpenStreetMap contributors, ODbL 1.0",
+  "licence": "This file is a derived extract of OpenStreetMap data and is published under the Open Database Licence (ODbL) 1.0. https://www.openstreetmap.org/copyright",
+  "fetched_on": "2026-11-11",
+  "bbox": {
+   "south": 30.55,
+   "west": 76.6,
+   "north": 30.85,
+   "east": 77.0
+  },
+  "endpoint": "Overpass API",
+  "city_rule": "chandigarh: OSM admin boundary level 4 \"Chandigarh\"; panchkula and mohali: the level 6 (tehsil) boundary of that name. Places outside all three, or inside more than one, are left out.",
+  "queries": [
+   {
+    "city": "chandigarh",
+    "overpass_ql": "[out:json][timeout:180];\nrel[\"boundary\"=\"administrative\"][\"admin_level\"=\"4\"][\"name\"~\"^Chandigarh$\"](30.55,76.6,30.85,77.0);\nmap_to_area->.a;\n(\n  nwr(area.a)[\"place\"~\"^(suburb|neighbourhood|quarter|locality|city_block)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"boundary\"=\"administrative\"][\"admin_level\"~\"^(9|10|11)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"landuse\"~\"^(residential|commercial|retail|institutional)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"amenity\"~\"^(university|college)$\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"hospital\"][\"name\"];\n  nwr(area.a)[\"railway\"=\"station\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"bus_station\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"marketplace\"][\"name\"];\n  nwr(area.a)[\"shop\"=\"mall\"][\"name\"];\n);\nout center tags;"
+   },
+   {
+    "city": "panchkula",
+    "overpass_ql": "[out:json][timeout:180];\nrel[\"boundary\"=\"administrative\"][\"admin_level\"=\"6\"][\"name\"~\"^Panchkula$\"](30.55,76.6,30.85,77.0);\nmap_to_area->.a;\n(\n  nwr(area.a)[\"place\"~\"^(suburb|neighbourhood|quarter|locality|city_block)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"boundary\"=\"administrative\"][\"admin_level\"~\"^(9|10|11)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"landuse\"~\"^(residential|commercial|retail|institutional)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"amenity\"~\"^(university|college)$\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"hospital\"][\"name\"];\n  nwr(area.a)[\"railway\"=\"station\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"bus_station\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"marketplace\"][\"name\"];\n  nwr(area.a)[\"shop\"=\"mall\"][\"name\"];\n);\nout center tags;"
+   },
+   {
+    "city": "mohali",
+    "overpass_ql": "[out:json][timeout:180];\nrel[\"boundary\"=\"administrative\"][\"admin_level\"=\"6\"][\"name\"~\"^S\\\\.?A\\\\.?S\\\\.? Nagar|^Sahibzada Ajit Singh Nagar|Mohali\"](30.55,76.6,30.85,77.0);\nmap_to_area->.a;\n(\n  nwr(area.a)[\"place\"~\"^(suburb|neighbourhood|quarter|locality|city_block)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"boundary\"=\"administrative\"][\"admin_level\"~\"^(9|10|11)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"landuse\"~\"^(residential|commercial|retail|institutional)$\"][\"name\"~\"^(Sector|Sec\\.?|Phase|Ph\\.?)[ -]?[0-9]+[ -]?[A-Za-z]?[0-9]?$\"];\n  nwr(area.a)[\"amenity\"~\"^(university|college)$\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"hospital\"][\"name\"];\n  nwr(area.a)[\"railway\"=\"station\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"bus_station\"][\"name\"];\n  nwr(area.a)[\"amenity\"=\"marketplace\"][\"name\"];\n  nwr(area.a)[\"shop\"=\"mall\"][\"name\"];\n);\nout center tags;"
+   }
+  ],
+  "counts": {
+   "college": {
+    "chandigarh": 27,
+    "mohali": 5,
+    "panchkula": 5
+   },
+   "hospital": {
+    "chandigarh": 62,
+    "mohali": 46,
+    "panchkula": 27
+   },
+   "market": {
+    "chandigarh": 14,
+    "mohali": 3,
+    "panchkula": 2
+   },
+   "sector": {
+    "chandigarh": 57,
+    "mohali": 64,
+    "panchkula": 27
+   },
+   "transit": {
+    "chandigarh": 4,
+    "mohali": 2,
+    "panchkula": 3
+   }
+  },
+  "left_out": {
+   "no_name_or_kind": 9,
+   "no_position": 0,
+   "in_two_cities": 12
+  }
+ },
+ "places": [
+  {
+   "name": "Ch. Devi Lal Centre of Learning",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.718804,
+   "lng": 76.81044,
+   "aliases": "CDCL  Chandigarh",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chandigarh College of Architecture",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.765647,
+   "lng": 76.784027,
+   "aliases": "",
+   "popular_rank": 9,
+   "source": "osm"
+  },
+  {
+   "name": "Chandigarh College of Engineering and Technology",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.726671,
+   "lng": 76.808766,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "DAV College",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.7521,
+   "lng": 76.785287,
+   "aliases": "DAV Sector 10",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dev Samaj College for Women",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.707482,
+   "lng": 76.765269,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dev Samaj College Of Education",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.73314,
+   "lng": 76.761637,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Goswami Ganesh Dutta Sanatan Dharma College",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.704017,
+   "lng": 76.772312,
+   "aliases": "",
+   "popular_rank": 10,
+   "source": "osm"
+  },
+  {
+   "name": "Goverment Polytechnic for Women",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.75434,
+   "lng": 76.784357,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government College of Art",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.749899,
+   "lng": 76.789029,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government Home Science College",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.752664,
+   "lng": 76.782836,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government Industrial Training Institute",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.713114,
+   "lng": 76.800046,
+   "aliases": "Govt. Industrial Training Institute",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "GRIID",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.698989,
+   "lng": 76.776601,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "GRIID main gate",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.699221,
+   "lng": 76.776386,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Guru Gobind College for Women",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.730357,
+   "lng": 76.80933,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Judicial training Institute",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.720855,
+   "lng": 76.745973,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mehr Chand Mahajan DAV College for Women",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.734248,
+   "lng": 76.755977,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Panjab University",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.760134,
+   "lng": 76.766226,
+   "aliases": "",
+   "popular_rank": 2,
+   "source": "osm"
+  },
+  {
+   "name": "poest graduate government college",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.701994,
+   "lng": 76.771255,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Post Graduate Government College",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.758458,
+   "lng": 76.779244,
+   "aliases": "GC-11",
+   "popular_rank": 11,
+   "source": "osm"
+  },
+  {
+   "name": "Post Graduate Government College for Girls",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.75568,
+   "lng": 76.781127,
+   "aliases": "GCG-11",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Post Graduate Govt. College for Girls",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.725042,
+   "lng": 76.738684,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Punjab Engineering College",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.766579,
+   "lng": 76.785531,
+   "aliases": "PEC",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Regional Institute of Cooperative Management",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.704864,
+   "lng": 76.77596,
+   "aliases": "RICM  Chandigarh",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Regional Institute of English",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.705202,
+   "lng": 76.7748,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sri Guru Gobind Singh College",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.731902,
+   "lng": 76.808268,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "State Council of Educational Research and Training",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.704675,
+   "lng": 76.773956,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "University Institute of Engineering and Technology",
+   "kind": "college",
+   "city": "chandigarh",
+   "lat": 30.751625,
+   "lng": 76.759158,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Abhilasha Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.727952,
+   "lng": 76.759499,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Advance Eye Center",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.763949,
+   "lng": 76.780052,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Air Force Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.703395,
+   "lng": 76.777515,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Arthoscopy and Spinal Endoscopy Centre",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.716308,
+   "lng": 76.777796,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "ARV Othopaedic Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.726406,
+   "lng": 76.773247,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Arya Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.717464,
+   "lng": 76.832989,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Ashwini Maternity Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.719376,
+   "lng": 76.757891,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Babe Ke Hospital And IMT",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.724507,
+   "lng": 76.732464,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Bedi Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.7177,
+   "lng": 76.769382,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Bharat Vikas Parishad Charitable Medical Centre",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.747535,
+   "lng": 76.765978,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Cancer Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.763393,
+   "lng": 76.781005,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chaitanya Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.710748,
+   "lng": 76.754191,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chd City Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.741709,
+   "lng": 76.794256,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chhuttani Medical Centre - Psychiatrist & De-addiction Centre",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.740194,
+   "lng": 76.782629,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Civil hospital, Manimajra",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.712853,
+   "lng": 76.842418,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Civil Hospital-Sector 22",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.732432,
+   "lng": 76.771662,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Cloudnine Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.700136,
+   "lng": 76.787576,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Composite Hospital I.T.B.P",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.677988,
+   "lng": 76.807281,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dabur Dhanwantry Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.69994,
+   "lng": 76.767141,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Deep Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.7636,
+   "lng": 76.748321,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dharam Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.749174,
+   "lng": 76.774026,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dispesary",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.67759,
+   "lng": 76.798432,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dr. Ashok Sharma's Cornea Centre",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.727605,
+   "lng": 76.769457,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dr. Chandan Trikha Homeopathic Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.712789,
+   "lng": 76.777409,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dr. Priyanka Sharma Gynaecologist",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.735249,
+   "lng": 76.800628,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Eden Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.709148,
+   "lng": 76.802711,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "ESIC Hospital Ramdarbar",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.696743,
+   "lng": 76.787964,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Fortis Medcentre Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.760621,
+   "lng": 76.782037,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "GMCH Sector 32",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.709111,
+   "lng": 76.780695,
+   "aliases": "GMCH SECTOR 32 Government Medical College Hospital",
+   "popular_rank": 7,
+   "source": "osm"
+  },
+  {
+   "name": "GMSH Sector-16",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.750814,
+   "lng": 76.780947,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government Pet Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.73297,
+   "lng": 76.771474,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Grewal Eye Institute",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.742022,
+   "lng": 76.790916,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Grover Eye Laser and E.N.T Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.730178,
+   "lng": 76.76032,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Guru Nanak Multispeciality Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.72554,
+   "lng": 76.76229,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Happy Family Maternitys Children Hospital Pvt Ltd",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.715826,
+   "lng": 76.838934,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Inscol Tertiary Care Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.723938,
+   "lng": 76.765686,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Kapoor's Kidney and Urostone Centre Pvt.Ltd.",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.702963,
+   "lng": 76.762,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Kaushal Clinic & Clinical Lab",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.752584,
+   "lng": 76.717353,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Kaushal Hospital, Chandigarh",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.722908,
+   "lng": 76.744779,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "KD Cosmetic Surgery Centre,Sector 34-A",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.724524,
+   "lng": 76.768988,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Land Mark Hospital(Langol View Charitable Clinic and Maternity Home)",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.712272,
+   "lng": 76.770275,
+   "aliases": "Landmark Hospital",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mamta Child Health Care Centre",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.731388,
+   "lng": 76.784999,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mangnum Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.723771,
+   "lng": 76.760497,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mental Health Institute",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.704263,
+   "lng": 76.775149,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mukat Hospital and Heart Institute",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.722836,
+   "lng": 76.770339,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Neeraj Eye Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.734221,
+   "lng": 76.75258,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Nehru Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.760872,
+   "lng": 76.776366,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "New OPD",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.762896,
+   "lng": 76.780862,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Nins Brain and Spine Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.721826,
+   "lng": 76.766946,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Nirmal Dr. Bhasin Jannee Fertility Centre",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.742139,
+   "lng": 76.735669,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Omni Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.721697,
+   "lng": 76.766972,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Oxford Heart and Multispeciality Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.728748,
+   "lng": 76.789855,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Pandhi Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.726638,
+   "lng": 76.752325,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "PGIMER",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.764368,
+   "lng": 76.776278,
+   "aliases": "Postgraduate Institute of Medical Education and Research (PGIMER) PGI Chandigarh PGI Emergency",
+   "popular_rank": 1,
+   "source": "osm"
+  },
+  {
+   "name": "Police Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.723238,
+   "lng": 76.812297,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Rameshwara Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.758307,
+   "lng": 76.784318,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "RHTC Palsora",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.734745,
+   "lng": 76.717848,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Santokh Hospital",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.747863,
+   "lng": 76.748988,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sarhind Orthopaedic Multispeciality Medical Centre",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.713433,
+   "lng": 76.768741,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Superintended Hospital Engineer Building",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.765226,
+   "lng": 76.775577,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Tricity Hospital Pvt. Ltd.",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.710446,
+   "lng": 76.842968,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Virdi Eye Hospital(Virk Hospital)",
+   "kind": "hospital",
+   "city": "chandigarh",
+   "lat": 30.719818,
+   "lng": 76.768628,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Centra Mall",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.706894,
+   "lng": 76.796616,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Electronic Market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.733956,
+   "lng": 76.78722,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Furniture Market Chandigarh",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.725912,
+   "lng": 76.731934,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "GOL Market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.766142,
+   "lng": 76.775059,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Inner Market Sector-7",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.735682,
+   "lng": 76.801136,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mat makers Market Bamboo",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.730436,
+   "lng": 76.771363,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Nexus Elante Mall",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.705328,
+   "lng": 76.801145,
+   "aliases": "Elante Mall",
+   "popular_rank": 8,
+   "source": "osm"
+  },
+  {
+   "name": "Piccadily Square Mall",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.723522,
+   "lng": 76.76759,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 8 Inner Market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.740151,
+   "lng": 76.798254,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 37A Market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.740247,
+   "lng": 76.748223,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 49-A Market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.697414,
+   "lng": 76.755261,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 49-B market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.694146,
+   "lng": 76.756779,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector-8 Inner Market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.74037,
+   "lng": 76.797359,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Shastri Market",
+   "kind": "market",
+   "city": "chandigarh",
+   "lat": 30.732157,
+   "lng": 76.770466,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 1",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.761659,
+   "lng": 76.801072,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 2",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.763495,
+   "lng": 76.791356,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 3",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.757925,
+   "lng": 76.796133,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 4",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.7517,
+   "lng": 76.80135,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 5",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.745621,
+   "lng": 76.806401,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 6",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.738678,
+   "lng": 76.812081,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 7",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.735288,
+   "lng": 76.804035,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 8",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.741071,
+   "lng": 76.799023,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 9",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.747085,
+   "lng": 76.7939,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 10",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.753265,
+   "lng": 76.788737,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 11",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.75898,
+   "lng": 76.783785,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 12",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.764841,
+   "lng": 76.780127,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 14",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.760027,
+   "lng": 76.766497,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 15",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.752375,
+   "lng": 76.772537,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 16",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.746322,
+   "lng": 76.777463,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 17",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.740025,
+   "lng": 76.782609,
+   "aliases": "",
+   "popular_rank": 3,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 18",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.73407,
+   "lng": 76.787912,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 19",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.728333,
+   "lng": 76.793117,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 20",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.72121,
+   "lng": 76.781703,
+   "aliases": "20-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 21",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.726973,
+   "lng": 76.776581,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 22",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.733044,
+   "lng": 76.771339,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 23",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.739413,
+   "lng": 76.76623,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 24",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.745407,
+   "lng": 76.761452,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 25",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.751487,
+   "lng": 76.756885,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 26",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.729575,
+   "lng": 76.808335,
+   "aliases": "26-E",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 27",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.722718,
+   "lng": 76.798408,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 28",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.717143,
+   "lng": 76.803924,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 29",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.710178,
+   "lng": 76.792407,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 30",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.715524,
+   "lng": 76.786978,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 31",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.702838,
+   "lng": 76.781237,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 32",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.708391,
+   "lng": 76.775495,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 33",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.714138,
+   "lng": 76.770306,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 34",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.719921,
+   "lng": 76.765247,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 35",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.726174,
+   "lng": 76.760031,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 36",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.732444,
+   "lng": 76.754993,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 37",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.738534,
+   "lng": 76.750307,
+   "aliases": "37-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 38",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.744658,
+   "lng": 76.745803,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 39",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.743761,
+   "lng": 76.730105,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 40",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.737538,
+   "lng": 76.7345,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 41",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.732732,
+   "lng": 76.739059,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 42",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.725441,
+   "lng": 76.742748,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 43",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.719077,
+   "lng": 76.748774,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 44",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.712891,
+   "lng": 76.754006,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 45",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.707052,
+   "lng": 76.759072,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 46",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.701367,
+   "lng": 76.764231,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 47",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.695643,
+   "lng": 76.769431,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 48",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.68965,
+   "lng": 76.757986,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 49",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.694067,
+   "lng": 76.752857,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 50",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.699961,
+   "lng": 76.747798,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 51",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.70577,
+   "lng": 76.743311,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 52",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.712439,
+   "lng": 76.737648,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 53",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.720151,
+   "lng": 76.734637,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 54",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.726321,
+   "lng": 76.729539,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 55",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.732222,
+   "lng": 76.725065,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 56",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.737878,
+   "lng": 76.720593,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 61",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.708998,
+   "lng": 76.731381,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 63",
+   "kind": "sector",
+   "city": "chandigarh",
+   "lat": 30.696403,
+   "lng": 76.740316,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chandigarh Railway Station",
+   "kind": "transit",
+   "city": "chandigarh",
+   "lat": 30.702162,
+   "lng": 76.821453,
+   "aliases": "",
+   "popular_rank": 4,
+   "source": "osm"
+  },
+  {
+   "name": "CTU Local Bus Station 43",
+   "kind": "transit",
+   "city": "chandigarh",
+   "lat": 30.717178,
+   "lng": 76.743364,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "ISBT Sector 17",
+   "kind": "transit",
+   "city": "chandigarh",
+   "lat": 30.735727,
+   "lng": 76.779073,
+   "aliases": "Chandigarh ISBT  Sector 17 ISBT 17",
+   "popular_rank": 6,
+   "source": "osm"
+  },
+  {
+   "name": "ISBT Sector 43",
+   "kind": "transit",
+   "city": "chandigarh",
+   "lat": 30.716325,
+   "lng": 76.74467,
+   "aliases": "Chandigarh ISBT  Sector 43 ISBT 43",
+   "popular_rank": 5,
+   "source": "osm"
+  },
+  {
+   "name": "C.G.C LANDRAN",
+   "kind": "college",
+   "city": "mohali",
+   "lat": 30.689567,
+   "lng": 76.660909,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "IISER Mohali",
+   "kind": "college",
+   "city": "mohali",
+   "lat": 30.663127,
+   "lng": 76.727016,
+   "aliases": "Indian Institute of Science Education and Research  Mohali IISER-M",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Plaksha University",
+   "kind": "college",
+   "city": "mohali",
+   "lat": 30.631651,
+   "lng": 76.72607,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "PTU",
+   "kind": "college",
+   "city": "mohali",
+   "lat": 30.722388,
+   "lng": 76.701445,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Shivalik Institute Of Education And Research",
+   "kind": "college",
+   "city": "mohali",
+   "lat": 30.733834,
+   "lng": 76.71642,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Aayush Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.731994,
+   "lng": 76.69388,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Adityaj Hospital And Laboratory",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.72818,
+   "lng": 76.722281,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Akaal Medical Center (Akaal Clinic)",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.691252,
+   "lng": 76.698961,
+   "aliases": "AMC (Akaal Clinic )",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Amar Hospital, Rupnagar",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.696302,
+   "lng": 76.716644,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Behgal Multispecialty Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.701834,
+   "lng": 76.682568,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Bhupindera Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.729319,
+   "lng": 76.694635,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "bodysculpt",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.703468,
+   "lng": 76.710082,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "BSF Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.697452,
+   "lng": 76.67879,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chahal Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.681651,
+   "lng": 76.743628,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chawla Nursing Home",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.70834,
+   "lng": 76.724084,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chhabra Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.748954,
+   "lng": 76.674675,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Civil Hospital SAS Nagar (Mohali)",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.739313,
+   "lng": 76.713873,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dhingra Hospital and Surgical Centre",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.719702,
+   "lng": 76.713574,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dr. Amritpal Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.713207,
+   "lng": 76.717471,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dr. Sodhi's Health Care, Multispeciality Hospital- Mohali",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.712996,
+   "lng": 76.718298,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Dr. Virendra Dhanlhar Mayo Health Care Super Speciality Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.689984,
+   "lng": 76.71047,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "ENT Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.679946,
+   "lng": 76.745555,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Fortis Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.694798,
+   "lng": 76.73108,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Gopal Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.70766,
+   "lng": 76.723614,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Grand Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.684294,
+   "lng": 76.74268,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Grecian Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.691353,
+   "lng": 76.72344,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Hamdard Ayurvedic Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.745432,
+   "lng": 76.674463,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Harmony Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.719722,
+   "lng": 76.705683,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "I- Med Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.681326,
+   "lng": 76.744445,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Indus Hospital,S.A.S Nagar",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.708959,
+   "lng": 76.722468,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Indus Super Speciality Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.729257,
+   "lng": 76.722148,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Ivy Health and Life Sciences Private Limited",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.706747,
+   "lng": 76.70832,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Ivy Health and Life Sciences Pvt. Ltd",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.706628,
+   "lng": 76.708319,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "J P Eye Hospital, Rupnagar",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.706867,
+   "lng": 76.726213,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Liberty Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.711314,
+   "lng": 76.719109,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Max Super Speciality Hospital-Mohali",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.739959,
+   "lng": 76.714187,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mayo Healthcare Super Speciality Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.691547,
+   "lng": 76.716421,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Pancham Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.732776,
+   "lng": 76.682105,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Prime Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.743158,
+   "lng": 76.675443,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "R.P Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.641623,
+   "lng": 76.684714,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Shivalik Hospital and ACE Heart & Vascular Institute",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.694945,
+   "lng": 76.721416,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Shri Guru Nanak Dev Ji Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.732474,
+   "lng": 76.695404,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Silver Oaks Hospitals",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.692086,
+   "lng": 76.733003,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Singla Medicare Clinic",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.726834,
+   "lng": 76.720965,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sohana Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.692971,
+   "lng": 76.699132,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sri Guru Harkrishan Sahib (C) Eye Institute And Super Speciality Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.692894,
+   "lng": 76.699076,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Trauma and Emergency Critical Care",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.691666,
+   "lng": 76.721233,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Trehan Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.679541,
+   "lng": 76.724947,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Tricity Eye Hospital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.741557,
+   "lng": 76.676007,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Universal Institute & Charitable Hospiital",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.683514,
+   "lng": 76.723983,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Yukti Herbs",
+   "kind": "hospital",
+   "city": "mohali",
+   "lat": 30.653331,
+   "lng": 76.734982,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Bestech Square",
+   "kind": "market",
+   "city": "mohali",
+   "lat": 30.673472,
+   "lng": 76.740198,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "CP67 Mall",
+   "kind": "market",
+   "city": "mohali",
+   "lat": 30.678105,
+   "lng": 76.723102,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "North Country Mall",
+   "kind": "market",
+   "city": "mohali",
+   "lat": 30.736666,
+   "lng": 76.678832,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 54",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.724428,
+   "lng": 76.726268,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 57",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.729775,
+   "lng": 76.706087,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 59",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.717052,
+   "lng": 76.715941,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 60",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.711097,
+   "lng": 76.721045,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 61",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.705045,
+   "lng": 76.726037,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 62",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.698699,
+   "lng": 76.729996,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 64",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.686714,
+   "lng": 76.740918,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 65",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.681127,
+   "lng": 76.746227,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 66-A",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.661024,
+   "lng": 76.746197,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 66-B",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.651795,
+   "lng": 76.755209,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 67",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.680357,
+   "lng": 76.729613,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 68",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.685667,
+   "lng": 76.724382,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 69",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.691515,
+   "lng": 76.720181,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 70",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.697564,
+   "lng": 76.714868,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 71",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.704021,
+   "lng": 76.70944,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 72",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.709778,
+   "lng": 76.704526,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 73",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.717673,
+   "lng": 76.698625,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 74",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.709442,
+   "lng": 76.68837,
+   "aliases": "74-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 76",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.696858,
+   "lng": 76.696858,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 77",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.691346,
+   "lng": 76.702702,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 78",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.684739,
+   "lng": 76.709011,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 79",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.678162,
+   "lng": 76.712963,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 80",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.672209,
+   "lng": 76.718023,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 81",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.664549,
+   "lng": 76.725061,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 82",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.65497,
+   "lng": 76.732979,
+   "aliases": "82-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 83",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.64969,
+   "lng": 76.721478,
+   "aliases": "83-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 84",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.657369,
+   "lng": 76.711993,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 85",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.664955,
+   "lng": 76.706208,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 86",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.670917,
+   "lng": 76.701608,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 87",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.676749,
+   "lng": 76.696887,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 88",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.683245,
+   "lng": 76.691394,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 89",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.688928,
+   "lng": 76.686416,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 90",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.696567,
+   "lng": 76.679678,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 91",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.703542,
+   "lng": 76.673026,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 92",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.7107,
+   "lng": 76.667533,
+   "aliases": "92-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 93",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.698228,
+   "lng": 76.665988,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 94",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.690405,
+   "lng": 76.669721,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 95",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.682876,
+   "lng": 76.674571,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 96",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.677118,
+   "lng": 76.680364,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 97",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.6704,
+   "lng": 76.686115,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 98",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.663756,
+   "lng": 76.690493,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 99",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.657406,
+   "lng": 76.695127,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 100",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.651869,
+   "lng": 76.700449,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 101",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.643229,
+   "lng": 76.708002,
+   "aliases": "101-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 102",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.627647,
+   "lng": 76.699247,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 103",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.637838,
+   "lng": 76.694527,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 104",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.650613,
+   "lng": 76.686544,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 105",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.658698,
+   "lng": 76.68118,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 106",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.666524,
+   "lng": 76.676245,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 107",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.674239,
+   "lng": 76.674678,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 108",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.649893,
+   "lng": 76.678734,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 109",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.657406,
+   "lng": 76.672382,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 110",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.670345,
+   "lng": 76.665795,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 111",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.678631,
+   "lng": 76.662812,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 112",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.684537,
+   "lng": 76.661181,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 113",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.692766,
+   "lng": 76.656761,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 114",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.701217,
+   "lng": 76.653285,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 115",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.710368,
+   "lng": 76.653328,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 116",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.714242,
+   "lng": 76.65822,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 117",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.723281,
+   "lng": 76.677275,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 118",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.733167,
+   "lng": 76.683497,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 119",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.72424,
+   "lng": 76.694183,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 120",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.739991,
+   "lng": 76.691694,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 121",
+   "kind": "sector",
+   "city": "mohali",
+   "lat": 30.73645,
+   "lng": 76.701994,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mohali",
+   "kind": "transit",
+   "city": "mohali",
+   "lat": 30.696572,
+   "lng": 76.726813,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sahibzada Ajitsingh Nagar (Mohali)",
+   "kind": "transit",
+   "city": "mohali",
+   "lat": 30.665982,
+   "lng": 76.73961,
+   "aliases": "Mohali",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government Industrial Training Institute",
+   "kind": "college",
+   "city": "panchkula",
+   "lat": 30.67965,
+   "lng": 76.84682,
+   "aliases": "Govt. ITI  Panchkula",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government P.G. College For Women",
+   "kind": "college",
+   "city": "panchkula",
+   "lat": 30.6775,
+   "lng": 76.846628,
+   "aliases": "Government College for Girls  Sec-14  Panchkula",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government Postgraduate College, Panchkula",
+   "kind": "college",
+   "city": "panchkula",
+   "lat": 30.701224,
+   "lng": 76.8699,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Govt Polytechnic Panchkula",
+   "kind": "college",
+   "city": "panchkula",
+   "lat": 30.658071,
+   "lng": 76.882072,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "National Institite of Fashion Technology Panchkula",
+   "kind": "college",
+   "city": "panchkula",
+   "lat": 30.68505,
+   "lng": 76.881617,
+   "aliases": "NIFT Panchkula",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Aarogya Hospital, Panchkula",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.674763,
+   "lng": 76.851386,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Alchemist Hospital, Panchkula",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.674544,
+   "lng": 76.864769,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "AM Eye Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.66343,
+   "lng": 76.87805,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Amcare Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.667707,
+   "lng": 76.85319,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Bright Kidney Care Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.657746,
+   "lng": 76.876994,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chakravarty Polyclinics",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.688542,
+   "lng": 76.850379,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Civil Hospital Panchkula",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.704849,
+   "lng": 76.855683,
+   "aliases": "General Hospital",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Command Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.71313,
+   "lng": 76.853928,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Drishti Eye Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.688219,
+   "lng": 76.850033,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Gokul Surgical Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.682106,
+   "lng": 76.837479,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Government Poly Clinic",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.661489,
+   "lng": 76.882431,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Gupta Eye Hospital, Chandigarh",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.67276,
+   "lng": 76.85363,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Institute Of Reproduction and Child Cares",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.69874,
+   "lng": 76.835774,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Jai Shree Shyam Skin Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.665817,
+   "lng": 76.855325,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Malik Multi-Speciality Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.672909,
+   "lng": 76.850997,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mother Teresa Saket Orthopaedic Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.701193,
+   "lng": 76.867065,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Netra Eye Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.672544,
+   "lng": 76.855923,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Ojas Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.660991,
+   "lng": 76.882254,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Om Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.656832,
+   "lng": 76.883796,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Orthomax Bone and Joint Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.685556,
+   "lng": 76.840692,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Oscar Medical Center",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.671106,
+   "lng": 76.886636,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Paras Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.693294,
+   "lng": 76.883247,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Phoenix Hospital, Panchkula",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.695839,
+   "lng": 76.838175,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Prolife Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.683561,
+   "lng": 76.865882,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Raffels Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.681546,
+   "lng": 76.848598,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Shri Ram Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.689099,
+   "lng": 76.853355,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Singla Orthopaedic Centre / Ortho Nava Hospital",
+   "kind": "hospital",
+   "city": "panchkula",
+   "lat": 30.701989,
+   "lng": 76.839433,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Market sector 2",
+   "kind": "market",
+   "city": "panchkula",
+   "lat": 30.696435,
+   "lng": 76.866399,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Shalimaar Mall",
+   "kind": "market",
+   "city": "panchkula",
+   "lat": 30.702365,
+   "lng": 76.851112,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 1",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.703482,
+   "lng": 76.868014,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 2",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.696282,
+   "lng": 76.865323,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 3",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.690293,
+   "lng": 76.870607,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 4",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.689177,
+   "lng": 76.860609,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 5",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.696738,
+   "lng": 76.856191,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 6",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.706144,
+   "lng": 76.857691,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 7",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.707519,
+   "lng": 76.84506,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 8",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.699961,
+   "lng": 76.844499,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 9",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.69451,
+   "lng": 76.84551,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 10",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.689306,
+   "lng": 76.847573,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 11",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.685122,
+   "lng": 76.852194,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 12",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.680694,
+   "lng": 76.857478,
+   "aliases": "12-A",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 14",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.679452,
+   "lng": 76.845675,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 15",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.684818,
+   "lng": 76.840367,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 16",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.692246,
+   "lng": 76.836933,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 17",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.699008,
+   "lng": 76.835818,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 18",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.704065,
+   "lng": 76.836903,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 20",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.666055,
+   "lng": 76.857448,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 21",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.676448,
+   "lng": 76.865839,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 22",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.695123,
+   "lng": 76.881121,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 23",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.687814,
+   "lng": 76.881606,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 24",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.669723,
+   "lng": 76.878621,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 25",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.67104,
+   "lng": 76.88498,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 26",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.661783,
+   "lng": 76.882966,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 27",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.65394,
+   "lng": 76.880687,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 28",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.646388,
+   "lng": 76.879535,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Sector 31",
+   "kind": "sector",
+   "city": "panchkula",
+   "lat": 30.692793,
+   "lng": 76.890894,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Chandi Mandir",
+   "kind": "transit",
+   "city": "panchkula",
+   "lat": 30.727087,
+   "lng": 76.887223,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Mansa Devi Bus Stand",
+   "kind": "transit",
+   "city": "panchkula",
+   "lat": 30.724832,
+   "lng": 76.859007,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  },
+  {
+   "name": "Panchkula Interstate Bus Stand",
+   "kind": "transit",
+   "city": "panchkula",
+   "lat": 30.691982,
+   "lng": 76.852987,
+   "aliases": "",
+   "popular_rank": null,
+   "source": "osm"
+  }
+ ]
+}

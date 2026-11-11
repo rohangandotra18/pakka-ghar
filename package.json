@@ -45,7 +45,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "api:types": "openapi-typescript contracts/openapi.json -o src/core/api/schema.d.ts",
-    "postinstall": "node scripts/build-map-engine.js"
+    "map:engine": "node scripts/build-map-engine.js",
+    "test:map": "node src/shared/map/mapCore.test.mjs",
+    "postinstall": "npm run map:engine"
   },
   "private": true
 }

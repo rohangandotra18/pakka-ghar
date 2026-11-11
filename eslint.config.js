@@ -9,7 +9,7 @@ const only = (message, group) => ({ 'no-restricted-imports': ['error', { pattern
 
 module.exports = defineConfig([
   expoConfig,
-  { ignores: ['dist/*', 'backend/*', 'src/core/api/schema.d.ts', 'src/shared/map/mapEngine.generated.ts'] },
+  { ignores: ['dist/*', 'backend/*', 'src/core/api/schema.d.ts', 'src/shared/map/*.generated.ts'] },
   {
     files: ['src/design/**'],
     rules: only('design/ is only the look of the app; it must not know about the API, the session or any feature.',

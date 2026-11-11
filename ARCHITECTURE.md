@@ -78,6 +78,14 @@ What differs on the web: the map draws MapLibre straight into the page (`src/sha
 engine in a web view), and photos can only be taken on a phone, because they must come from the phone's camera at the
 building. The API allows the website's origin through `CORS_ORIGINS`.
 
+The map's behaviour is written once, in `src/shared/map/mapCore.js` (pins, clustering, the selected pin, the camera
+rules, "the map moved" events). The website imports it; phones run a generated copy inside the web view, so after
+editing it run `npm run map:engine` (it also runs on `npm install`), and `npm run test:map` checks it under plain
+Node. Find (`src/features/search/`) searches around a chosen place or inside the map area on screen
+(`GET /api/listings` with `lat`/`lng` or `bbox`, plus `gender`, `max_rent_paise`, `kind`), and its place search
+reads `GET /api/places`, a public reference table loaded from `backend/apps/property/data/tricity_places.json`
+by `manage.py load_places` (regenerate the file with `backend/scripts/fetch_places.py`).
+
 ## Photos and agreements
 
 - **Photos** are taken in the app's camera only, with the phone's location at that moment. The server keeps a
@@ -172,6 +180,7 @@ cd backend
 uv venv .venv --python 3.12 && uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev.txt
 scripts/dev-db.sh                         # local Postgres 16 (first run creates roles and the database)
 .venv/bin/python manage.py migrate
+.venv/bin/python manage.py load_places    # sectors, colleges, hospitals and stations to search from (OpenStreetMap, ODbL)
 .venv/bin/python manage.py make_staff "+91 XXXXX XXXXX"   # someone on the trust team, to approve new PGs
 .venv/bin/python manage.py runserver 0.0.0.0:8000
 .venv/bin/python -m pytest                # the test suite
@@ -187,6 +196,9 @@ Then `npx expo start` at the root: press `i` for the iPhone simulator, `a` for A
 override). For the Android emulator, also run `adb reverse tcp:8000 tcp:8000`.
 
 The database starts empty: there is no sample data. An owner signs up in the app and lists a PG; it goes live once
-someone on the trust team approves it (`GET /api/staff/queue`, `POST /api/staff/properties/{id}/approve`). With
+someone on the trust team approves it on the Trust team screen (`/staff`, in the account menu for staff; it uses
+`GET /api/staff/queue` and `POST /api/staff/properties/{id}/approve`). For development only,
+`manage.py seed_demo` fills an empty database with demo PGs, residents, a trust-team queue and placeholder photos
+marked "Demo photo", and prints the numbers to sign in with; it refuses to run without `DEBUG=1`. With
 `DEBUG=1` the sign-in code is filled in for you, and `/api/dev/payments/{id}/capture` stands in for the payment
 partner. `manage.py reset_data --yes` empties every table (development only).

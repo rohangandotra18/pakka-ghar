@@ -1,16 +1,17 @@
 """Listings as tenants see them. Availability and ratings span everyone's bookings, so the aggregates are read
 with the system role and only public fields leave this module."""
 import math
+import re
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Avg, Count, Max, Min, Q
+from django.db.models import Avg, Case, Count, F, IntegerField, Max, Min, Q, When
 from django.utils import timezone
 
 from apps.core.api_support import add_months, ist, month_start, today
 from apps.core.rls import system
 
-from .models import Bed, Property
+from .models import Bed, Place, Property
 
 RADIUS_KM = 3.0
 
@@ -122,7 +123,12 @@ def listing(prop: Property, near: tuple[float, float] | None = None) -> dict:
     return listings([prop], near)[0]
 
 
-def search(lat: float | None, lng: float | None, radius_km: float, gender: str | None, q: str | None) -> list[dict]:
+def search(lat: float | None, lng: float | None, radius_km: float, gender: str | None, q: str | None, *,
+           bbox: tuple[float, float, float, float] | None = None, max_rent_paise: int | None = None,
+           kind: str | None = None, free_only: bool = False, limit: int = 100) -> list[dict]:
+    """Published PGs inside a box (west, south, east, north) or within `radius_km` of a point, then filtered and sorted.
+    A point alongside a box is only the reference for each card's distance and the sort. Room and bed filters read the
+    cards `listings()` already built, so the number of queries does not depend on how many PGs match."""
     with system():
         qs = Property.objects.filter(status='published').select_related('organisation')
         if gender:
@@ -131,17 +137,69 @@ def search(lat: float | None, lng: float | None, radius_km: float, gender: str |
             for word in q.split():
                 qs = qs.filter(Q(name__icontains=word) | Q(area__icontains=word) | Q(gender__icontains=word) | Q(city__icontains=word))
         near = (lat, lng) if lat is not None and lng is not None else None
-        if near:  # cheap bounding box before the exact distance
+        if bbox:
+            west, south, east, north = (Decimal(str(v)) for v in bbox)
+            qs = qs.filter(lat__range=(south, north), lng__range=(west, east))
+        elif near:  # cheap bounding box before the exact distance
             dlat = Decimal(radius_km / 110.574)
             dlng = Decimal(radius_km / (111.32 * math.cos(lat * math.pi / 180)))
             qs = qs.filter(lat__range=(Decimal(lat) - dlat, Decimal(lat) + dlat), lng__range=(Decimal(lng) - dlng, Decimal(lng) + dlng))
         out = listings(list(qs), near)
-    if near:
+    if near and not bbox:
         out = [x for x in out if x['km'] <= radius_km]
+    if max_rent_paise is not None or kind:
+        kept = []
+        for x in out:  # `rooms` holds only rooms with a free bed, so a match is always a bed the tenant can get
+            fits = [r['rent_paise'] for r in x['rooms']
+                    if (max_rent_paise is None or r['rent_paise'] <= max_rent_paise) and (not kind or r['kind'] == kind)]
+            if fits:
+                x['rent_paise'] = min(fits)
+                kept.append(x)
+        out = kept
+    elif free_only:
+        out = [x for x in out if x['free'] > 0]
+    if near:
         for x in out:
             x['km'] = max(0.1, x['km'])
         out.sort(key=lambda x: x['km'])
-    return out
+    else:
+        out.sort(key=lambda x: (x['free'] == 0, x['rent_paise'], x['name']))
+    return out[:limit]
+
+
+# ---- places ---------------------------------------------------------------------------------------------
+
+_SECTOR = re.compile(r'\b(?:sector|sec)\s*(\d)')
+_PHASE = re.compile(r'\b(?:phase|ph)\s*(\d)')
+
+
+def normalise_place_query(q: str) -> str:
+    """How people type places: `sec 22`, `sector22`, `ph 7` become `sector 22`, `phase 7`."""
+    q = ' '.join(q.lower().split())
+    return _PHASE.sub(r'phase \1', _SECTOR.sub(r'sector \1', q))
+
+
+def places(q: str | None, limit: int = 8) -> list[Place]:
+    """Places matching what was typed: every word must be in the name or aliases. Names that start with the query come
+    before names that merely contain it, then ranked (popular) places by rank, then name. Digits alone mean a sector. Without a
+    query, the ranked places in order."""
+    qs = Place.objects.all()
+    q = ' '.join((q or '').split()[:6])[:60]
+    if not q:
+        return list(qs.filter(popular_rank__isnull=False).order_by('popular_rank')[:limit])
+    norm = normalise_place_query(q)
+    digits_only = norm.isdigit()
+    words = [norm] if digits_only else norm.split()
+    for w in words:
+        if w.isdigit():  # `22` is a whole number, not the start of `220`
+            rx = rf'(^|[^0-9]){w}($|[^0-9])'
+            qs = qs.filter(Q(name__iregex=rx) | Q(aliases__iregex=rx))
+        else:
+            qs = qs.filter(Q(name__icontains=w) | Q(aliases__icontains=w))
+    full = f'sector {norm}' if digits_only else norm
+    rank = Case(When(name__iexact=full, then=0), When(Q(name__istartswith=full) | Q(name__istartswith=q), then=1), default=2,
+                output_field=IntegerField())
+    return list(qs.annotate(rank=rank).order_by('rank', F('popular_rank').asc(nulls_last=True), 'name')[:limit])
 
 
 def by_slug(slug: str) -> dict | None:
