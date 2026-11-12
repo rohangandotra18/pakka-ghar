@@ -11,7 +11,7 @@ export { kmBetween } from './geo';
 let cssAdded = false;
 
 export function MapView(props: MapViewProps) {
-  const { height, fill, onPick } = props;
+  const { height, fill, bare, onPick } = props;
   const box = useRef<HTMLDivElement | null>(null);
   const core = useRef<MapCore | null>(null);
   const status = useMapStatus();
@@ -37,7 +37,7 @@ export function MapView(props: MapViewProps) {
   useEffect(() => { core.current?.setState(latest.current); }, [json]);
 
   return (
-    <MapFrame height={height} fill={fill} picking={!!onPick} status={status}>
+    <MapFrame height={height} fill={fill} bare={bare} picking={!!onPick} status={status}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
         <div ref={box} style={{ width: '100%', height: '100%', cursor: onPick ? 'crosshair' : 'grab' }} aria-label={onPick ? 'Map. Click your building to place the pin.' : 'Map of PGs'} />
       </div>

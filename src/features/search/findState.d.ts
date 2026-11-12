@@ -22,3 +22,6 @@ export function areaOffer(region: { bounds: Bounds; byUser: boolean } | null | u
 export function placeSubtitle(p: { kind: string; city: string }): string;
 export function samePlace(a: { name: string }, b: { name: string }): boolean;
 export function placeChips<P extends Place>(popular: P[] | undefined, fallback: P[], chosen: P, max?: number): P[];
+export function parsePlaceParams(params: Record<string, string | string[] | undefined> | null | undefined): Place | null;
+export function findHref(place: Place): { pathname: '/find'; params: { place: string; lat: number; lng: number } };
+export function sameSpot(a: Place, b: Place): boolean;

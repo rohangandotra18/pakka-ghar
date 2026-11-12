@@ -1,6 +1,6 @@
 import { Redirect, Tabs, router, usePathname, type Href } from 'expo-router';
-import { Platform, Pressable, View, useWindowDimensions } from 'react-native';
-import { C, Icon, R, SP, T, TabBar, Wordmark, type IconName } from '@/design';
+import { Pressable, View } from 'react-native';
+import { C, Icon, R, SP, T, TabBar, Wordmark, useWide, type IconName } from '@/design';
 import { api, ok, useQuery } from '@/core/api';
 import { useStore } from '@/core/session';
 
@@ -52,10 +52,9 @@ function Sidebar() {
 
 export default function OwnerTabs() {
   const { s } = useStore();
-  const { width } = useWindowDimensions();
+  const wide = useWide();
   const path = usePathname();
   if (s.role !== 'owner') return <Redirect href="/find" />;
-  const wide = Platform.OS === 'web' && width >= 900;
   const lit = UNDER_MORE.includes(path.slice(1)) ? 'more' : undefined;
   const tabs = (
     <Tabs screenOptions={{ headerShown: false, animation: 'none' }}

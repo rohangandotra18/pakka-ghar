@@ -47,7 +47,7 @@ window.setMapState=function(s){if(core)core.setState(s)};
 </script></body></html>`;
 
 export function MapView(props: MapViewProps) {
-  const { height, fill, onPick } = props;
+  const { height, fill, bare, onPick } = props;
   const ref = useRef<WebViewHandle>(null);
   const status = useMapStatus();
   const { loads, attempt } = status;
@@ -63,7 +63,7 @@ export function MapView(props: MapViewProps) {
     handleMapEvent(m, status, handlers.current);
   }, [status]);
   return (
-    <MapFrame height={height} fill={fill} picking={!!onPick} status={status}>
+    <MapFrame height={height} fill={fill} bare={bare} picking={!!onPick} status={status}>
       <Web key={attempt} ref={ref} source={{ html: HTML, baseUrl: `${API_BASE}/` }} originWhitelist={['*']} onMessage={onMessage}
         javaScriptEnabled domStorageEnabled scrollEnabled={false} bounces={false} overScrollMode="never" nestedScrollEnabled
         setSupportMultipleWindows={false} showsHorizontalScrollIndicator={false} showsVerticalScrollIndicator={false}

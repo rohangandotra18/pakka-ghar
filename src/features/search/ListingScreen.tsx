@@ -1,17 +1,17 @@
+import { Platform, View } from 'react-native';
 import { router, useLocalSearchParams, type Href } from 'expo-router';
-import { Image, ScrollView, View } from 'react-native';
+import Head from 'expo-router/head';
 import { MapView } from '@/shared';
-import { Loading, Back, Badge, Btn, Chip, Dot, List, Note, Row, Screen, Stars, T, C, GENDER_COLOR, R, dayHour } from '@/design';
-import { api, inr, ok, useQuery } from '@/core/api';
-import { mediaUrl } from '@/core/device';
+import { Loading, Back, Columns, Screen, GENDER_COLOR, SP, useWide } from '@/design';
+import { api, ok, useQuery } from '@/core/api';
 import { useStore } from '@/core/session';
-
-const closes = (iso?: string | null) => (iso ? dayHour(iso) : 'Friday 6 pm');
-const day = (iso: string) => new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+import { ListingGallery, ListingPhotoNote } from './ListingGallery';
+import { ListingActions, ListingBookingPanel, ListingExplainer, ListingFacts, ListingRooms, ListingTitle, ListingWhere } from './ListingParts';
 
 export default function PGDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { tenantReady } = useStore();
+  const wide = useWide();
   const q = useQuery(() => ok(api.GET('/api/listings/{slug}', { params: { path: { slug: id } } })), [id]);
   const mine = useQuery(() => (tenantReady ? ok(api.GET('/api/applications/mine')) : Promise.resolve([])), [tenantReady]);
   /* browsing is open; acting needs a verified account. Sign-up then carries straight on to `next`. */
@@ -20,55 +20,41 @@ export default function PGDetail() {
     else router.push(next as Href);
   };
   const p = q.data;
-  if (!p) return <Screen><Back /><Loading error={q.error} retry={q.reload} /></Screen>;
+  if (!p) return <Screen width="wide"><Back /><Loading error={q.error} retry={q.reload} /></Screen>;
   const live = (mine.data ?? []).find(a => a.listing === p.id && ['forming', 'pending', 'accepted'].includes(a.status));
   const pinLabel = '₹' + Math.round(p.rent_paise / 100000 * 10) / 10 + 'k';
-  const map = <MapView height={190} center={{ lat: p.lat, lng: p.lng }} zoom={15} pins={[{ id: p.id, lat: p.lat, lng: p.lng, label: pinLabel, color: GENDER_COLOR[p.gender] }]} />;
-  return (
-    <Screen>
-      <Back />
-      {p.photos.length > 0
-        ? <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {p.photos.map(ph => (
-              <View key={ph.id} style={{ width: 260, gap: 4 }}>
-                <Image source={{ uri: mediaUrl(ph.url) }} style={{ width: 260, height: 180, borderRadius: R.md, backgroundColor: C.surface2 }} accessibilityLabel={ph.caption || `Photo${ph.room ? ` of room ${ph.room}` : ''}`} />
-                <T v="sm" style={{ fontSize: 11 }}>{ph.room ? `Room ${ph.room} · ` : ''}Taken on site, {day(ph.taken_at)}</T>
-              </View>
-            ))}
-          </ScrollView>
-        : map}
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}><T v="h2" style={{ flex: 1 }}>{p.name}</T>{p.verified_owner && <Badge label="Verified owner" tone="ok" />}</View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}><Dot color={GENDER_COLOR[p.gender]} /><T v="sm">{p.gender} · {p.area}</T>{p.rating != null && <><Stars value={p.rating} /><T v="sm">{p.rating} ({p.stays} stays)</T></>}</View>
-      {p.photos.length > 0 && <T v="sm">Every photo was taken at the building with the Pakka Ghar camera. No stock, edited or AI pictures.</T>}
+  const mapAt = (height: number) => <MapView height={height} center={{ lat: p.lat, lng: p.lng }} zoom={15} pins={[{ id: p.id, lat: p.lat, lng: p.lng, label: pinLabel, color: GENDER_COLOR[p.gender] }]} />;
+  const hasPhotos = p.photos.length > 0;
 
-      <T v="label">Rooms with a free bed</T>
-      {p.rooms.length === 0 ? <Note tone="soft">Every bed is taken for now. Schedule a tour to be first when one frees up.</Note> : (
-        <List>
-          {p.rooms.map((r, i) => (
-            <Row key={r.number} last={i === p.rooms.length - 1}
-              left={<View style={{ gap: 2 }}>
-                <T v="bodyBold">Room {r.number} · {r.kind_label}</T>
-                <T v="sm">{inr(r.rent_paise)} a bed · {r.free} of {r.beds} free</T>
-                {r.instant && r.free > 0 && <T v="sm" style={{ color: C.ok }}>Instant booking: book now, no waiting for the owner</T>}
-                {r.bidding && <T v="sm" style={{ color: C.warn }}>Up for bids until {closes(r.closes_at)}{r.bids ? ` · ${r.bids} bid${r.bids > 1 ? 's' : ''}` : ''}</T>}
-              </View>}
-              right={!live ? <Chip label={r.bidding ? 'Bid' : r.instant ? 'Book now' : 'Request'} onPress={() => go(r.bidding ? 'offer' : 'book', `/apply/${p.id}?room=${r.number}`)} /> : undefined} />
-          ))}
-        </List>
-      )}
-      <List>
-        <Row left="Deposit" right={`${p.deposit_months} month, in escrow`} />
-        <Row left="Electricity" right={`By meter, ₹${(p.tariff_paise / 100).toFixed(2)}/unit`} />
-        <Row left="Meals" right={p.meals} />
-        <Row left="Payment" right="In the app only" />
-        <Row left="Fees" right="None, Pakka Ghar is free" last />
-      </List>
-      {live
-        ? <Btn label={live.status === 'accepted' ? 'Accepted: sign and pay' : 'See your request'} onPress={() => router.push(live.status === 'accepted' ? `/book/${p.id}` : '/stay')} />
-        : p.rooms.length > 0 && <Btn label="Request a bed" onPress={() => go('book', `/apply/${p.id}`)} />}
-      <Btn kind="secondary" label="Schedule a tour" onPress={() => go('visit', `/tour/${p.id}`)} />
-      <T v="sm">Request a bed alone or with roommates. The owner sees your verified record and accepts; then you sign and pay the deposit in one go. Pakka Ghar is free: no brokerage, no fees.</T>
-      {p.photos.length > 0 && map}
+  if (wide) {
+    return (
+      <Screen width="wide">
+        {Platform.OS === 'web' && <Head><title>{`${p.name} · ${p.area} · Pakka Ghar`}</title></Head>}
+        <Back />
+        <ListingGallery photos={p.photos} pgName={p.name} fallback={mapAt(380)} />
+        {hasPhotos && <ListingPhotoNote />}
+        <View style={{ height: SP.sm }} />
+        <Columns side={<ListingBookingPanel p={p} live={live} go={go} />} sideWidth={360} gap={32}>
+          <ListingTitle p={p} />
+          <ListingRooms p={p} live={live} go={go} />
+          <ListingFacts p={p} />
+          <ListingWhere p={p} map={mapAt(340)} />
+          <ListingExplainer />
+        </Columns>
+      </Screen>
+    );
+  }
+  return (
+    <Screen width="wide">
+      <Back />
+      <ListingGallery photos={p.photos} pgName={p.name} fallback={mapAt(190)} />
+      <ListingTitle p={p} />
+      {hasPhotos && <ListingPhotoNote />}
+      <ListingRooms p={p} live={live} go={go} />
+      <ListingFacts p={p} />
+      <ListingActions p={p} live={live} go={go} />
+      <ListingExplainer />
+      {hasPhotos && mapAt(190)}
     </Screen>
   );
 }

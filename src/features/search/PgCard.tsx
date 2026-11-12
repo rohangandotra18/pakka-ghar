@@ -1,10 +1,14 @@
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { Badge, Dot, T, C, GENDER_COLOR, R } from '@/design';
+import { Badge, Dot, T, C, GENDER_COLOR, R, useWide } from '@/design';
 import { inr, type Schemas } from '@/core/api';
+import { PgCardWide } from './PgCardWide';
 
-/* One PG in the results: price, free beds, name, who it's for and where. `from` adds how far it is from the chosen place. */
+/* One PG in the results: price, free beds, name, who it's for and where. `from` adds how far it is from the chosen place.
+   On a wide website it is a horizontal card with the PG's first photo (PgCardWide). */
 export function PgCard({ pg, from, selected, onHover }: { pg: Schemas['ListingOut']; from?: string; selected?: boolean; onHover?: (on: boolean) => void }) {
+  const wide = useWide();
+  if (wide) return <PgCardWide pg={pg} from={from} selected={selected} onHover={onHover} />;
   return (
     <Pressable onPress={() => router.push(`/pg/${pg.id}`)} onHoverIn={onHover && (() => onHover(true))} onHoverOut={onHover && (() => onHover(false))}
       accessibilityRole="button" accessibilityLabel={`${pg.name}, ${inr(pg.rent_paise)} per bed, ${pg.area}`}

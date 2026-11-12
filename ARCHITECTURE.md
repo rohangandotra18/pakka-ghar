@@ -78,6 +78,16 @@ What differs on the web: the map draws MapLibre straight into the page (`src/sha
 engine in a web view), and photos can only be taken on a phone, because they must come from the phone's camera at the
 building. The API allows the website's origin through `CORS_ORIGINS`.
 
+In a browser window at least 900 px wide (`useWide()` in `src/design/`) the website gets a desktop layout; phones
+and narrow windows are untouched, because every desktop branch sits behind that one test. The root layout draws a
+site header (`src/shell/SiteHeader.tsx`: logo, page links, account menu) in place of the bottom tab bar; the owner
+dashboard keeps its sidebar instead. `Screen` takes `width` (`text` 760 px, `wide` 1120 px, `full`), and `Columns`
+gives a main column with a side panel that stays in view. The landing page (`src/features/welcome/`), Find (a
+results pane beside a full-height map) and a PG's page (gallery, details and a booking panel) each have a wide
+layout built from the same parts as the phone one. Browser-tab titles and the page description are set after the
+page loads (`src/shell/DocumentHead.tsx`); the site is still a single-page app, so they are not in the first HTML
+a crawler receives.
+
 The map's behaviour is written once, in `src/shared/map/mapCore.js` (pins, clustering, the selected pin, the camera
 rules, "the map moved" events). The website imports it; phones run a generated copy inside the web view, so after
 editing it run `npm run map:engine` (it also runs on `npm install`), and `npm run test:map` checks it under plain

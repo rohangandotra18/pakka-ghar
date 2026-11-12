@@ -3,17 +3,22 @@ import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, typ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { C, F, R, SP } from './theme';
+import { useWide } from './useWide';
 
-/* A short message over the screen, above the tab bar. The shell decides what it says. */
+/* A short message over the screen, above the tab bar (on a wide website there is no tab bar, so it sits at the
+   bottom centre). The shell decides what it says. */
 export function Toast({ message }: { message: string }) {
   const insets = useSafeAreaInsets();
+  const wide = useWide();
   if (!message) return null;
-  return <View pointerEvents="none" style={[s.toast, { bottom: 96 + insets.bottom }]}><T v="smBold" style={{ color: C.bg }}>{message}</T></View>;
+  return <View pointerEvents="none" style={[s.toast, wide ? { bottom: 24, maxWidth: 420, marginHorizontal: 'auto' } : { bottom: 96 + insets.bottom }]}><T v="smBold" style={{ color: C.bg }}>{message}</T></View>;
 }
 
 /* Every element is drawn by the app itself (no native switches, sliders or ripples), so iOS and Android match. */
-type Variant = 'h1' | 'h2' | 'h3' | 'body' | 'bodyBold' | 'sm' | 'smBold' | 'label' | 'price';
+type Variant = 'display' | 'h1' | 'h2' | 'h3' | 'body' | 'bodyBold' | 'sm' | 'smBold' | 'label' | 'price';
 const TV: Record<Variant, TextStyle> = {
+  /* the big title of a page on a wide screen; phones keep h1 */
+  display: { fontFamily: F.display, fontSize: 44, lineHeight: 50, letterSpacing: -1, color: C.ink },
   h1: { fontFamily: F.display, fontSize: 28, lineHeight: 33, letterSpacing: -0.6, color: C.ink },
   h2: { fontFamily: F.display, fontSize: 23, lineHeight: 28, letterSpacing: -0.4, color: C.ink },
   h3: { fontFamily: F.display, fontSize: 19, lineHeight: 24, letterSpacing: -0.3, color: C.ink },
@@ -28,7 +33,16 @@ export function T({ v = 'body', style, children, numberOfLines }: { v?: Variant;
   return <Text allowFontScaling={false} numberOfLines={numberOfLines} style={[TV[v], { includeFontPadding: false }, style]}>{children}</Text>;
 }
 
-export function Screen({ children, scroll = true, pad = true }: { children: ReactNode; scroll?: boolean; pad?: boolean }) {
+/* The page. `width` sets how wide its content may be on a wide website (phones and narrow windows ignore it):
+     'text' (default)  a 760 px centred column, for forms and reading
+     'wide'            a 1120 px centred column with 24 px side padding, for pages with two columns or a grid
+     'full'            no maximum width and no padding, for pages that lay out their own panes. With scroll={false} the
+                       content also fills the height left under the header (flex: 1, no gap, no bottom padding), so
+                       a pane can be exactly as tall as the window.
+   <Screen width="wide"> ... </Screen> */
+export type ScreenWidth = 'text' | 'wide' | 'full';
+export function Screen({ children, scroll = true, pad = true, width = 'text' }: { children: ReactNode; scroll?: boolean; pad?: boolean; width?: ScreenWidth }) {
+  const wide = useWide();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollViewInstance>(null);
   /* Neither platform makes room for the keyboard here (Android is edge-to-edge), so we add a spacer the
@@ -51,10 +65,32 @@ export function Screen({ children, scroll = true, pad = true }: { children: Reac
   }, [scroll]);
   /* bottom padding clears the home indicator or Android gesture bar, or the keyboard when it's open */
   /* on the website the same screens sit in a centred, readable column */
-  const content = <View style={{ gap: SP.md, padding: pad ? SP.lg : 0, paddingBottom: SP.xl * 2 + (kb || insets.bottom), ...(Platform.OS === 'web' ? { width: '100%', maxWidth: 760, alignSelf: 'center' as const } : null) }}>{children}</View>;
+  const column: ViewStyle | null = Platform.OS !== 'web' ? null
+    : wide && width === 'wide' ? { width: '100%', maxWidth: 1120, alignSelf: 'center', ...(pad ? { paddingHorizontal: SP.xl } : null) }
+    : wide && width === 'full' ? { width: '100%', padding: 0 }
+    : { width: '100%', maxWidth: 760, alignSelf: 'center' };
+  const fills = wide && width === 'full' && !scroll;
+  const content = <View style={{ gap: SP.md, padding: pad ? SP.lg : 0, paddingBottom: SP.xl * 2 + (kb || insets.bottom), ...column, ...(fills ? { flex: 1, gap: 0, paddingBottom: 0, minHeight: 0 } : null) }}>{children}</View>;
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top }}>
       {scroll ? <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} overScrollMode="never" bounces={false}>{content}</ScrollView> : content}
+    </View>
+  );
+}
+
+/* Main content with a side panel, for wide pages. On a wide website `children` and `side` sit in two columns and the
+   side column stays in view (sticks to the top of the page area) while the main column scrolls. On phones and in a
+   narrow window the main content comes first and the side content follows, stacked.
+   <Columns side={<Card>...</Card>} sideWidth={360} gap={32}>{main}</Columns> */
+/* RN's style types have no `position: 'sticky'`, but react-native-web passes it to CSS, so this is the one cast. */
+const STICKY = { position: 'sticky', top: SP.xl, alignSelf: 'flex-start' } as unknown as ViewStyle;
+export function Columns({ children, side, sideWidth = 360, gap = 32 }: { children: ReactNode; side: ReactNode; sideWidth?: number; gap?: number }) {
+  const wide = useWide();
+  if (!wide) return <View style={{ gap: SP.md }}>{children}{side}</View>;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap }}>
+      <View style={{ flex: 1, minWidth: 0, gap: SP.md }}>{children}</View>
+      <View style={[{ width: sideWidth, gap: SP.md }, STICKY]}>{side}</View>
     </View>
   );
 }

@@ -62,3 +62,32 @@ export function placeChips(popular, fallback, chosen, max = 6) {
   const base = (popular && popular.length ? popular : fallback).slice(0, max);
   return base.some(p => samePlace(p, chosen)) ? base : [chosen, ...base];
 }
+
+/* The Tricity, as a box: a link naming a place outside it is ignored. */
+const TRICITY = { south: 30.55, north: 30.85, west: 76.6, east: 77.0 };
+const round6 = n => Math.round(n * 1e6) / 1e6;
+
+function coordinate(v, min, max) {
+  if (typeof v !== 'string' || !v.trim()) return null;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
+}
+
+/* A place from the address (`/find?place=Sector%2022&lat=30.733044&lng=76.771339`), or null when any part is missing or
+   invalid: the name must be 1 to 80 characters, and lat/lng numbers inside the Tricity. */
+export function parsePlaceParams(params) {
+  if (!params) return null;
+  const name = typeof params.place === 'string' ? params.place.trim() : '';
+  const lat = coordinate(params.lat, TRICITY.south, TRICITY.north);
+  const lng = coordinate(params.lng, TRICITY.west, TRICITY.east);
+  if (name.length < 1 || name.length > 80 || lat === null || lng === null) return null;
+  return { name, lat, lng };
+}
+
+/* The link that opens Find on a place (the inverse of parsePlaceParams): router.push(findHref(place)) */
+export function findHref(place) {
+  return { pathname: '/find', params: { place: place.name, lat: round6(place.lat), lng: round6(place.lng) } };
+}
+
+/* true when both are the same spot, once rounded as the address rounds it */
+export const sameSpot = (a, b) => samePlace(a, b) && round6(a.lat) === round6(b.lat) && round6(a.lng) === round6(b.lng);

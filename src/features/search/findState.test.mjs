@@ -1,6 +1,6 @@
 /* Run with `node src/features/search/findState.test.mjs` (plain node, no framework). */
 import assert from 'node:assert/strict';
-import { RADIUS_KM, areaOffer, bboxString, bboxTooLarge, boundsDiffer, buildListingsQuery, countFilters, placeChips, placeSubtitle, round5, roundBounds } from './findState.js';
+import { RADIUS_KM, areaOffer, bboxString, bboxTooLarge, boundsDiffer, buildListingsQuery, countFilters, findHref, parsePlaceParams, sameSpot, placeChips, placeSubtitle, round5, roundBounds } from './findState.js';
 
 const pgimer = { name: 'PGIMER', lat: 30.7649, lng: 76.7757 };
 const box = { west: 76.7, south: 30.7, east: 76.8, north: 30.8 };
@@ -60,5 +60,33 @@ const many = Array.from({ length: 11 }, (_, i) => ({ name: 'P' + i, lat: i, lng:
 assert.equal(placeChips(many, fallback, many[0]).length, 6);
 assert.equal(placeChips(many, fallback, many[9]).length, 7);   // a searched place that isn't a chip goes in front
 assert.equal(placeChips(many, fallback, { ...many[1], name: 'p1' })[0].name, 'P0');   // matched by name, any case
+
+/* links to a place */
+const link = { place: 'Sector 22', lat: '30.733044', lng: '76.771339' };
+assert.deepEqual(parsePlaceParams(link), { name: 'Sector 22', lat: 30.733044, lng: 76.771339 });
+assert.equal(parsePlaceParams({ ...link, place: '  Sector 22 ' }).name, 'Sector 22');
+assert.equal(parsePlaceParams({}), null);
+assert.equal(parsePlaceParams(undefined), null);
+assert.equal(parsePlaceParams({ ...link, place: '' }), null);
+assert.equal(parsePlaceParams({ ...link, place: '   ' }), null);
+assert.equal(parsePlaceParams({ ...link, place: 'x'.repeat(81) }), null);
+assert.equal(parsePlaceParams({ ...link, place: 'x'.repeat(80) }).name.length, 80);
+assert.equal(parsePlaceParams({ ...link, place: ['a', 'b'] }), null);
+assert.equal(parsePlaceParams({ ...link, lat: undefined }), null);
+assert.equal(parsePlaceParams({ ...link, lat: '' }), null);
+assert.equal(parsePlaceParams({ ...link, lat: 'abc' }), null);
+assert.equal(parsePlaceParams({ ...link, lat: 'Infinity' }), null);
+assert.equal(parsePlaceParams({ ...link, lat: 'NaN' }), null);
+assert.equal(parsePlaceParams({ ...link, lat: '30.54' }), null);   // outside the Tricity
+assert.equal(parsePlaceParams({ ...link, lat: '30.86' }), null);
+assert.equal(parsePlaceParams({ ...link, lng: '77.01' }), null);
+assert.equal(parsePlaceParams({ ...link, lng: '76.59' }), null);
+assert.equal(parsePlaceParams({ ...link, lat: '30.55', lng: '77' }).lng, 77);   // the box edges are inside
+assert.deepEqual(findHref({ name: 'Sector 22', lat: 30.7330444444, lng: 76.7713391 }),
+  { pathname: '/find', params: { place: 'Sector 22', lat: 30.733044, lng: 76.771339 } });
+const href = findHref(pgimer);
+assert.deepEqual(parsePlaceParams(Object.fromEntries(Object.entries(href.params).map(([k, v]) => [k, String(v)]))), pgimer);
+assert.equal(sameSpot(pgimer, { ...pgimer, name: 'pgimer' }), true);
+assert.equal(sameSpot(pgimer, { ...pgimer, lat: 30.7650 }), false);
 
 console.log('findState: ok');

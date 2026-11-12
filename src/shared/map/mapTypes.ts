@@ -23,4 +23,6 @@ export type MapViewProps = {
   cluster?: boolean;
   /* take all the height the parent gives (flex: 1) instead of `height` */
   fill?: boolean;
+  /* no border or rounded corners, for a map that runs to the edges of its pane */
+  bare?: boolean;
 };

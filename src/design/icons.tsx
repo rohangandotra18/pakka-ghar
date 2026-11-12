@@ -4,7 +4,7 @@ import { C } from './theme';
 import { T } from './ui';
 
 /* Line icons drawn with SVG so they're pixel-identical on both platforms. */
-export type IconName = 'find' | 'stay' | 'req' | 'hist' | 'today' | 'beds' | 'money' | 'people' | 'home' | 'inbox' | 'more';
+export type IconName = 'find' | 'stay' | 'req' | 'hist' | 'today' | 'beds' | 'money' | 'people' | 'home' | 'inbox' | 'more' | 'shield' | 'camera' | 'tick';
 export function Icon({ name, color = C.ink, size = 22 }: { name: IconName; color?: string; size?: number }) {
   const p = { fill: 'none', stroke: color, strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   return (
@@ -19,6 +19,9 @@ export function Icon({ name, color = C.ink, size = 22 }: { name: IconName; color
       {name === 'home' && <Path d="M4 11 12 4.5 20 11v8.5a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z" {...p} />}
       {name === 'inbox' && <><Path d="M4 13.5 6.5 5h11l2.5 8.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" {...p} /><Path d="M4 13.5h4.5l1.5 2.5h4l1.5-2.5H20" {...p} /></>}
       {name === 'more' && <><Circle cx={6} cy={12} r={1.4} {...p} /><Circle cx={12} cy={12} r={1.4} {...p} /><Circle cx={18} cy={12} r={1.4} {...p} /></>}
+      {name === 'shield' && <Path d="M12 3.5 5 6.2v5.3c0 4.3 2.9 7.6 7 9 4.1-1.4 7-4.7 7-9V6.2z M8.8 12l2.4 2.4 4-4.2" {...p} />}
+      {name === 'camera' && <><Rect x={3} y={7} width={18} height={12.5} rx={2.5} {...p} /><Circle cx={12} cy={13.2} r={3.2} {...p} /><Path d="M8.5 7l1.3-2.5h4.4L15.5 7" {...p} /></>}
+      {name === 'tick' && <Path d="M5 12.5l4.5 4.5L19 7.5" {...p} />}
       {name === 'people' && <><Circle cx={9} cy={8} r={3.2} {...p} /><Path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5 M16 5.5a3 3 0 0 1 0 6 M18 14.8c2 .7 3 2.5 3 5.2" {...p} /></>}
     </Svg>
   );

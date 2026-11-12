@@ -2,6 +2,7 @@
    this folder only. Nothing here knows about accounts, the API or any feature. */
 export * from './theme';
 export * from './fonts';
+export * from './useWide';
 export * from './ui';
 export * from './icons';
 export * from './Otp';

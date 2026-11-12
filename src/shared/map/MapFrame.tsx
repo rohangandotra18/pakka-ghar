@@ -45,10 +45,10 @@ export function handleMapEvent(e: MapCoreEvent, status: MapStatus, h: Pick<MapVi
   }
 }
 
-export function MapFrame({ height = 220, fill, picking, status, children }: { height?: number; fill?: boolean; picking: boolean; status: MapStatus; children: ReactNode }) {
+export function MapFrame({ height = 220, fill, bare, picking, status, children }: { height?: number; fill?: boolean; bare?: boolean; picking: boolean; status: MapStatus; children: ReactNode }) {
   const { ready, failed, retry } = status;
   return (
-    <View style={[fill ? { flex: 1 } : { height }, { borderRadius: R.lg, overflow: 'hidden', borderWidth: 1, borderColor: picking ? C.accent : C.line, backgroundColor: C.map }]}>
+    <View style={[fill ? { flex: 1 } : { height }, { overflow: 'hidden', backgroundColor: C.map }, !bare && { borderRadius: R.lg, borderWidth: 1, borderColor: picking ? C.accent : C.line }]}>
       {children}
       {!ready && (
         <View pointerEvents={failed ? 'auto' : 'none'} style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, backgroundColor: C.map }}>
