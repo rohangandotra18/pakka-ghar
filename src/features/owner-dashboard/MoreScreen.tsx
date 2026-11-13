@@ -38,6 +38,7 @@ export default function More() {
           row('beds', 'Rooms and rent', 'Add rooms, rent per bed', go('/onboarding/owner?step=rooms')),
           row('find', 'Photos and papers', 'Camera photos, ownership papers', go('/onboarding/owner?step=photos')),
           row('money', 'Bank account for rent', 'Where payouts go', go('/onboarding/owner?step=payouts')),
+          row('today', 'Tour hours', 'When tenants can book a visit', go('/tour-hours' as Href)),
           row('today', 'Electricity meters', 'One meter per room', go('/onboarding/owner?step=meters')),
           row('hist', 'Your own agreement', 'Use your PDF instead of the standard one', go('/onboarding/owner?step=agreement')),
         ])}

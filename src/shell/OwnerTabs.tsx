@@ -14,7 +14,7 @@ const TABS: { name: string; title: string; icon: IconName }[] = [
   { name: 'money', title: 'Money', icon: 'money' },
   { name: 'more', title: 'More', icon: 'more' },
 ];
-const UNDER_MORE = ['residents', 'tickets'];
+const UNDER_MORE = ['residents', 'tickets', 'tour-hours'];
 
 function Sidebar() {
   const path = usePathname();
@@ -62,6 +62,7 @@ export default function OwnerTabs() {
       {TABS.map(x => <Tabs.Screen key={x.name} name={x.name} options={{ title: x.title }} />)}
       <Tabs.Screen name="residents" options={{ title: 'Residents' }} />
       <Tabs.Screen name="tickets" options={{ title: 'Repairs' }} />
+      <Tabs.Screen name="tour-hours" options={{ title: 'Tour hours' }} />
     </Tabs>
   );
   if (!wide) return tabs;

@@ -18,6 +18,7 @@ const TITLES: [prefix: string, title: string][] = [
   ['/money', 'Money'],
   ['/more', 'PG settings'],
   ['/residents', 'Residents'],
+  ['/tour-hours', 'Tour hours'],
   ['/resident', 'Resident'],
   ['/tickets', 'Repairs'],
   ['/staff', 'Trust team'],
