@@ -2,6 +2,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
+from django.db import transaction
 from django.db.backends.postgresql.psycopg_any import DateTimeTZRange
 from django.utils import timezone
 
@@ -91,6 +92,9 @@ def settle_deposit(b: Booking, actor: Party, deduction_paise: int = 0, reason: s
     if b.status not in ('ended', 'cancelled'):
         raise ApiError(409, 'still_living_here', 'Settle the deposit after the resident moves out.')
     from apps.core.ledger import balance
+    # Locked before the balance is read: the owner's button and the hourly automatic return can settle the same
+    # deposit at once, and both reading it as still held would pay it out twice.
+    list(Booking.objects.select_for_update(of=('self',)).filter(pk=b.pk).values_list('pk', flat=True))
     held = -balance(b.organisation, 'deposit_liability', b.guest)
     if held <= 0:
         raise ApiError(409, 'nothing_held', 'No deposit is held for this resident.')
@@ -148,7 +152,11 @@ def settle_overdue_deposits() -> int:
             attrs = dict(b.attributes or {})
             if days >= DEPOSIT_DAYS:
                 charge = min(int(attrs.get('notice_charge_paise', 0)), held)
-                settle_deposit(b, None, charge, 'rent for unserved notice' if charge else '')
+                try:
+                    with transaction.atomic():
+                        settle_deposit(b, None, charge, 'rent for unserved notice' if charge else '')
+                except ApiError:   # the owner settled it a moment ago: nothing left to return
+                    continue
                 for o in owners_of(b.organisation):
                     notify(o, 'deposit.auto', f'{b.guest.first_name}’s deposit wasn’t settled in {DEPOSIT_DAYS} days, so ₹{(held - charge) // 100:,} '
                            f'went back to them{f" (₹{charge // 100:,} unserved notice kept for you)" if charge else ""}.', org=b.organisation, booking=str(b.id))
