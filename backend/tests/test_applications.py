@@ -275,3 +275,12 @@ def test_owners_hear_once_when_bidding_ends(world):
     assert announce_ended_bidding.delay().get() == 0                # the next run doesn't repeat it
     notes = read(lambda: list(Notification.objects.filter(party=world['owner_a'], kind='bidding.ended').values_list('title', flat=True)))
     assert len(notes) == 1 and f'Room {room.number}' in notes[0]
+
+
+def test_owners_read_and_change_their_tour_hours(world):
+    owner = world['api'](world['owner_a'])
+    assert owner.get('/owner/tour-hours').json() == {'days': [0, 1, 2, 3, 4, 5], 'start': '10:00', 'end': '18:00', 'minutes': 30}
+    assert owner.put('/owner/tour-hours', {'days': [5, 6], 'start': '11:00', 'end': '14:00', 'minutes': 45}).status_code == 200
+    assert owner.get('/owner/tour-hours').json() == {'days': [5, 6], 'start': '11:00', 'end': '14:00', 'minutes': 45}
+    assert owner.put('/owner/tour-hours', {'days': [], 'start': '14:00', 'end': '11:00'}).status_code == 422
+    assert world['api'](world['simran']).get('/owner/tour-hours').status_code in (403, 404)   # tenants have no PG

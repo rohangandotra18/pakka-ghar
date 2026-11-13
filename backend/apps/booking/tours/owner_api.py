@@ -48,7 +48,19 @@ class TourHoursIn(Schema):
     minutes: int = 30
 
 
-@router.put('/owner/tour-hours', response=dict, summary='When tenants can book tours')
+class TourHoursOut(Schema):
+    days: list[int]       # 0 = Monday
+    start: str
+    end: str
+    minutes: int
+
+
+@router.get('/owner/tour-hours', response=TourHoursOut, summary='Your tour hours (also while the PG is a draft)')
+def get_tour_hours(request):
+    return svc.tour_hours(common.owner_property(request))
+
+
+@router.put('/owner/tour-hours', response=TourHoursOut, summary='When tenants can book tours')
 def tour_hours(request, body: TourHoursIn):
     import re
     p = common.owner_property(request)

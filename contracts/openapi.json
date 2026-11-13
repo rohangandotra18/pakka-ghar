@@ -4003,6 +4003,37 @@
         "title": "TourHoursIn",
         "type": "object"
       },
+      "TourHoursOut": {
+        "properties": {
+          "days": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Days",
+            "type": "array"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "minutes": {
+            "title": "Minutes",
+            "type": "integer"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "days",
+          "start",
+          "end",
+          "minutes"
+        ],
+        "title": "TourHoursOut",
+        "type": "object"
+      },
       "TourIn": {
         "properties": {
           "listing": {
@@ -6901,6 +6932,31 @@
       }
     },
     "/api/owner/tour-hours": {
+      "get": {
+        "operationId": "apps_booking_tours_owner_api_get_tour_hours",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TourHoursOut"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "TokenAuth": []
+          }
+        ],
+        "summary": "Your tour hours (also while the PG is a draft)",
+        "tags": [
+          "owner"
+        ]
+      },
       "put": {
         "operationId": "apps_booking_tours_owner_api_tour_hours",
         "parameters": [],
@@ -6919,9 +6975,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
+                  "$ref": "#/components/schemas/TourHoursOut"
                 }
               }
             },

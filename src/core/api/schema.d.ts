@@ -1162,7 +1162,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Your tour hours (also while the PG is a draft) */
+        get: operations["apps_booking_tours_owner_api_get_tour_hours"];
         /** When tenants can book tours */
         put: operations["apps_booking_tours_owner_api_tour_hours"];
         post?: never;
@@ -3061,6 +3062,17 @@ export interface components {
             /** Start */
             start: string;
         };
+        /** TourHoursOut */
+        TourHoursOut: {
+            /** Days */
+            days: number[];
+            /** End */
+            end: string;
+            /** Minutes */
+            minutes: number;
+            /** Start */
+            start: string;
+        };
         /** TourIn */
         TourIn: {
             /** Listing */
@@ -4764,6 +4776,26 @@ export interface operations {
             };
         };
     };
+    apps_booking_tours_owner_api_get_tour_hours: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TourHoursOut"];
+                };
+            };
+        };
+    };
     apps_booking_tours_owner_api_tour_hours: {
         parameters: {
             query?: never;
@@ -4783,9 +4815,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["TourHoursOut"];
                 };
             };
         };

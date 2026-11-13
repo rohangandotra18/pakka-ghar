@@ -17,14 +17,12 @@ type Hours = { days: number[]; start: string; end: string; minutes: number };
 
 export default function TourHoursScreen() {
   const { act } = useAction();
-  const prop = useQuery(() => ok(api.GET('/api/owner/property')));
-  const slug = prop.data?.id;
-  const current = useQuery(() => (slug ? ok(api.GET('/api/listings/{slug}/tour-slots', { params: { path: { slug } } })) : Promise.resolve(null)), [slug]);
+  const current = useQuery(() => ok(api.GET('/api/owner/tour-hours')));   // works while the PG is still a draft too
   /* the saved hours until the owner changes something, then their edit */
   const [edited, setEdited] = useState<Hours | null>(null);
-  const h = edited ?? (current.data?.hours as Hours | undefined) ?? null;
+  const h = edited ?? current.data ?? null;
 
-  if (!h) return <Screen><Back /><Loading error={prop.error ?? current.error} retry={() => { prop.reload(); current.reload(); }} /></Screen>;
+  if (!h) return <Screen><Back /><Loading error={current.error} retry={current.reload} /></Screen>;
   const set = (x: Partial<Hours>) => setEdited({ ...h, ...x });
   const toggleDay = (d: number) => set({ days: h.days.includes(d) ? h.days.filter(x => x !== d) : [...h.days, d].sort() });
   const valid = h.days.length > 0 && h.start < h.end;
