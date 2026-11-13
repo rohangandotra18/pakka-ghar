@@ -1,11 +1,13 @@
+import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
-import { Loading, Back, Badge, Btn, List, Note, Row, Screen, T } from '@/design';
+import { Loading, Back, Badge, Btn, Card, List, Note, Row, Screen, StarInput, T } from '@/design';
 import { api, inr, ok, useAction, useQuery } from '@/core/api';
 
 export default function Resident() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { act, busy } = useAction();
+  const [stars, setStars] = useState(0);   /* the owner's own rating of the resident; 0 = not rated */
   const q = useQuery(() => ok(api.GET('/api/owner/residents/{booking_id}', { params: { path: { booking_id: id } } })), [id]);
   const r = q.data;
   if (!r) return <Screen><Back /><Loading error={q.error} retry={q.reload} /></Screen>;
@@ -31,8 +33,15 @@ export default function Resident() {
       {r.agreement === 'Waiting for your signature' && <Btn label="Read and sign the agreement" onPress={() => router.push(`/agreement/${r.booking_id}`)} />}
       {ended && r.deposit_held_paise > 0 && <>
         {r.settle_by && <Note tone="soft">Settle by {new Date(r.settle_by).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}. After that the deposit goes back automatically{r.notice_charge_paise ? `, less ${inr(Math.min(r.notice_charge_paise, r.deposit_held_paise))} for the notice ${r.name.split(' ')[0]} didn’t serve` : ''}.</Note>}
-        {r.notice_charge_paise > 0 && <Btn label={`Keep ${inr(Math.min(r.notice_charge_paise, r.deposit_held_paise))} unserved notice, return ${inr(r.deposit_held_paise - Math.min(r.notice_charge_paise, r.deposit_held_paise))}`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: Math.min(r.notice_charge_paise, r.deposit_held_paise), reason: 'rent for unserved notice', rating: 5 } })), 'Deposit settled. Rating saved.')} />}
-      {ended && r.deposit_held_paise > 0 && <Btn kind={r.notice_charge_paise > 0 ? 'secondary' : 'primary'} label={`Return ${inr(r.deposit_held_paise)} deposit and rate 5 stars`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: 0, reason: '', rating: 5 } })), 'Deposit returned from escrow. Rating saved.')} />}
+        {/* the owner rates the resident themselves (or not at all); settling releases money from escrow for good */}
+        <Card>
+          <T v="bodyBold">How was {r.name.split(' ')[0]} as a resident?</T>
+          <StarInput value={stars} onChange={setStars} />
+          <T v="sm">{stars ? `${stars} star${stars > 1 ? 's' : ''}. Shown to other owners once ${r.name.split(' ')[0]} has rated too, or after 14 days.` : 'Optional. Leave it blank to settle without rating.'}</T>
+        </Card>
+        <T v="sm">Settling sends the money from escrow straight away. It can’t be undone.</T>
+        {r.notice_charge_paise > 0 && <Btn label={`Keep ${inr(Math.min(r.notice_charge_paise, r.deposit_held_paise))} unserved notice, return ${inr(r.deposit_held_paise - Math.min(r.notice_charge_paise, r.deposit_held_paise))}`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: Math.min(r.notice_charge_paise, r.deposit_held_paise), reason: 'rent for unserved notice', rating: stars || null } })), stars ? 'Deposit settled. Rating saved.' : 'Deposit settled.')} />}
+        <Btn kind={r.notice_charge_paise > 0 ? 'secondary' : 'primary'} label={`Return the full ${inr(r.deposit_held_paise)} deposit`} disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/residents/{booking_id}/move-out', { ...path, body: { deduction_paise: 0, reason: '', rating: stars || null } })), stars ? 'Deposit returned from escrow. Rating saved.' : 'Deposit returned from escrow.')} />
       </>}
       <Btn kind="secondary" label="Open the agreement" onPress={() => router.push(`/agreement/${r.booking_id}`)} />
     </Screen>
