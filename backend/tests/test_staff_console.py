@@ -38,3 +38,18 @@ def test_the_queue_is_for_staff_only(world):
     assert r.status_code == 403 and r.json()['code'] == 'not_staff'
     assert world['api'](world['owner_a']).get('/staff/queue').status_code == 403
     assert _staff_api().get('/staff/queue').status_code == 200
+
+
+def test_a_dismissed_report_is_on_record_but_hidden_from_the_owner(world):
+    from apps.core.models import AuditEvent
+    from apps.core.rls import set_context, system
+    staff = _staff_api()
+    world['api'](world['simran']).post('/requests', {'category': 'Asked to pay in cash', 'text': 'Owner wants cash', 'listing': 'sidhu'})
+    rid = staff.get('/staff/queue').json()['reports'][0]['id']
+    assert staff.post(f'/staff/reports/{rid}/resolve', {'outcome': 'dismissed'}).json()['status'] == 'dismissed'
+    assert staff.post(f'/staff/reports/{rid}/resolve', {'outcome': 'confirmed'}).status_code == 404   # decided once
+    with system():
+        ev = AuditEvent.objects.get(action='report.resolve')
+        assert ev.after['status'] == 'dismissed' and ev.actor.phone == '+919999900000' and ev.organisation_id is None
+    set_context(world['org_a'].id, world['owner_a'].id)      # the owner the report was about sees none of it
+    assert not AuditEvent.objects.filter(action='report.resolve').exists()

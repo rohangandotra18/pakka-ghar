@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 import { AppBar } from '@/shared';
-import { Loading, Badge, Btn, Chip, Kpi, List, Note, Row, Screen, T } from '@/design';
-import { api, inr, ok, useAction, useQuery } from '@/core/api';
+import { Loading, Badge, Btn, Card, Chip, Kpi, List, Note, Row, Screen, T } from '@/design';
+import { api, inr, ok, useAction, useQuery, type Schemas } from '@/core/api';
 
 export default function Money() {
   const { act, busy } = useAction();
+  /* the year statement stays on screen to read through or show the CA, rather than a toast that goes in seconds */
+  const [stmt, setStmt] = useState<Schemas['StatementOut'] | null>(null);
   const q = useQuery(() => ok(api.GET('/api/owner/money')));
   const m = q.data;
   if (!m) return <Screen><AppBar /><Loading error={q.error} retry={q.reload} /></Screen>;
@@ -34,7 +37,27 @@ export default function Money() {
         <Row left="Deposits in escrow" right={inr(m.escrow_paise)} />
         <Row left="Next payout" right={`${inr(m.next_payout_paise)} · ${m.payout_account ?? 'add a bank account'}`} last />
       </List>
-      <Btn kind="secondary" label="Year statement for your CA" disabled={busy} onPress={() => act(() => ok(api.GET('/api/owner/statement')), s => `FY ${s.fy}: rent ${inr(s.rent_paise)}, electricity ${inr(s.electricity_paise)}. ${s.note.split('.')[0]}.`)} />
+      {stmt ? (
+        <Card>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <T v="bodyBold">Year statement · FY {stmt.fy}</T>
+            <Btn small kind="ghost" label="Close" onPress={() => setStmt(null)} />
+          </View>
+          <List>
+            <Row left="Rent billed" right={inr(stmt.rent_paise)} />
+            <Row left="Electricity billed" right={inr(stmt.electricity_paise)} />
+            {stmt.deductions_paise > 0 && <Row left="Taken from deposits" right={inr(stmt.deductions_paise)} />}
+            <Row left="30% standard deduction on rent" right={inr(stmt.standard_deduction_paise)} last />
+          </List>
+          {stmt.rows.length > 0 && <>
+            <T v="label">By resident</T>
+            <List>{stmt.rows.map((r, i) => <Row key={`${r.name}-${r.room}-${i}`} last={i === stmt.rows.length - 1}
+              left={<View><T v="bodyBold">{r.name}</T><T v="sm">Room {r.room}</T></View>}
+              right={<View style={{ alignItems: 'flex-end' }}><T v="bodyBold">{inr(r.rent_paise)}</T>{r.electricity_paise > 0 && <T v="sm">+ {inr(r.electricity_paise)} electricity</T>}</View>} />)}</List>
+          </>}
+          <Note tone="soft">{stmt.note}</Note>
+        </Card>
+      ) : <Btn kind="secondary" label="Year statement for your CA" onPress={() => act(async () => { setStmt(await ok(api.GET('/api/owner/statement'))); })} />}
     </Screen>
   );
 }

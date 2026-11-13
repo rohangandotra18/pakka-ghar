@@ -15,7 +15,7 @@ export default function More() {
       style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: SP.md, padding: SP.md, backgroundColor: pressed ? C.bg : C.surface })}>
       <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: C.accentSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name={icon} color={C.accent} /></View>
       <View style={{ flex: 1 }}><T v="bodyBold">{title}</T><T v="sm">{sub}</T></View>
-      {badge ? <View style={{ minWidth: 22, height: 22, borderRadius: 11, backgroundColor: C.crit, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}><T v="smBold" style={{ color: '#fff', fontSize: 12 }}>{badge}</T></View> : <T v="sm">›</T>}
+      {badge ? <View style={{ minWidth: 22, height: 22, borderRadius: 11, backgroundColor: C.crit, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}><T v="smBold" accessibilityLabel={`${badge} new`} style={{ color: C.surface, fontSize: 12 }}>{badge}</T></View> : <T v="sm">›</T>}
     </Pressable>
   );
   const group = (children: React.ReactNode[]) => (

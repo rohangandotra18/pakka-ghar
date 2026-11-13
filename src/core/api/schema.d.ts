@@ -2103,6 +2103,8 @@ export interface components {
             rooms: components["schemas"]["RoomCardOut"][];
             /** Stays */
             stays: number;
+            /** Taking Tenants */
+            taking_tenants: boolean;
             /** Tariff Paise */
             tariff_paise: number;
             /** Verified Owner */

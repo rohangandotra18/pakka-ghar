@@ -46,7 +46,7 @@ export default function Beds() {
           </View>}
           {consent?.room === room.number && <>
             <T v="sm">With instant booking, a verified tenant’s request for Room {room.number} is accepted and signed for you at once; they then sign and pay. Confirm with the code sent to your phone ending {consent.last4}.</T>
-            <Otp code={consent.code || '······'} />
+            <Otp code={consent.code} onChange={code => setConsent(x => x && { ...x, code })} />
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Btn small kind="secondary" style={{ flex: 1 }} label="Cancel" onPress={() => setConsent(null)} />
               <Btn small style={{ flex: 1 }} label="Turn on instant booking" disabled={busy} onPress={() => act(async () => {

@@ -71,8 +71,8 @@ function Mosaic({ photos, pgName, onOpen, tileRef }: { photos: Photo[]; pgName: 
 function RoundBtn({ label, glyph, onPress, disabled, btnRef }: { label: string; glyph: string; onPress: () => void; disabled?: boolean; btnRef?: (el: HostInstance | null) => void }) {
   return (
     <Pressable ref={btnRef} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ disabled: !!disabled }} disabled={disabled} onPress={onPress}
-      style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? '#3A423E' : '#262C29', opacity: disabled ? 0.3 : 1 })}>
-      <T v="h2" style={{ color: '#FFFFFF', fontFamily: F.regular, fontSize: 30, lineHeight: 34 }}>{glyph}</T>
+      style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? C.viewerBtnPressed : C.viewerBtn, opacity: disabled ? 0.3 : 1 })}>
+      <T v="h2" style={{ color: C.viewerInk, fontFamily: F.regular, fontSize: 30, lineHeight: 34 }}>{glyph}</T>
     </Pressable>
   );
 }
@@ -97,7 +97,7 @@ function Viewer({ photos, pgName, index, setIndex, onClose }: { photos: Photo[];
   useEffect(() => { const t = setTimeout(() => closeRef.current?.focus(), 30); return () => clearTimeout(t); }, []);
   return (
     <Modal transparent animationType="none" visible onRequestClose={onClose} accessibilityLabel={`Photos of ${pgName}`}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(8,10,9,0.97)', paddingVertical: 24, paddingHorizontal: 24 }}>
+      <View style={{ flex: 1, backgroundColor: C.viewerBg, paddingVertical: 24, paddingHorizontal: 24 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
           <RoundBtn label="Close photos" glyph="×" onPress={onClose} btnRef={el => { closeRef.current = el; }} />
         </View>
@@ -109,8 +109,8 @@ function Viewer({ photos, pgName, index, setIndex, onClose }: { photos: Photo[];
           <RoundBtn label="Next photo" glyph="›" onPress={() => step(1)} disabled={index === n - 1} />
         </View>
         <View style={{ alignItems: 'center', gap: 4, paddingTop: 12 }}>
-          <T v="body" style={{ color: '#FFFFFF' }}>{captionOf(photo)}</T>
-          <T v="sm" style={{ color: '#B8C2BC' }} >{index + 1} of {n}</T>
+          <T v="body" style={{ color: C.viewerInk }}>{captionOf(photo)}</T>
+          <T v="sm" style={{ color: C.viewerMuted }} >{index + 1} of {n}</T>
         </View>
       </View>
     </Modal>

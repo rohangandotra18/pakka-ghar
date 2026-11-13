@@ -14,3 +14,12 @@ def settle_overdue_deposits() -> int:
     from .stay.services import settle_overdue_deposits as run
     with transaction.atomic():
         return run()
+
+
+@shared_task
+def announce_ended_bidding() -> int:
+    from apps.core.rls import system
+
+    from .applications.services import announce_ended_bidding as run
+    with transaction.atomic(), system():
+        return run()

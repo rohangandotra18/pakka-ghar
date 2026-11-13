@@ -11,7 +11,7 @@ export function PgCard({ pg, from, selected, onHover }: { pg: Schemas['ListingOu
   if (wide) return <PgCardWide pg={pg} from={from} selected={selected} onHover={onHover} />;
   return (
     <Pressable onPress={() => router.push(`/pg/${pg.id}`)} onHoverIn={onHover && (() => onHover(true))} onHoverOut={onHover && (() => onHover(false))}
-      accessibilityRole="button" accessibilityLabel={`${pg.name}, ${inr(pg.rent_paise)} per bed, ${pg.area}`}
+      accessibilityRole="button" accessibilityLabel={`${pg.name}, ${inr(pg.rent_paise)} per bed, ${pg.area}${pg.rating != null ? `, rated ${pg.rating.toFixed(1)} from ${pg.stays} ${pg.stays === 1 ? 'stay' : 'stays'}` : ''}`}
       style={({ pressed }) => ({ backgroundColor: C.surface, borderRadius: R.lg, borderWidth: selected ? 2 : 1, borderColor: selected ? C.accent : C.line, padding: selected ? 13 : 14, gap: 4, opacity: pressed ? 0.85 : 1 })}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <T v="price">{inr(pg.rent_paise)}<T v="sm"> /bed</T></T>
@@ -20,6 +20,7 @@ export function PgCard({ pg, from, selected, onHover }: { pg: Schemas['ListingOu
       <T v="bodyBold">{pg.name}</T>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Dot color={GENDER_COLOR[pg.gender]} /><T v="sm">{pg.gender} · {pg.meals} · {pg.area}</T></View>
       {from && pg.km != null ? <T v="smBold" style={{ color: C.accent }}>{pg.km} km from {from}</T> : null}
+      {pg.rating != null ? <T v="sm">★ {pg.rating.toFixed(1)} · {pg.stays} {pg.stays === 1 ? 'stay' : 'stays'}</T> : null}
     </Pressable>
   );
 }

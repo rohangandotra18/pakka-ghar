@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import { AppBar, SignupPrompt } from '@/shared';
@@ -17,6 +18,7 @@ const ago = (iso?: string | null) => {
 export default function Stay() {
   const { tenantReady } = useStore();
   const { act, busy } = useAction();
+  const [confirmNotice, setConfirmNotice] = useState(false);
   const q = useQuery(() => (tenantReady ? ok(api.GET('/api/stay')) : Promise.resolve({ stay: null })), [tenantReady]);
   if (!tenantReady) return <SignupPrompt title="Your stay lives here" body="Once you book, your rent, electricity reading, agreement and receipts show up here. Browsing doesn’t need an account." />;
   if (!q.data) return <Screen><AppBar /><Loading error={q.error} retry={q.reload} /></Screen>;
@@ -73,8 +75,18 @@ export default function Stay() {
         <Row left="Police verification" right={b.police === 'verified' ? <Badge label="Verified" tone="ok" /> : <Badge label={b.police === 'submitted' ? 'Submitted' : 'With the owner'} tone="warn" />} />
         <Row left="Receipts" right={`${st.receipts} saved`} last />
       </List>
-      {moved && <View style={{ flexDirection: 'row', gap: 8 }}>
-        {!st.leaves_on && <Btn kind="secondary" style={{ flex: 1 }} label="Give notice" disabled={busy} onPress={() => act(() => ok(api.POST('/api/stay/notice')), r => r.stay?.leaves_on ? `Notice recorded: you leave on ${dayMonth(r.stay.leaves_on)}. The owner is told.` : undefined)} />}
+      {/* notice can't be taken back in the app and the owner may offer the bed straight away, so it is asked twice */}
+      {moved && !st.leaves_on && confirmNotice ? (
+        <Card>
+          <T v="bodyBold">Give notice?</T>
+          <T v="sm">You’d leave on {dayMonth(st.notice_ends_on)}. The owner is told straight away and can offer your bed to someone else. You can’t take notice back in the app.</T>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Btn kind="secondary" style={{ flex: 1 }} label="Keep my bed" onPress={() => setConfirmNotice(false)} />
+            <Btn style={{ flex: 1 }} label="Yes, give notice" disabled={busy} onPress={() => act(() => ok(api.POST('/api/stay/notice')), r => r.stay?.leaves_on ? `Notice recorded: you leave on ${dayMonth(r.stay.leaves_on)}. The owner is told.` : undefined).then(() => setConfirmNotice(false))} />
+          </View>
+        </Card>
+      ) : moved && <View style={{ flexDirection: 'row', gap: 8 }}>
+        {!st.leaves_on && <Btn kind="secondary" style={{ flex: 1 }} label="Give notice" onPress={() => setConfirmNotice(true)} />}
         <Btn kind="secondary" style={{ flex: 1 }} label="End stay and rate" onPress={() => router.push('/rate')} />
       </View>}
     </Screen>

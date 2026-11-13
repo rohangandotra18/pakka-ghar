@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { Image, Pressable, TextInput, View } from 'react-native';
-import { Back, Btn, Chip, Chips, Note, Screen, T, C, F } from '@/design';
+import { Image, Pressable, View } from 'react-native';
+import { Back, Btn, Chip, Chips, Field, Note, Screen, T, C } from '@/design';
 import { api, ok, useAction, useQuery } from '@/core/api';
 import { takeOnSitePhoto, uploadShot, type OnSiteShot } from '@/core/device';
 import { useStore } from '@/core/session';
@@ -42,8 +42,7 @@ export default function NewRequest() {
       <T v="h2">{living ? 'New request' : 'Report a problem'}</T>
       <T v="label">What’s it about?</T>
       <Chips>{cats.map(c => <Chip key={c} label={c} on={cat === c} onPress={() => setCat(c)} />)}</Chips>
-      <T v="label">Describe it</T>
-      <TextInput allowFontScaling={false} multiline value={text} onChangeText={setText} placeholder={starter(cat)} placeholderTextColor={C.muted} style={{ minHeight: 90, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.surface, padding: 12, fontFamily: F.semi, fontSize: 15, color: C.ink, textAlignVertical: 'top' }} />
+      <Field label="Describe it" multiline value={text} onChangeText={setText} placeholder={starter(cat)} />
       {living && !toUs && (shot
         ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}><Image source={{ uri: shot.uri }} style={{ width: 72, height: 72, borderRadius: 10 }} accessibilityLabel="Your photo" /><Btn small kind="ghost" label="Retake" onPress={snap} /></View>
         : <Pressable onPress={snap} accessibilityRole="button" style={{ borderWidth: 1.5, borderStyle: 'dashed', borderColor: C.line, borderRadius: 12, padding: 18, alignItems: 'center' }}><T v="smBold" style={{ color: C.muted }}>+ Take a photo of it</T></Pressable>)}

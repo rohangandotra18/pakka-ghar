@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Pressable, TextInput, View } from 'react-native';
-import { Loading, Back, Btn, Chip, Chips, Field, Note, Screen, T, C, F, R } from '@/design';
+import { Pressable, View } from 'react-native';
+import { Loading, Back, Btn, Chip, Chips, Field, Note, Screen, T, C, R } from '@/design';
 import { api, inr, ok, useAction, useQuery } from '@/core/api';
 
 const STEP = 10000; // ₹100
@@ -87,10 +87,8 @@ export default function Apply() {
       {mates.length < 2 && people < Math.max(room_for, 1) && <Btn small kind="secondary" label="+ Add a roommate" onPress={() => setMates(xs => [...xs, ''])} />}
       {tooMany && <Note tone="warn">{room_for ? `${r ? `Room ${r.number}` : 'No room'} has only ${room_for} free bed${room_for > 1 ? 's' : ''} together.` : 'No room has free beds together for your group.'} Pick another room or fewer people.</Note>}
 
-      <T v="label">A note to the owner</T>
-      <TextInput allowFontScaling={false} multiline value={message} onChangeText={setMessage} maxLength={500}
-        placeholder="Where you study or work, when you'd move in, anything they should know" placeholderTextColor={C.muted}
-        style={{ minHeight: 80, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.surface, padding: 12, fontFamily: F.semi, fontSize: 15, color: C.ink, textAlignVertical: 'top' }} />
+      <Field label="A note to the owner" multiline maxLength={500} value={message} onChangeText={setMessage}
+        placeholder="Where you study or work, when you'd move in, anything they should know" />
 
       <Btn label={bidding ? `Place bid of ${inr(amount)}` : mates.length ? `Request ${people} beds` : p.rooms.find(x => x.number === room)?.instant ? 'Book now' : 'Send request'}
         disabled={busy || tooMany || mates.some(m => m.replace(/\D/g, '').length < 10)} onPress={submit} />

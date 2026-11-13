@@ -1,5 +1,6 @@
 """Public listings, and the owner's property setup (details, map pin, rooms, meters, papers, payouts)."""
 import math
+import re
 import secrets
 from datetime import date, datetime
 from decimal import Decimal
@@ -75,6 +76,7 @@ class ListingOut(Schema):
     notice_months: int
     tariff_paise: int
     verified_owner: bool
+    taking_tenants: bool           # false while the trust team checks it or the owner has paused it
     move_in_on: date
     km: float | None
 
@@ -277,8 +279,10 @@ def upload_doc(request, kind: str, file_name: str = ''):
     if kind not in dict(OwnershipDocument.KINDS):
         raise ApiError(422, 'bad_kind', 'Unknown document.')
     d, _ = OwnershipDocument.objects.get_or_create(property=p, kind=kind, defaults={'organisation': p.organisation})
+    before = {'status': d.status, 'file_name': d.file_name}
     d.status, d.file_name = 'uploaded', file_name[:200]
     d.save()
+    audit(p.organisation, request.party, 'document.upload', d, before, {'status': d.status, 'file_name': d.file_name})
     return property_out(p)
 
 
@@ -368,6 +372,9 @@ def pair_meter(request, number: str):
     return property_out(p)
 
 
+IFSC = re.compile(r'[A-Z]{4}0[A-Z0-9]{6}')
+
+
 class PayoutIn(Schema):
     bank_name: str
     account_number: str
@@ -378,10 +385,22 @@ class PayoutIn(Schema):
 def payout(request, body: PayoutIn):
     p = _prop(request)
     digits = ''.join(ch for ch in body.account_number if ch.isdigit())
-    if len(digits) < 9 or len(body.ifsc) != 11:
+    ifsc = body.ifsc.strip().upper()
+    # Indian accounts are 9 to 18 digits; an IFSC is four letters for the bank, a zero, then six for the branch
+    if not 9 <= len(digits) <= 18 or not IFSC.fullmatch(ifsc):
         raise ApiError(422, 'bad_account', 'Check the account number and IFSC.')
-    PayoutAccount.objects.create(organisation=p.organisation, bank_name=body.bank_name, ifsc=body.ifsc.upper(),
-                                 account_masked='XXXX XXXX ' + digits[-4:], name_matched_at=timezone.now())
+    before = PayoutAccount.objects.filter(organisation=p.organisation).order_by('-created_at').first()
+    acct = PayoutAccount.objects.create(organisation=p.organisation, bank_name=body.bank_name.strip()[:80], ifsc=ifsc,
+                                        account_masked='XXXX XXXX ' + digits[-4:], name_matched_at=timezone.now())
+    # where the rent goes is the change a stolen login would make: keep a trail and tell every owner of the PG
+    audit(p.organisation, request.party, 'payout.change', acct,
+          {'account': before.account_masked, 'ifsc': before.ifsc} if before else None,
+          {'account': acct.account_masked, 'ifsc': acct.ifsc, 'bank': acct.bank_name})
+    from apps.booking.common import owners_of
+    from apps.core.api_support import notify
+    for o in owners_of(p.organisation):
+        notify(o, 'payout.changed', f'Rent for {p.name} will now be paid to {acct.bank_name} {acct.account_masked}. '
+               'If this wasn’t you, contact the trust team.', org=p.organisation)
     return property_out(p)
 
 

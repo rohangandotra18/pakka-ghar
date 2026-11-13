@@ -39,6 +39,26 @@ def test_monthly_rent_job_is_safe_to_run_twice(world):
     assert read(lambda: Invoice.objects.count()) == 2      # one per resident per month, however often it runs
 
 
+def test_one_bill_that_fails_does_not_stop_the_others(world, monkeypatch):
+    from apps.payments import services as pay_svc
+    with system():
+        broken = stay(bed(world['a'], '101', 1), world['aman'], date(2026, 8, 1))
+        stay(bed(world['b'], '204', 1), world['simran'], date(2026, 9, 1))
+    real = pay_svc.charge_month
+
+    def flaky(b, period):
+        if b.pk == broken.pk:
+            raise RuntimeError('bad data on this one booking')
+        return real(b, period)
+    monkeypatch.setattr(pay_svc, 'charge_month', flaky)
+    assert charge_rent_for_month.delay().get() == 1
+    assert read(lambda: list(Invoice.objects.values_list('booking_id', flat=True))) != [broken.pk]
+    assert read(lambda: Invoice.objects.count()) == 1
+    monkeypatch.setattr(pay_svc, 'charge_month', real)     # fixed by the next morning's run
+    assert charge_rent_for_month.delay().get() == 2
+    assert read(lambda: Invoice.objects.count()) == 2
+
+
 def test_settlement_moves_collections_to_the_owners_bank(world):
     with system():
         b = stay(bed(world['a'], '101', 1), world['aman'], date(2026, 8, 1))
@@ -112,8 +132,35 @@ def test_housekeeping_keeps_recent_records(db):
     with system():
         OtpChallenge.objects.create(phone='+919800022222', code_hash='x', expires_at=timezone.now())
         OtpChallenge.objects.filter(phone='+919800022222').update(created_at=timezone.now() - timedelta(days=2))
-    assert purge_expired.delay().get() == {'codes': 1, 'replays': 0}
+    assert purge_expired.delay().get() == {'codes': 1, 'replays': 0, 'sessions': 0, 'notifications': 0}
     assert read(lambda: OtpChallenge.objects.count()) == 1
+
+
+def test_housekeeping_drops_sign_ins_that_can_no_longer_be_used(db):
+    from apps.core.models import Party
+    from apps.core.tasks import purge_expired
+    from apps.identity.models import SessionToken
+    now = timezone.now()
+    with system():
+        p = Party.objects.create(phone='+919800033333')
+        for name, used, revoked in [('in use', now, None), ('signed out today', now, now),
+                                    ('signed out long ago', now, now - timedelta(days=40)),
+                                    ('forgotten', now - timedelta(days=100), None)]:
+            SessionToken.objects.create(party=p, token_hash=uuid.uuid4().hex, device=name, last_used_at=used, revoked_at=revoked)
+    assert purge_expired.delay().get()['sessions'] == 2
+    assert read(lambda: sorted(SessionToken.objects.values_list('device', flat=True))) == ['in use', 'signed out today']
+
+
+def test_housekeeping_drops_notifications_after_three_months(db):
+    from apps.core.models import Notification, Party
+    from apps.core.tasks import purge_expired
+    with system():
+        p = Party.objects.create(phone='+919800044444')
+        Notification.objects.create(party=p, kind='x', title='recent')
+        Notification.objects.create(party=p, kind='x', title='old')
+        Notification.objects.filter(title='old').update(created_at=timezone.now() - timedelta(days=91))
+    assert purge_expired.delay().get()['notifications'] == 1
+    assert read(lambda: list(Notification.objects.values_list('title', flat=True))) == ['recent']
 
 
 def test_the_website_may_call_the_api(db, settings):

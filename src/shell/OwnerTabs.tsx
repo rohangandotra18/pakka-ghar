@@ -36,7 +36,7 @@ function Sidebar() {
             <Icon name={it.icon} color={on ? C.accent : C.muted} size={20} />
             <T v="bodyBold" style={{ flex: 1, color: on ? C.accent : C.ink }}>{it.title}</T>
             {n > 0 && <View style={{ minWidth: 20, height: 20, borderRadius: 10, backgroundColor: C.crit, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 }}>
-              <T v="smBold" style={{ color: '#fff', fontSize: 11 }}>{n}</T></View>}
+              <T v="smBold" accessibilityLabel={`${n} new`} style={{ color: C.surface, fontSize: 11 }}>{n}</T></View>}
           </Pressable>
         );
       })}

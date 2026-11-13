@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import { api, inr, ok, useAction, useQuery } from '@/core/api';
-import { Badge, Btn, Card, T } from '@/design';
+import { Badge, Btn, Card, T, C } from '@/design';
 
 const STATUS: Record<string, [string, 'ok' | 'warn' | 'crit' | undefined]> = {
   forming: ['Waiting for roommates', 'warn'], pending: ['With the owner', 'warn'], accepted: ['Accepted', 'ok'],
@@ -11,6 +12,7 @@ const STATUS: Record<string, [string, 'ok' | 'warn' | 'crit' | undefined]> = {
 /* Before a stay: roommate invites and the tenant's applications, with where each bid stands. */
 export function MyApplications() {
   const { act, busy } = useAction();
+  const [withdrawing, setWithdrawing] = useState<string | null>(null);
   const invites = useQuery(() => ok(api.GET('/api/invites')));
   const apps = useQuery(() => ok(api.GET('/api/applications/mine')));
   const live = (apps.data ?? []).filter(a => a.status !== 'withdrawn');
@@ -49,7 +51,14 @@ export function MyApplications() {
                 <Btn key={m.id} small kind="secondary" label={`Go ahead without ${m.name === 'Invited' ? `••${m.phone_last4}` : m.name.split(' ')[0]}`} disabled={busy}
                   onPress={() => act(() => ok(api.POST('/api/applications/{app_id}/members/{member_id}/remove', { params: { path: { app_id: a.id, member_id: m.id } } })))} />
               ))}
-              <Btn small kind="ghost" label="Withdraw" disabled={busy} onPress={() => act(() => ok(api.POST('/api/applications/{app_id}/withdraw', { params: { path: { app_id: a.id } } })), 'Application withdrawn.')} />
+              {/* withdrawing can't be undone, gives up a bid and ends the group for roommates, so it is asked twice */}
+              {withdrawing === a.id ? <>
+                <T v="sm" style={{ color: C.ink }}>Withdraw this request?{a.amount_paise ? ' Your bid is given up.' : ''}{others.length ? ' Your roommates’ places in it end too.' : ''} You can send a new one later if a bed is still free.</T>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <Btn small kind="secondary" style={{ flex: 1 }} label="Keep it" onPress={() => setWithdrawing(null)} />
+                  <Btn small style={{ flex: 1 }} label="Withdraw" disabled={busy} onPress={() => act(() => ok(api.POST('/api/applications/{app_id}/withdraw', { params: { path: { app_id: a.id } } })), 'Request withdrawn.').then(() => setWithdrawing(null))} />
+                </View>
+              </> : <Btn small kind="ghost" label="Withdraw" onPress={() => setWithdrawing(a.id)} />}
             </>}
           </Card>
         );

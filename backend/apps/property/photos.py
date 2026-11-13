@@ -42,6 +42,14 @@ def km(lat1, lng1, lat2, lng2) -> float:
     return 6371 * 2 * math.asin(math.sqrt(h))
 
 
+def _read(file) -> bytes:
+    """The upload's bytes, refused by its declared size first: reading a huge file just to measure it would hold
+    all of it in memory."""
+    if file.size is not None and file.size > settings.PHOTO_MAX_BYTES:
+        raise ApiError(413, 'too_big', 'That photo is too large. Take it again at normal quality.')
+    return file.read(settings.PHOTO_MAX_BYTES + 1)   # never more than one byte past the limit, which the next check refuses
+
+
 def _check_and_encode(raw: bytes) -> tuple[bytes, bytes, tuple[int, int]]:
     from PIL import Image, ImageOps
     if len(raw) > settings.PHOTO_MAX_BYTES:
@@ -132,7 +140,7 @@ def add_listing_photo(request, file: UploadedFile = File(...), taken_at: datetim
     r = Room.objects.filter(property=prop, number=room).first() if room else None
     if room and not r:
         raise ApiError(404, 'no_room', f'No room {room}.')
-    p = save_photo(prop, request.party, file.read(), taken_at, lat, lng, accuracy_m, device, r, caption)
+    p = save_photo(prop, request.party, _read(file), taken_at, lat, lng, accuracy_m, device, r, caption)
     return photo_out(p)
 
 
@@ -157,5 +165,5 @@ def add_ticket_photo(request, ticket_id: uuid.UUID, file: UploadedFile = File(..
     t = Ticket.objects.filter(pk=ticket_id, raised_by=party).select_related('property').first()
     if not t:
         raise ApiError(404, 'not_found', 'No such request.')
-    p = save_photo(t.property, party, file.read(), taken_at, lat, lng, accuracy_m, device, t.room, '', ticket=t)
+    p = save_photo(t.property, party, _read(file), taken_at, lat, lng, accuracy_m, device, t.room, '', ticket=t)
     return photo_out(p)

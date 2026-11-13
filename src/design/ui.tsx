@@ -1,5 +1,5 @@
 import { Children, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type StyleProp, type TextStyle, type ViewStyle, Platform } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ScrollViewInstance, type StyleProp, type TextStyle, type ViewStyle, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { C, F, R, SP } from './theme';
@@ -10,8 +10,10 @@ import { useWide } from './useWide';
 export function Toast({ message }: { message: string }) {
   const insets = useSafeAreaInsets();
   const wide = useWide();
+  /* screen readers hear it too: a live region on Android, role=status on the web, and iOS has to be told */
+  useEffect(() => { if (message && Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(message); }, [message]);
   if (!message) return null;
-  return <View pointerEvents="none" style={[s.toast, wide ? { bottom: 24, maxWidth: 420, marginHorizontal: 'auto' } : { bottom: 96 + insets.bottom }]}><T v="smBold" style={{ color: C.bg }}>{message}</T></View>;
+  return <View pointerEvents="none" role="status" accessibilityLiveRegion="polite" style={[s.toast, wide ? { bottom: 24, maxWidth: 420, marginHorizontal: 'auto' } : { bottom: 96 + insets.bottom }]}><T v="smBold" style={{ color: C.bg }}>{message}</T></View>;
 }
 
 /* Every element is drawn by the app itself (no native switches, sliders or ripples), so iOS and Android match. */
@@ -29,8 +31,8 @@ const TV: Record<Variant, TextStyle> = {
   label: { fontFamily: F.bold, fontSize: 12, lineHeight: 16, color: C.muted, letterSpacing: 0.2 },
   price: { fontFamily: F.display, fontSize: 19, lineHeight: 24, letterSpacing: -0.3, color: C.ink },
 };
-export function T({ v = 'body', style, children, numberOfLines }: { v?: Variant; style?: StyleProp<TextStyle>; children: ReactNode; numberOfLines?: number }) {
-  return <Text allowFontScaling={false} numberOfLines={numberOfLines} style={[TV[v], { includeFontPadding: false }, style]}>{children}</Text>;
+export function T({ v = 'body', style, children, numberOfLines, accessibilityLabel }: { v?: Variant; style?: StyleProp<TextStyle>; children: ReactNode; numberOfLines?: number; accessibilityLabel?: string }) {
+  return <Text allowFontScaling={false} numberOfLines={numberOfLines} accessibilityLabel={accessibilityLabel} style={[TV[v], { includeFontPadding: false }, style]}>{children}</Text>;
 }
 
 /* The page. `width` sets how wide its content may be on a wide website (phones and narrow windows ignore it):
@@ -95,13 +97,25 @@ export function Columns({ children, side, sideWidth = 360, gap = 32 }: { childre
   );
 }
 
-export function Btn({ label, onPress, kind = 'primary', small, disabled, style }: { label: string; onPress?: () => void; kind?: 'primary' | 'secondary' | 'ghost'; small?: boolean; disabled?: boolean; style?: StyleProp<ViewStyle> }) {
+/* When onPress returns a promise (an `act(...)` call does), the pressed button shows a spinner until it settles, so
+   of all the buttons a busy screen greys out, the one you tapped is the one that looks at work. */
+export function Btn({ label, onPress, kind = 'primary', small, disabled, style }: { label: string; onPress?: () => unknown; kind?: 'primary' | 'secondary' | 'ghost'; small?: boolean; disabled?: boolean; style?: StyleProp<ViewStyle> }) {
   const bg = kind === 'primary' ? C.accent : kind === 'secondary' ? C.surface : 'transparent';
   const fg = kind === 'primary' ? C.accentInk : kind === 'ghost' ? C.accent : C.ink;
+  const [working, setWorking] = useState(false);
+  const press = () => {
+    const r = onPress?.();
+    if (r instanceof Promise) {
+      setWorking(true);
+      r.finally(() => setWorking(false)).catch(() => {});
+    }
+  };
   return (
-    <Pressable accessibilityRole="button" disabled={disabled} onPress={onPress}
-      style={({ pressed }) => [s.btn, small && s.btnSm, { backgroundColor: bg, borderColor: kind === 'secondary' ? C.line : bg, opacity: disabled ? 0.45 : pressed ? 0.82 : 1 }, style]}>
-      <T v={small ? 'smBold' : 'bodyBold'} style={{ color: fg, textAlign: 'center' }}>{label}</T>
+    <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled || working, busy: working }} disabled={disabled || working} onPress={press}
+      style={({ pressed }) => [s.btn, small && s.btnSm, { backgroundColor: bg, borderColor: kind === 'secondary' ? C.line : bg, opacity: disabled && !working ? 0.45 : pressed ? 0.82 : 1 }, style]}>
+      {/* the label stays, invisibly, so the button keeps its size */}
+      <T v={small ? 'smBold' : 'bodyBold'} style={{ color: fg, textAlign: 'center', opacity: working ? 0 : 1 }}>{label}</T>
+      {working && <ActivityIndicator color={fg} style={StyleSheet.absoluteFill} accessibilityLabel="Working" />}
     </Pressable>
   );
 }
@@ -130,8 +144,24 @@ export function Badge({ label, tone }: { label: string; tone?: 'ok' | 'warn' | '
   return <View style={[s.badge, { backgroundColor: bg }]}><T v="label" style={{ color: fg, fontSize: 11 }}>{label}</T></View>;
 }
 
-export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPress?: () => void }) {
-  return <Pressable accessibilityRole="button" accessibilityState={{ selected: !!on }} onPress={onPress} style={[s.chip, on && { backgroundColor: C.ink, borderColor: C.ink }]}><T v="smBold" style={{ color: on ? C.bg : C.ink }}>{label}</T></Pressable>;
+export function Chip({ label, on, onPress }: { label: string; on?: boolean; onPress?: () => unknown }) {
+  /* Used as an action too (bids, instant booking): like Btn, while its promise runs it shows a spinner and takes no
+     second tap, so a quick double tap can't switch something on and straight off again. */
+  const [working, setWorking] = useState(false);
+  const press = () => {
+    const r = onPress?.();
+    if (r instanceof Promise) {
+      setWorking(true);
+      r.finally(() => setWorking(false)).catch(() => {});
+    }
+  };
+  const fg = on ? C.bg : C.ink;
+  /* a little extra to tap above and below: chips wrap onto rows only 6pt apart, so not enough to overlap the next row */
+  return <Pressable accessibilityRole="button" accessibilityState={{ selected: !!on, disabled: working, busy: working }} disabled={working} onPress={press} hitSlop={{ top: 3, bottom: 3 }}
+    style={({ pressed }) => [s.chip, on && { backgroundColor: C.ink, borderColor: C.ink }, { opacity: pressed ? 0.75 : 1 }]}>
+    <T v="smBold" style={{ color: fg, opacity: working ? 0 : 1 }}>{label}</T>
+    {working && <ActivityIndicator size="small" color={fg} style={StyleSheet.absoluteFill} accessibilityLabel="Working" />}
+  </Pressable>;
 }
 export function Chips({ children }: { children: ReactNode }) { return <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>{children}</View>; }
 
@@ -145,20 +175,26 @@ export function Steps({ i, labels }: { i: number; labels: string[] }) {
 }
 
 /* Pass onChangeText to make it controlled (the value is what gets sent); without it, value is just a starting text. */
-export function Field({ label, value, placeholder, keyboard, multiline, onChangeText }: { label: string; value?: string; placeholder?: string; keyboard?: 'default' | 'number-pad' | 'phone-pad'; multiline?: boolean; onChangeText?: (t: string) => void }) {
+export function Field({ label, value, placeholder, keyboard, multiline, maxLength, onChangeText }: { label: string; value?: string; placeholder?: string; keyboard?: 'default' | 'number-pad' | 'phone-pad'; multiline?: boolean; maxLength?: number; onChangeText?: (t: string) => void }) {
+  const [focused, setFocused] = useState(false);
+  /* a limit is only worth showing once it's close: from 80% of it */
+  const used = value?.length ?? 0;
+  const near = maxLength != null && onChangeText != null && used >= maxLength * 0.8;
   return (
     <View style={{ gap: 5 }}>
       <T v="label">{label}</T>
-      <TextInput allowFontScaling={false} {...(onChangeText ? { value, onChangeText } : { defaultValue: value })} placeholder={placeholder} placeholderTextColor={C.muted} keyboardType={keyboard}
-        multiline={multiline} textAlignVertical={multiline ? 'top' : undefined}
-        style={multiline ? [s.input, { minHeight: 84 }] : s.input} underlineColorAndroid="transparent" selectionColor={C.accent} />
+      <TextInput accessibilityLabel={label} allowFontScaling={false} {...(onChangeText ? { value, onChangeText } : { defaultValue: value })} placeholder={placeholder} placeholderTextColor={C.muted} keyboardType={keyboard} maxLength={maxLength}
+        multiline={multiline} textAlignVertical={multiline ? 'top' : undefined} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+        style={[s.input, multiline && { minHeight: 84 }, focused && { borderColor: C.accent }]} underlineColorAndroid="transparent" selectionColor={C.accent} />
+      {near && <T v="sm" style={{ alignSelf: 'flex-end', fontSize: 12, color: used >= maxLength ? C.warn : C.muted }}>{used} / {maxLength}</T>}
     </View>
   );
 }
 
 export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} onPress={() => onChange(!on)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    <Pressable accessibilityRole="switch" accessibilityState={{ checked: on }} accessibilityLabel={label} onPress={() => onChange(!on)} hitSlop={{ top: 10, bottom: 10 }}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 10, opacity: pressed ? 0.75 : 1 })}>
       <View style={[s.track, { backgroundColor: on ? C.accent : C.line }]}><View style={[s.thumb, { transform: [{ translateX: on ? 18 : 0 }] }]} /></View>
       <T v="smBold" style={{ flex: 1 }}>{label}</T>
     </Pressable>
@@ -167,7 +203,7 @@ export function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boo
 
 export function Stars({ value, size = 13 }: { value: number; size?: number }) {
   const n = Math.round(value);
-  return <T style={{ fontSize: size, color: C.star, letterSpacing: 1 }}>{'★'.repeat(n)}<T style={{ fontSize: size, color: C.line }}>{'★'.repeat(5 - n)}</T></T>;
+  return <T accessibilityLabel={`${n} out of 5 stars`} style={{ fontSize: size, color: C.star, letterSpacing: 1 }}>{'★'.repeat(n)}<T style={{ fontSize: size, color: C.line }}>{'★'.repeat(5 - n)}</T></T>;
 }
 export function StarInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (

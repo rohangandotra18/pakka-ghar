@@ -179,7 +179,9 @@ development, `/api/dev/payments/{id}/capture` sends that same signed webhook thr
   with a CA.
 - **Providers.** OTP (SMS/WhatsApp), DigiLocker, Razorpay or Cashfree with escrow, and eSign/e-stamp all run as
   local fakes. Each has a single place to wire the real client (`apps/identity/services.py`,
-  `apps/payments/services.py`, `apps/booking/bookings/services.py` for the e-stamp).
+  `apps/payments/services.py`, `apps/booking/bookings/services.py` for the e-stamp). With `DEBUG=0` the server
+  refuses to start while `KYC_PROVIDER`, `PAYMENT_PROVIDER` or `OTP_PROVIDER` is still the fake, unless
+  `ALLOW_FAKE_PROVIDERS=1` says it is a demo server.
 - **Development stand-ins**: `/api/dev/payments/{id}/capture` (acting as the payment partner) and returning the OTP
   to the app exist only with `DEBUG=1`.
 

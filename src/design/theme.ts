@@ -19,12 +19,18 @@ export const C = {
   critBg: '#FDE8E5',
   boys: '#2C6ECB',
   girls: '#C2417F',
-  coed: '#0E8A7E',
+  coed: '#0D8276', /* 4.7:1 under white pin labels (AA); #0E8A7E was 4.2 */
   star: '#E2A100',
   map: '#EEF1EC',
   mapRoad: '#FFFFFF',
   mapPark: '#D9EAD2',
   mapWater: '#C3DDEC',
+  /* the full-screen photo viewer: a dark room so photos read true */
+  viewerBg: 'rgba(8,10,9,0.97)',
+  viewerBtn: '#262C29',
+  viewerBtnPressed: '#3A423E',
+  viewerInk: '#FFFFFF',
+  viewerMuted: '#B8C2BC',
 };
 
 export const F = {

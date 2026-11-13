@@ -22,7 +22,7 @@ export function ListingTitle({ p }: { p: Listing }) {
   const meta = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
       <Dot color={GENDER_COLOR[p.gender]} /><T v="sm">{p.gender} · {p.area}</T>
-      {p.rating != null && <><Stars value={p.rating} /><T v="sm">{p.rating} ({p.stays} stays)</T></>}
+      {p.rating != null && <><Stars value={p.rating} /><T v="sm">{p.rating.toFixed(1)} ({p.stays} {p.stays === 1 ? 'stay' : 'stays'})</T></>}
     </View>
   );
   return (
@@ -80,6 +80,8 @@ export function ListingFacts({ p }: { p: Listing }) {
 
 /* The two big buttons: the request (or the live request) and the tour. */
 export function ListingActions({ p, live, go }: { p: Listing; live: Application | undefined; go: Go }) {
+  /* being checked by the trust team, or paused: a request already made carries on, but nothing new starts here */
+  if (!p.taking_tenants && !live) return <Note tone="soft">Not taking new tenants right now. The PG is being checked by our trust team or paused by its owner.</Note>;
   return (
     <>
       {live

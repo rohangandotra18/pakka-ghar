@@ -1,7 +1,9 @@
 """The one HTTP API. Its OpenAPI 3.1 schema (GET /api/openapi.json, exported to contracts/) is the contract the
 app's TypeScript client is generated from."""
 import json
+import threading
 import time
+from collections import Counter
 
 from django.conf import settings
 from django.db import DataError, IntegrityError, connection, transaction
@@ -104,11 +106,32 @@ def notifications(request, after: int = 0):
     return [note_out(n) for n in Notification.objects.filter(party=party_of(request), id__gt=after).order_by('-id')[:30]]
 
 
+# Each stream holds a server thread for up to five minutes, so one account opening many could starve everyone else.
+# A person has a phone and a browser or two; more than this from one account in one process is not normal use.
+STREAMS_PER_PARTY = 4
+_streams: Counter = Counter()
+_streams_lock = threading.Lock()
+
+
 @events.get('/events', summary='Server-sent events: one per notification, as it happens')
 def stream(request, after: int = 0):
     party_id = party_of(request).id
     last = int(request.headers.get('Last-Event-ID') or after or 0) or (
         Notification.objects.filter(party_id=party_id).aggregate(m=Max('id'))['m'] or 0)
+    with _streams_lock:
+        if _streams[party_id] >= STREAMS_PER_PARTY:
+            raise ApiError(429, 'too_many_streams', 'This account already has the app open in too many places.')
+        _streams[party_id] += 1
+    released = False
+
+    def release():
+        nonlocal released
+        with _streams_lock:
+            if not released:
+                released = True
+                _streams[party_id] -= 1
+                if _streams[party_id] <= 0:
+                    del _streams[party_id]
 
     def gen():
         nonlocal last
@@ -128,9 +151,11 @@ def stream(request, after: int = 0):
                     yield ': ping\n\n'
                 time.sleep(2)
         finally:
+            release()
             connection.close()
 
     resp = StreamingHttpResponse(gen(), content_type='text/event-stream')
+    resp._resource_closers.append(release)   # also when the client goes before the stream ever starts
     resp['Cache-Control'] = 'no-cache'
     resp['X-Accel-Buffering'] = 'no'
     return resp

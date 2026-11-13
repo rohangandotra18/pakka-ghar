@@ -1494,6 +1494,10 @@
             "title": "Stays",
             "type": "integer"
           },
+          "taking_tenants": {
+            "title": "Taking Tenants",
+            "type": "boolean"
+          },
           "tariff_paise": {
             "title": "Tariff Paise",
             "type": "integer"
@@ -1530,6 +1534,7 @@
           "notice_months",
           "tariff_paise",
           "verified_owner",
+          "taking_tenants",
           "move_in_on",
           "km"
         ],

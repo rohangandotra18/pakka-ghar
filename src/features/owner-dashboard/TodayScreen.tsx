@@ -58,7 +58,7 @@ export default function Home() {
     <Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <T v="bodyBold">Beds</T>
-        <Pressable onPress={() => router.navigate('/beds')} accessibilityRole="link"><T v="smBold" style={{ color: C.accent }}>Open board ›</T></Pressable>
+        <Pressable onPress={() => router.navigate('/beds')} accessibilityRole="link" hitSlop={14}><T v="smBold" style={{ color: C.accent }}>Open board ›</T></Pressable>
       </View>
       {t.beds.length === 0 ? <T v="sm">No rooms yet.</T> : (
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 5 }}>
@@ -85,7 +85,7 @@ export default function Home() {
     <Card>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <T v="bodyBold">Collected, last 6 months</T>
-        <Pressable onPress={() => router.navigate('/money')} accessibilityRole="link"><T v="smBold" style={{ color: C.accent }}>Money ›</T></Pressable>
+        <Pressable onPress={() => router.navigate('/money')} accessibilityRole="link" hitSlop={14}><T v="smBold" style={{ color: C.accent }}>Money ›</T></Pressable>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, height: 120 }} accessibilityLabel={t.months.map(m => `${month(m.period)} ${inr(m.collected_paise)}`).join(', ')}>
         {t.months.map(m => (

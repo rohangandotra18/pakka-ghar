@@ -1,6 +1,5 @@
 """Signing: every page read and a one-time code; signatures are append-only. The owner signs when accepting a
 request, the resident before paying the deposit."""
-import hashlib
 import re
 import secrets
 
@@ -48,13 +47,14 @@ def start_signing(a: Agreement, party: Party, role: str, pages_read: int) -> tup
 def use_code(party: Party, challenge_id, code: str):
     """Check and consume a one-time code sent to this person's phone."""
     from apps.identity.models import OtpChallenge
+    from apps.identity.services import otp_hash
     with system():
         ch = OtpChallenge.objects.select_for_update().filter(pk=challenge_id, phone=party.phone).first()
         if not ch or ch.consumed_at or ch.expires_at < timezone.now():
             raise ApiError(400, 'code_expired', 'That code has expired. Ask for a new one.')
         if ch.attempts >= settings.OTP_MAX_ATTEMPTS:
             raise ApiError(429, 'too_many_attempts', 'Too many wrong codes. Ask for a new one.')
-        if not secrets.compare_digest(ch.code_hash, hashlib.sha256(f'{ch.phone}:{(code or "").strip()}'.encode()).hexdigest()):
+        if not secrets.compare_digest(ch.code_hash, otp_hash(ch.phone, code or '')):
             OtpChallenge.objects.filter(pk=ch.pk).update(attempts=ch.attempts + 1)
             raise ApiError(400, 'wrong_code', 'That code is not right.', commit=True)
         ch.consumed_at = timezone.now()

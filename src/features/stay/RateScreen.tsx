@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { TextInput } from 'react-native';
-import { Tick, Back, Btn, Hero, List, Note, Row, Screen, StarInput, T, C, F } from '@/design';
+import { Tick, Back, Btn, Field, Hero, List, Note, Row, Screen, StarInput, T } from '@/design';
 import { api, inr, ok, useAction, useQuery } from '@/core/api';
 
 /* End-of-stay rating. Both sides' ratings unlock together, so neither rates in reaction to the other. */
@@ -23,8 +22,7 @@ export default function Rate() {
       <T v="h2">Rate your stay</T>
       <T v="sm">{st ? `${st.booking.name} · since ${st.since}` : 'Your last stay'}</T>
       <List>{ASPECTS.map((a, i) => <Row key={a} last={i === ASPECTS.length - 1} left={a} right={<StarInput value={v[a] ?? 0} onChange={n => setV({ ...v, [a]: n })} />} />)}</List>
-      <T v="label">Anything to tell future residents?</T>
-      <TextInput allowFontScaling={false} multiline value={comment} onChangeText={setComment} placeholder="Food, cleanliness, Wi-Fi, how the owner responds…" placeholderTextColor={C.muted} style={{ minHeight: 90, borderWidth: 1, borderColor: C.line, borderRadius: 11, backgroundColor: C.surface, padding: 12, fontFamily: F.semi, fontSize: 15, color: C.ink, textAlignVertical: 'top' }} />
+      <Field label="Anything to tell future residents?" multiline value={comment} onChangeText={setComment} placeholder="Food, cleanliness, Wi-Fi, how the owner responds…" />
       {st && st.leave_now_charge_paise > 0 && <Note tone="warn">Your notice runs until {new Date(st.notice_ends_on).toLocaleDateString('en-IN', { day: 'numeric', month: 'long' })}. Leaving today, {inr(st.leave_now_charge_paise)} rent for the days not served comes from your {inr(st.booking.deposit_paise)} deposit.{st.leaves_on ? '' : ' To leave with nothing taken, give notice from My stay and stay until it ends.'}</Note>}
       <Btn label={st && st.leave_now_charge_paise > 0 ? `End stay today (${inr(st.leave_now_charge_paise)} from deposit)` : 'Submit rating and end stay'} disabled={!allRated || !st || busy} onPress={() => act(async () => {
         await ok(api.POST('/api/stay/end', { body: { aspects: v, comment }   /* the deposit is settled after this, so it isn't rated here */ }));

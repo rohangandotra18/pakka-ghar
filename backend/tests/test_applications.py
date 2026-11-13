@@ -65,6 +65,25 @@ def test_one_live_application_per_pg(world):
     assert api.post('/applications', {'listing': 'sidhu', 'room': '104'}).json()['code'] == 'already_applied'
 
 
+def test_a_tenant_can_have_only_a_few_requests_waiting_at_once(world):
+    from apps.booking.applications.services import MAX_OPEN_REQUESTS
+    from .factories import make_property, org_with_owner
+    with system():
+        for i in range(MAX_OPEN_REQUESTS + 1):
+            org = org_with_owner(f'Owner {i}', person(f'Owner {i}', f'+91980005{i:04d}'))
+            make_property(org, f'pg-{i}', f'PG {i}', 'Girls', 'Sector 15', f'#{i} Sector 15', 'Chandigarh',
+                          30.75, 76.77, 'Veg', [('101', 'single', 8000)])
+    api = world['api'](world['simran'])
+    for i in range(MAX_OPEN_REQUESTS):
+        assert api.post('/applications', {'listing': f'pg-{i}'}).status_code == 200
+    over = api.post('/applications', {'listing': f'pg-{MAX_OPEN_REQUESTS}'})
+    assert over.status_code == 409 and over.json()['code'] == 'too_many_requests'
+    # withdrawing one frees a place
+    first = next(a for a in _mine(api) if a['listing'] == 'pg-0')
+    assert api.post(f"/applications/{first['id']}/withdraw").status_code == 200
+    assert api.post('/applications', {'listing': f'pg-{MAX_OPEN_REQUESTS}'}).status_code == 200
+
+
 # ---- bidding on a room ----------------------------------------------------------------------------------
 
 def test_bids_are_sealed_capped_and_the_best_wins_the_room(world):
@@ -240,3 +259,19 @@ def test_a_paused_pg_takes_no_new_tenants(world):
     assert Api().get('/listings/sidhu/tour-slots').json()['slots'] == []
     assert world['api'](world['aman']).post('/visits', {'listing': 'sidhu'}).json()['code'] == 'paused'
     assert accept(world['api'](world['owner_a']), a['id']).json()['code'] == 'paused'
+
+
+def test_owners_hear_once_when_bidding_ends(world):
+    from apps.booking.tasks import announce_ended_bidding
+    from apps.core.models import Notification
+    from apps.property.models import Room
+    with system():
+        room = Room.objects.filter(property=world['a']).first()
+        Room.objects.filter(pk=room.pk).update(offers_open=True, offers_close_at=timezone.now() + timedelta(hours=1))
+    assert announce_ended_bidding.delay().get() == 0                # still open: nothing to say
+    with system():
+        Room.objects.filter(pk=room.pk).update(offers_close_at=timezone.now() - timedelta(minutes=5))
+    assert announce_ended_bidding.delay().get() == 1
+    assert announce_ended_bidding.delay().get() == 0                # the next run doesn't repeat it
+    notes = read(lambda: list(Notification.objects.filter(party=world['owner_a'], kind='bidding.ended').values_list('title', flat=True)))
+    assert len(notes) == 1 and f'Room {room.number}' in notes[0]

@@ -11,7 +11,7 @@ import { T } from './ui';
 export function TabBar({ state, descriptors, navigateToTab, icons, only, lit }: BottomTabBarProps & { icons: Record<string, IconName>; only?: string[]; lit?: string }) {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: C.surface, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 10) }}>
+    <View accessibilityRole="tablist" style={{ flexDirection: 'row', backgroundColor: C.surface, borderTopWidth: 1, borderTopColor: C.line, paddingTop: 8, paddingBottom: Math.max(insets.bottom, 10) }}>
       {state.routes.map((route, i) => {
         if (only && !only.includes(route.name)) return null;
         const focused = lit ? route.name === lit : state.index === i;

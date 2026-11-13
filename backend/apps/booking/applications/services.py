@@ -19,6 +19,7 @@ from ..models import BLOCKING, Application, ApplicationMember, Booking, Rating
 # ---- applications: alone or with roommates, at the listed rent or as a bid ----------------------------------
 
 MAX_ROOMMATES = 2   # a triple room is the largest
+MAX_OPEN_REQUESTS = 5   # live requests one tenant may lead at once; each one notifies and waits on an owner
 
 
 def tenant_record(party: Party) -> dict:
@@ -87,6 +88,10 @@ def apply(lead: Party, prop: Property, *, room_number: str = '', room_kind: str 
     size = 1 + len(phones)
     if Application.objects.filter(property=prop, lead=lead, status__in=['forming', 'pending']).exists():
         raise ApiError(409, 'already_applied', 'You already have an application here. Change or withdraw it instead.')
+    with system():   # across every owner: the tenant's own requests elsewhere are not this owner's rows
+        open_now = Application.objects.filter(lead=lead, status__in=['forming', 'pending']).count()
+    if open_now >= MAX_OPEN_REQUESTS:
+        raise ApiError(409, 'too_many_requests', f'You have {open_now} requests waiting. Withdraw one, or wait for an answer, before sending another.')
     room = None
     if room_number:
         room = Room.objects.filter(property=prop, number=room_number).first()
@@ -194,9 +199,18 @@ def change_bid(a: Application, party: Party, amount_paise: int | None, months: i
     return a
 
 
+def _lock(a: Application) -> Application:
+    """Lock the request's row and read its status afresh. The owner accepting or declining and the tenant
+    withdrawing can land at the same moment; whichever comes second waits here and then sees what the first did,
+    so a request is never both accepted (beds held) and withdrawn."""
+    a.status = Application.objects.select_for_update(of=('self',)).values_list('status', flat=True).get(pk=a.pk)
+    return a
+
+
 def withdraw(a: Application, party: Party) -> Application:
     if a.lead_id != party.id:
         raise ApiError(403, 'not_lead', 'Only the person who applied can withdraw it. You can leave it instead.')
+    _lock(a)
     if a.status not in ('forming', 'pending'):
         raise ApiError(409, 'not_open', 'This application is no longer open.')
     a.status, a.decided_at = 'withdrawn', timezone.now()
@@ -277,6 +291,7 @@ def standing(a: Application) -> dict:
 
 @transaction.atomic
 def accept(a: Application, actor: Party, room_number: str = '', instant: bool = False) -> list[Booking]:
+    _lock(a)
     if a.status != 'pending':
         raise ApiError(409, 'not_open', 'This application isn’t waiting for you.')
     if a.property.status != 'published':
@@ -315,6 +330,7 @@ def accept(a: Application, actor: Party, room_number: str = '', instant: bool = 
 
 
 def decline(a: Application, actor: Party, reason: str = '') -> Application:
+    _lock(a)
     if a.status not in ('forming', 'pending'):
         raise ApiError(409, 'not_open', 'This application is no longer open.')
     a.status, a.decided_at, a.decline_reason = 'declined', timezone.now(), reason.strip()[:200]
@@ -334,6 +350,25 @@ def open_bidding(room: Room, actor: Party) -> Room:
     room.save(update_fields=['offers_open', 'offers_close_at', 'instant_book', 'instant_by', 'instant_consent', 'updated_at'])
     audit(room.organisation, actor, 'room.bidding_open', room)
     return room
+
+
+def announce_ended_bidding() -> int:
+    """Tell the owners of each room whose bidding deadline has passed that it's time to pick a bid: until they do,
+    the room takes neither bids nor requests. Told once per deadline (the notification itself is the record), so
+    the job can run as often as it likes. Call with the system role. Returns how many rooms were announced."""
+    from apps.core.models import Notification
+    n = 0
+    for room in Room.objects.filter(offers_open=True, offers_close_at__lt=timezone.now()).select_related('property__organisation'):
+        stamp = room.offers_close_at.isoformat()
+        if Notification.objects.filter(kind='bidding.ended', data__room=str(room.id), data__closes_at=stamp).exists():
+            continue
+        bids = Application.objects.filter(room=room, status__in=['forming', 'pending'], amount_paise__isnull=False).count()
+        title = (f'Bidding on Room {room.number} has ended with {bids} bid{"" if bids == 1 else "s"}. Pick one to fill the bed.' if bids
+                 else f'Bidding on Room {room.number} ended with no bids. Stop it to take requests at the listed rent again.')
+        for o in owners_of(room.property.organisation):
+            notify(o, 'bidding.ended', title, org=room.property.organisation, room=str(room.id), closes_at=stamp)
+        n += 1
+    return n
 
 
 def close_bidding(room: Room, actor: Party, reason: str = '') -> Room:

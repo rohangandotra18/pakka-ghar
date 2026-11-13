@@ -1,10 +1,12 @@
 """OTP sign-in and DigiLocker identity checks. Providers are swappable; 'console' and 'fake' need no network."""
+import hmac
 import logging
 import re
 import secrets
 from datetime import timedelta
 
 from django.conf import settings
+from django.db.models import Sum
 from django.utils import timezone
 
 from apps.core.api_support import ApiError, sha256
@@ -13,6 +15,12 @@ from apps.core.models import Party
 from .models import OtpChallenge, SessionToken
 
 log = logging.getLogger('pakka')
+
+
+def otp_hash(phone: str, code: str) -> str:
+    """Keyed with the server secret: a six-digit code has only a million values, so a plain hash read out of the
+    database would give up every live code at once."""
+    return hmac.new(settings.SECRET_KEY.encode(), f'{phone}:{code.strip()}'.encode(), 'sha256').hexdigest()
 
 
 def normalise_phone(raw: str) -> str:
@@ -29,11 +37,15 @@ def start_otp(raw_phone: str, ip: str | None = None) -> tuple[OtpChallenge, str]
     since = timezone.now() - timedelta(minutes=10)
     if OtpChallenge.objects.filter(phone=phone, created_at__gte=since).count() >= settings.OTP_PER_PHONE_10MIN:
         raise ApiError(429, 'too_many_codes', 'Too many codes asked for. Try again in 10 minutes.')
+    wrong_today = (OtpChallenge.objects.filter(phone=phone, created_at__gte=timezone.now() - timedelta(days=1))
+                   .aggregate(n=Sum('attempts'))['n'] or 0)
+    if wrong_today >= settings.OTP_WRONG_PER_PHONE_DAY:
+        raise ApiError(429, 'too_many_wrong_codes', 'Too many wrong codes for this number today. Try again tomorrow.')
     # one network asking for codes to many numbers is how SMS bills get run up
     if ip and OtpChallenge.objects.filter(ip=ip, created_at__gte=since).count() >= settings.OTP_PER_IP_10MIN:
         raise ApiError(429, 'too_many_codes', 'Too many codes asked for from this network. Try again in 10 minutes.')
     code = f'{secrets.randbelow(10**6):06d}'
-    ch = OtpChallenge.objects.create(phone=phone, ip=ip or None, code_hash=sha256(f'{phone}:{code}'),
+    ch = OtpChallenge.objects.create(phone=phone, ip=ip or None, code_hash=otp_hash(phone, code),
                                      expires_at=timezone.now() + timedelta(seconds=settings.OTP_TTL_SECONDS))
     if settings.OTP_PROVIDER == 'console':
         log.info('OTP for %s: %s', phone, code)
@@ -48,7 +60,7 @@ def verify_otp(challenge_id, code: str, device: str = '') -> tuple[Party, str, b
         raise ApiError(400, 'code_expired', 'That code has expired. Ask for a new one.')
     if ch.attempts >= settings.OTP_MAX_ATTEMPTS:
         raise ApiError(429, 'too_many_attempts', 'Too many wrong codes. Ask for a new one.')
-    if not secrets.compare_digest(ch.code_hash, sha256(f'{ch.phone}:{code.strip()}')):
+    if not secrets.compare_digest(ch.code_hash, otp_hash(ch.phone, code)):
         OtpChallenge.objects.filter(pk=ch.pk).update(attempts=ch.attempts + 1)
         raise ApiError(400, 'wrong_code', 'That code is not right.', commit=True)
     ch.consumed_at = timezone.now()

@@ -13,7 +13,7 @@ export function PgCardWide({ pg, from, selected, onHover }: { pg: Schemas['Listi
   const photo = pg.photos[0];
   return (
     <Pressable onPress={() => router.push(`/pg/${pg.id}`)} onHoverIn={onHover && (() => onHover(true))} onHoverOut={onHover && (() => onHover(false))}
-      accessibilityRole="button" accessibilityLabel={`${pg.name}, ${inr(pg.rent_paise)} per bed, ${pg.area}`}
+      accessibilityRole="button" accessibilityLabel={`${pg.name}, ${inr(pg.rent_paise)} per bed, ${pg.area}${pg.rating != null ? `, rated ${pg.rating.toFixed(1)} from ${pg.stays} ${pg.stays === 1 ? 'stay' : 'stays'}` : ''}`}
       style={({ hovered, pressed }: PressState) => ({
         flexDirection: 'row', gap: 14, backgroundColor: C.surface, borderRadius: R.lg, padding: selected ? 11 : 12,
         borderWidth: selected ? 2 : 1, borderColor: selected ? C.accent : hovered ? C.ink : C.line, opacity: pressed ? 0.85 : 1,

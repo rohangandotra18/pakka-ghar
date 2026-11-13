@@ -3,7 +3,7 @@ import re
 from datetime import date
 from uuid import UUID
 
-from django.db.models import Sum
+from django.db.models import Prefetch, Sum
 from django.utils import timezone
 from ninja import Router, Schema
 
@@ -128,8 +128,12 @@ def statement(request, fy: str | None = None):
     lines = LedgerLine.objects.filter(organisation=p.organisation, journal__created_at__date__gte=start, journal__created_at__date__lt=end)
     tot = lambda code: -(lines.filter(account__code=code).aggregate(s=Sum('amount_paise'))['s'] or 0)  # noqa: E731
     rows = []
-    for b in Booking.objects.filter(bed__room__property=p, invoices__period__gte=start, invoices__period__lt=end).distinct().select_related('guest', 'bed__room'):
-        inv_lines = [ln for inv in b.invoices.filter(period__gte=start, period__lt=end) for ln in inv.lines.all()]
+    # the year's invoices and their lines come in with the bookings: a fixed few queries however many residents
+    year_invoices = Prefetch('invoices', queryset=Invoice.objects.filter(period__gte=start, period__lt=end).prefetch_related('lines'),
+                             to_attr='year_invoices')
+    for b in (Booking.objects.filter(bed__room__property=p, invoices__period__gte=start, invoices__period__lt=end).distinct()
+              .select_related('guest', 'bed__room').prefetch_related(year_invoices)):
+        inv_lines = [ln for inv in b.year_invoices for ln in inv.lines.all()]
         rows.append({'name': b.guest.name, 'room': b.bed.room.number,
                      'rent_paise': sum(ln.amount_paise for ln in inv_lines if ln.kind == 'rent'),
                      'electricity_paise': sum(ln.amount_paise for ln in inv_lines if ln.kind == 'electricity')})

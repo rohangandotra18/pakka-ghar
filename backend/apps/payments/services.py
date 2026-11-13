@@ -129,7 +129,10 @@ def electricity_shares(prop: Property, usage_month: date) -> dict:
 def send_electricity(prop: Property, period: date, actor) -> ElectricityRun:
     """Add last month's metered units to this month's invoices. Each charge is one ledger journal."""
     period = month_start(period)
-    run, _ = ElectricityRun.objects.get_or_create(property=prop, period=period, defaults={'organisation': prop.organisation})
+    ElectricityRun.objects.get_or_create(property=prop, period=period, defaults={'organisation': prop.organisation})
+    # locked: two sends at once (a double tap, or two owners of the PG) would both find it unsent and bill every
+    # resident's electricity twice; the second now waits here and then sees it sent
+    run = ElectricityRun.objects.select_for_update(of=('self',)).get(property=prop, period=period)
     if run.sent_at:
         return run
     shares = electricity_shares(prop, add_months(period, -1))
@@ -216,9 +219,13 @@ def capture(pay: Payment, provider_payment_id: str, amount_paise: int, method: s
     if pay.status == 'captured':
         return pay
     if amount_paise != pay.amount_paise or method not in METHOD_MAP:
-        pay.status = 'failed'
-        pay.save(update_fields=['status', 'updated_at'])
-        log.warning('payment %s rejected: amount %s method %s', pay.pk, amount_paise, method)
+        # The partner has already taken this money, so it must be refundable by hand: keep its payment id and say so.
+        pay.status, pay.provider_payment_id = 'failed', provider_payment_id
+        pay.save(update_fields=['status', 'provider_payment_id', 'updated_at'])
+        audit(pay.organisation, None, 'payment.rejected', pay, after={'provider_payment_id': provider_payment_id,
+                                                                     'amount_paise': amount_paise, 'method': method})
+        log.error('payment %s rejected but captured by the partner as %s (amount %s, method %s): refund it',
+                  pay.pk, provider_payment_id, amount_paise, method)
         return pay
     b, org = pay.booking, pay.organisation
     pay.status, pay.captured_at, pay.provider_payment_id = 'captured', timezone.now(), provider_payment_id
@@ -280,7 +287,15 @@ def sign_webhook(raw: bytes) -> str:
 def handle_webhook(raw: bytes, signature: str, event_id: str) -> str:
     if not settings.RAZORPAY_WEBHOOK_SECRET or not hmac.compare_digest(sign_webhook(raw), signature or ''):
         raise ApiError(401, 'bad_signature', 'Signature check failed.')
-    data = json.loads(raw)
+    try:
+        data = json.loads(raw)
+        if data.get('event') == 'payment.captured':
+            ent = data['payload']['payment']['entity']
+            ent['order_id'], ent['id'], int(ent['amount'])
+    except (ValueError, KeyError, TypeError, AttributeError):
+        # signed, so it is the partner's, but unreadable: say so plainly rather than fail with a 500 it retries forever
+        log.error('webhook %s: unreadable payload', event_id)
+        raise ApiError(400, 'bad_payload', 'The event could not be read.')
     with system():
         ev, created = WebhookEvent.objects.get_or_create(event_id=event_id or hashlib.sha256(raw).hexdigest(),
                                                          defaults={'provider': 'razorpay', 'payload': data})

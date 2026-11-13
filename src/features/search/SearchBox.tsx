@@ -13,6 +13,7 @@ const asPlace = (p: PlaceHit): Place => ({ name: p.name, lat: p.lat, lng: p.lng 
 export function SearchBox({ value, onChange, onPick }: { value: string; onChange: (t: string) => void; onPick: (p: Place) => void }) {
   /* set by typing, cleared by choosing a result or clearing, so putting a place's name in the box doesn't search again */
   const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
   const shown = open && value.trim().length >= MIN_CHARS;
   const found = useTypeahead(shown ? value : '');
   const pick = (p: PlaceHit) => { setOpen(false); onChange(p.name); onPick(asPlace(p)); };
@@ -20,8 +21,9 @@ export function SearchBox({ value, onChange, onPick }: { value: string; onChange
   return (
     <View style={{ gap: 8 }}>
       {/* our own clear button: iOS's built-in one doesn't exist on Android */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: C.line, borderRadius: 12 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.surface, borderWidth: 1, borderColor: focused ? C.accent : C.line, borderRadius: 12 }}>
         <TextInput allowFontScaling={false} value={value} onChangeText={type} accessibilityLabel="Search a sector, college or PG"
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           onSubmitEditing={() => { const first = found?.places[0]; if (first) pick(first); }}
           placeholder="Search a sector, college or PG" placeholderTextColor={C.muted} returnKeyType="search" autoCorrect={false}
           underlineColorAndroid="transparent" selectionColor={C.accent}

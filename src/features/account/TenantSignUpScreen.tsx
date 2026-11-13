@@ -17,7 +17,7 @@ export default function TenantOnboarding() {
   const [at, setI] = useState(me ? 1 : 0);
   const i = me ? at : 0;   // a sign-in the server no longer accepts starts again at the phone code
   const [phone, setPhone] = useState('');
-  const [challenge, setChallenge] = useState<{ id: string; code: string } | null>(null);
+  const [challenge, setChallenge] = useState<{ id: string; code: string; dev: boolean } | null>(null);
   const [name, setName] = useState(me?.name ?? '');
   const [busy, setBusy] = useState(false);
   const run = async (fn: () => Promise<void>) => {
@@ -33,7 +33,7 @@ export default function TenantOnboarding() {
 
   const sendCode = () => run(async () => {
     const r = await ok(api.POST('/api/auth/otp/start', { body: { phone } }));
-    setChallenge({ id: r.challenge_id, code: r.dev_code ?? '' });
+    setChallenge({ id: r.challenge_id, code: r.dev_code ?? '', dev: !!r.dev_code });
   });
   const verifyCode = () => run(async () => {
     if (!challenge) return;
@@ -64,8 +64,8 @@ export default function TenantOnboarding() {
         <Note tone="soft">{why === 'signin' ? 'One account for renting and for running a PG. Browsing never needs one.' : `${WHY[why ?? ''] ?? 'To book'}, verify once. Browsing never needs an account.`}</Note>
         <Field label="Mobile number" value={phone} onChangeText={t => { setPhone(t); setChallenge(null); }} keyboard="phone-pad" placeholder="10-digit mobile number" />
         {challenge ? <>
-          <Otp code={challenge.code || '······'} />
-          <T v="sm">{challenge.code ? 'Development build: the code is filled in until an SMS provider is connected.' : 'Enter the code we sent on SMS or WhatsApp.'}</T>
+          <Otp code={challenge.code} onChange={code => setChallenge(x => x && { ...x, code })} />
+          <T v="sm">{challenge.dev ? 'Development build: the code is filled in until an SMS provider is connected.' : 'Enter the code we sent on SMS or WhatsApp.'}</T>
           <Btn label="Verify" disabled={busy} onPress={verifyCode} />
         </> : <Btn label="Send code" disabled={busy || phone.replace(/\D/g, '').length < 10} onPress={sendCode} />}
       </>}

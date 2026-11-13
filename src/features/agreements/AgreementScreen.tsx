@@ -12,6 +12,7 @@ export default function AgreementScreen() {
   const { act, busy } = useAction();
   const q = useQuery(() => ok(api.GET('/api/agreements/{booking_id}', { params: { path: { booking_id: id } } })), [id]);
   const [seen, setSeen] = useState<Record<number, boolean>>({});
+  const [failed, setFailed] = useState<Record<number, boolean>>({});
   const [challenge, setChallenge] = useState<{ id: string; code: string; last4: string } | null>(null);
   const d = q.data;
   if (!d) return <Screen><Back /><Loading error={q.error} retry={q.reload} /></Screen>;
@@ -20,7 +21,10 @@ export default function AgreementScreen() {
   const total = d.signed ? d.signed_pages : d.pages;
   const read = Object.keys(seen).length;
   const canSign = !mine;
-  const markSeen = (n: number) => () => setSeen(x => (x[n] ? x : { ...x, [n]: true }));
+  const markSeen = (n: number) => () => { setSeen(x => (x[n] ? x : { ...x, [n]: true })); setFailed(x => (x[n] ? { ...x, [n]: false } : x)); };
+  /* page links expire after 15 minutes; a page that won't load gets fresh links rather than blocking signing for good */
+  const reloadPages = () => { setFailed({}); q.reload(); };
+  const broken = Object.keys(failed).filter(k => failed[+k]).length;
   return (
     <Screen>
       <Back />
@@ -33,8 +37,16 @@ export default function AgreementScreen() {
       {Array.from({ length: total }, (_, i) => i + 1).map(n => (
         <View key={`${n}-${d.signed}`} style={{ gap: 4 }}>
           {/* each page comes as a signed link that only works for this agreement and expires in 15 minutes */}
-          <Image source={{ uri: `${API_BASE}${d.page_urls[n - 1]}` }} onLoad={markSeen(n)} resizeMode="contain" accessibilityLabel={`Page ${n} of ${total}`}
-            style={{ width: '100%', aspectRatio: 0.707, borderRadius: R.sm, borderWidth: 1, borderColor: C.line, backgroundColor: C.surface }} />
+          {failed[n] ? (
+            <View style={{ width: '100%', aspectRatio: 0.707, borderRadius: R.sm, borderWidth: 1, borderColor: C.line, backgroundColor: C.surface2, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 20 }}>
+              <T v="bodyBold" style={{ textAlign: 'center' }}>Page {n} didn’t load</T>
+              <T v="sm" style={{ textAlign: 'center' }}>The link may have run out, or the connection dropped.</T>
+              <Btn small kind="secondary" label="Load the pages again" onPress={reloadPages} />
+            </View>
+          ) : (
+            <Image source={{ uri: `${API_BASE}${d.page_urls[n - 1]}` }} onLoad={markSeen(n)} onError={() => setFailed(x => ({ ...x, [n]: true }))} resizeMode="contain" accessibilityLabel={`Page ${n} of ${total}`}
+              style={{ width: '100%', aspectRatio: 0.707, borderRadius: R.sm, borderWidth: 1, borderColor: C.line, backgroundColor: C.surface }} />
+          )}
           <T v="sm" style={{ textAlign: 'center', fontSize: 11 }}>Page {n} of {total}</T>
         </View>
       ))}
@@ -42,10 +54,10 @@ export default function AgreementScreen() {
       {canSign && (
         <Card>
           <T v="bodyBold">Sign electronically</T>
-          <T v="sm">{read < d.pages ? `Read all ${d.pages} pages first (${read} opened so far).` : 'Confirm with the code we send to your phone.'}</T>
+          <T v="sm">{broken ? `${broken === 1 ? 'A page' : `${broken} pages`} didn’t load. Load them again above to carry on.` : read < d.pages ? `Read all ${d.pages} pages first (${read} opened so far).` : 'Confirm with the code we send to your phone.'}</T>
           {challenge ? <>
             <T v="sm">Code sent to your phone ending {challenge.last4}.</T>
-            <Otp code={challenge.code || '······'} />
+            <Otp code={challenge.code} onChange={code => setChallenge(x => x && { ...x, code })} />
             <Btn label="Sign the agreement" disabled={busy} onPress={() => act(async () => {
               await ok(api.POST('/api/agreements/{booking_id}/sign', { params: { path: { booking_id: id } }, body: { challenge_id: challenge.id, code: challenge.code, typed_name: '', pages_read: read } }));
               setChallenge(null);

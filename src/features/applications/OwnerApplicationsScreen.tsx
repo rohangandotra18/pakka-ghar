@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { AppBar } from '@/shared';
-import { Loading, Badge, Btn, Card, Chip, Chips, Field, Note, Otp, Screen, Stars, T, dayHour } from '@/design';
+import { Loading, Badge, Btn, Card, Chip, Chips, Field, Note, Otp, Screen, Stars, T, C, dayHour } from '@/design';
 import { api, ApiError, inr, ok, type Schemas, useAction, useQuery } from '@/core/api';
 
 type App = Schemas['OwnerApplicationOut'];
@@ -16,6 +16,7 @@ export default function Applications() {
   const q = useQuery(() => ok(api.GET('/api/owner/applications')));
   const [rooms, setRooms] = useState<Record<string, string>>({});
   const [declining, setDeclining] = useState<string | null>(null);
+  const [stopping, setStopping] = useState<string | null>(null);
   const [reason, setReason] = useState('');
   const [signing, setSigning] = useState<{ app: string; id: string; code: string; last4: string } | null>(null);
   const [bankFor, setBankFor] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export default function Applications() {
         <T v="sm">{a.amount_paise ? `Bid on Room ${a.room}` : a.room ? `Room ${a.room}` : `Any ${a.room_kind || ''} room`.replace('  ', ' ')} · {a.size} bed{a.size > 1 ? 's' : ''} · {a.months} months from {date(a.move_in_on)}</T>
         {a.members.map(m => (
           <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <T v="sm" style={{ color: '#111714' }}>{m.name}{m.works_at ? ` · ${m.works_at}` : ''}</T>
+            <T v="sm" style={{ color: C.ink }}>{m.name}{m.works_at ? ` · ${m.works_at}` : ''}</T>
             <Badge label={m.verified ? 'ID verified' : 'ID pending'} tone={m.verified ? 'ok' : 'warn'} />
             {m.past_stays && m.score != null ? <><Stars value={m.score} /><T v="sm">{m.score} from {m.past_stays} past stay{m.past_stays > 1 ? 's' : ''}</T></> : <T v="sm">No rental history yet</T>}
           </View>
@@ -65,14 +66,14 @@ export default function Applications() {
           <T v="sm">Needed once, before your first resident. We check it with a ₹1 test deposit.</T>
           <Field label="Bank" value={bank.bank} onChangeText={t => setBank(x => ({ ...x, bank: t }))} placeholder="e.g. HDFC Bank" />
           <Field label="Account number" value={bank.account} onChangeText={t => setBank(x => ({ ...x, account: t }))} keyboard="number-pad" placeholder="As on your passbook or cheque" />
-          <Field label="IFSC" value={bank.ifsc} onChangeText={t => setBank(x => ({ ...x, ifsc: t }))} placeholder="11 characters" />
+          <Field label="IFSC" value={bank.ifsc} onChangeText={t => setBank(x => ({ ...x, ifsc: t }))} placeholder="Like SBIN0001234" />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Btn small kind="secondary" style={{ flex: 1 }} label="Not now" onPress={() => setBankFor(null)} />
             <Btn small style={{ flex: 1 }} label="Save and continue" disabled={busy || !bank.bank.trim() || !bank.account.trim() || bank.ifsc.trim().length !== 11} onPress={() => saveBank(a.id)} />
           </View>
         </> : signing?.app === a.id ? <>
           <T v="sm">Accepting signs your side of {a.size > 1 ? 'each of their agreements' : 'their agreement'}. Code sent to your phone ending {signing.last4}.</T>
-          <Otp code={signing.code || '······'} />
+          <Otp code={signing.code} onChange={code => setSigning(x => x && { ...x, code })} />
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Btn small kind="secondary" style={{ flex: 1 }} label="Back" onPress={() => setSigning(null)} />
             <Btn small style={{ flex: 1 }} label="Accept and sign" disabled={busy} onPress={() => act(async () => {
@@ -105,9 +106,21 @@ export default function Applications() {
       <T v="h2">Requests</T>
       {d.bidding.map(r => (
         <Card key={r.number} soft>
-          <T v="bodyBold">Room {r.number} is up for bids</T>
-          <T v="sm">{r.kind} · rent {inr(r.rent_paise)} · bids up to {inr(r.cap_paise)} · {r.free} free bed{r.free === 1 ? '' : 's'} · closes {closes(r.closes_at)}</T>
-          <Btn small kind="ghost" label="Stop taking bids" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/rooms/{number}/bidding', { params: { path: { number: r.number } }, body: { open: false } })), 'Bidding closed. Everyone who bid has been told.')} />
+          {/* after the deadline no new bids or requests come in for the room until the owner picks one */}
+          {r.closes_at && new Date(r.closes_at) < new Date() ? <>
+            <T v="bodyBold">Bidding on Room {r.number} has ended</T>
+            <T v="sm">Pick a bid below to fill the {r.free === 1 ? 'bed' : `${r.free} beds`}. Until you do, the room takes no new requests.</T>
+          </> : <>
+            <T v="bodyBold">Room {r.number} is up for bids</T>
+            <T v="sm">{r.kind} · rent {inr(r.rent_paise)} · bids up to {inr(r.cap_paise)} · {r.free} free bed{r.free === 1 ? '' : 's'} · closes {closes(r.closes_at)}</T>
+          </>}
+          {stopping === r.number ? <>
+            <T v="sm" style={{ color: C.ink }}>Every bid on Room {r.number} will be declined and each bidder told. The room goes back to requests at the listed rent.</T>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Btn small kind="secondary" style={{ flex: 1 }} label="Keep the bids" onPress={() => setStopping(null)} />
+              <Btn small style={{ flex: 1 }} label="Decline them all" disabled={busy} onPress={() => act(() => ok(api.POST('/api/owner/rooms/{number}/bidding', { params: { path: { number: r.number } }, body: { open: false } })), 'Bidding closed. Everyone who bid has been told.').then(() => setStopping(null))} />
+            </View>
+          </> : <Btn small kind="ghost" label="Stop taking bids" onPress={() => setStopping(r.number)} />}
         </Card>
       ))}
       {bids.length > 0 && <T v="label">Bids, highest first</T>}

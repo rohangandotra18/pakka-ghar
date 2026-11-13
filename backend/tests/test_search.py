@@ -75,6 +75,15 @@ def test_unpublished_pgs_never_appear_in_an_area_search(world):
     assert ids(Api().get(f'/listings?bbox={EAST}')) == ['shown']
 
 
+def test_a_pg_page_says_when_it_is_not_taking_tenants(world):
+    # a link to a PG being re-checked or paused still opens (the trust team reviews from it), but says so
+    for status in ('submitted', 'paused'):
+        pg(f'held-{status}', 30.72, 76.80, [('1', 'single', 5000)], status=status)
+        assert Api().get(f'/listings/held-{status}').json()['taking_tenants'] is False
+    pg('open', 30.72, 76.801, [('1', 'single', 5000)])
+    assert Api().get('/listings/open').json()['taking_tenants'] is True
+
+
 # ---- filters --------------------------------------------------------------------------------------------
 
 def test_max_rent_and_kind_keep_pgs_with_a_free_bed_in_a_matching_room(world):
@@ -334,3 +343,20 @@ def test_the_shipped_places_file_loads(db):
     call_command('load_places')
     assert Place.objects.exists()
     assert all(p.source for p in Place.objects.all()[:5])
+
+
+def test_a_room_past_its_bid_deadline_is_not_offered(world):
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.property.models import Room
+    pg('bids', 30.72, 76.80, [('1', 'single', 5000), ('2', 'single', 5000)])
+    with system():
+        Room.objects.filter(property__slug='bids', number='1').update(offers_open=True, offers_close_at=timezone.now() + timedelta(days=2))
+    card = Api().get('/listings/bids').json()
+    assert [r['number'] for r in card['rooms']] == ['1', '2'] and card['hot']
+    with system():   # Friday 6 pm has passed and the owner hasn't picked yet
+        Room.objects.filter(property__slug='bids', number='1').update(offers_close_at=timezone.now() - timedelta(hours=1))
+    card = Api().get('/listings/bids').json()
+    assert [r['number'] for r in card['rooms']] == ['2'] and not card['hot']

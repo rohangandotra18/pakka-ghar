@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Back, Badge, Btn, Chip, Chips, Field, Hero, List, Note, Row, Screen, Steps, T, Toggle, Tick, Otp } from '@/design';
+import { Back, Badge, Btn, Chip, Chips, Field, Hero, List, Note, Row, Screen, Steps, T, Toggle, Tick, Otp, C } from '@/design';
 import { MapView } from '@/shared';
 import { OwnerAgreementTemplate } from '@/features/agreements';
 import { OwnerPhotos } from '@/features/photos';
@@ -67,7 +67,7 @@ export default function OwnerOnboarding() {
         <T v="h2">Your mobile number</T>
         <Field label="Mobile number" value={phone} onChangeText={t => { setPhone(t); setChallenge(null); }} keyboard="phone-pad" placeholder="10-digit mobile number" />
         {challenge ? <>
-          <Otp code={challenge.code || '······'} />
+          <Otp code={challenge.code} onChange={code => setChallenge(x => x && { ...x, code })} />
           <Btn label="Verify" disabled={busy} onPress={() => run(async () => {
             const r = await ok(api.POST('/api/auth/otp/verify', { body: { challenge_id: challenge.id, code: challenge.code, device: 'Pakka Ghar app' } }));
             await signIn(null, r.token, r.me);
@@ -164,7 +164,7 @@ export default function OwnerOnboarding() {
       </>}
       {i === 5 && <>
         <T v="h2">Send it for checking</T>
-        <Note tone="soft"><T v="smBold">No cash, ever.</T><T v="sm" style={{ color: '#111714' }}>Pakka Ghar PGs take rent, deposits and electricity only in the app. And it’s all free: no listing fees, no subscription, no payment fees.</T></Note>
+        <Note tone="soft"><T v="smBold">No cash, ever.</T><T v="sm" style={{ color: C.ink }}>Pakka Ghar PGs take rent, deposits and electricity only in the app. And it’s all free: no listing fees, no subscription, no payment fees.</T></Note>
         <Toggle on={!!p?.no_cash_pledged} onChange={v => v && !p?.no_cash_pledged && save(() => ok(api.POST('/api/owner/no-cash-pledge')))} label="I won't take cash from residents" />
         <Btn label={p?.status === 'draft' ? 'Send for checking' : 'Continue'} disabled={busy || !p?.no_cash_pledged} onPress={async () => {
           if (p?.status === 'draft') { const sent = await run(async () => prop.setData(await ok(api.POST('/api/owner/property/submit')))); if (!sent) return; }
@@ -186,7 +186,7 @@ export default function OwnerOnboarding() {
         {p?.payout ? <List><Row left="Bank account" right={p.payout} /><Row left="Account check (₹1 test deposit)" right={<Badge label="Name matches" tone="ok" />} last /></List> : <>
           <Field label="Bank" value={f.bank} onChangeText={set('bank')} placeholder="e.g. HDFC Bank" />
           <Field label="Account number" value={f.account} onChangeText={set('account')} keyboard="number-pad" placeholder="As on your passbook or cheque" />
-          <Field label="IFSC" value={f.ifsc} onChangeText={set('ifsc')} placeholder="11 characters" />
+          <Field label="IFSC" value={f.ifsc} onChangeText={set('ifsc')} placeholder="Like SBIN0001234" />
           <Btn kind="secondary" label="Check with a ₹1 test deposit" disabled={busy || !f.bank.trim() || !f.account.trim() || f.ifsc.trim().length !== 11} onPress={() => save(() => ok(api.POST('/api/owner/payout', { body: { bank_name: f.bank, account_number: f.account, ifsc: f.ifsc } })))} />
         </>}
         <T v="sm">Rent reaches you the next working day. Deposits stay in escrow until move-out.</T>

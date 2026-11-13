@@ -21,7 +21,7 @@ const FOCUS = { outlineStyle: 'solid', outlineWidth: 2, outlineColor: C.accent, 
 /* A text link: accent text that underlines on hover and shows an outline when reached with the keyboard. */
 export function TextLink({ label, onPress, muted }: { label: string; onPress: () => void; muted?: boolean }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="link" accessibilityLabel={label}
+    <Pressable onPress={onPress} accessibilityRole="link" accessibilityLabel={label} hitSlop={8}
       style={({ focused }: PressState) => ({ alignSelf: 'flex-start', paddingVertical: 4, borderRadius: 4, ...(focused ? FOCUS : null) })}>
       {({ hovered }: PressState) => <T v="bodyBold" style={{ color: muted ? C.ink : C.accent, textDecorationLine: hovered ? 'underline' : 'none' }}>{label}</T>}
     </Pressable>

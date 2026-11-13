@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { AppBar, SignupPrompt } from '@/shared';
-import { Loading, Badge, Card, Screen, Stars, T } from '@/design';
+import { Loading, Badge, Card, Screen, Stars, T, C } from '@/design';
 import { api, inr, ok, useQuery } from '@/core/api';
 import { useStore } from '@/core/session';
 
@@ -21,7 +21,7 @@ export default function History() {
         <Card key={x.booking_id ?? i}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><T v="bodyBold">{x.name}</T>{x.current ? <Badge label="Current" tone="ok" /> : <Stars value={x.rated ?? 0} />}</View>
           <T v="sm">{x.area} · {x.from_label} – {x.to_label} · {inr(x.rent_paise)}/month</T>
-          {x.deposit ? <T v="sm" style={{ color: '#111714' }}>{x.deposit}</T> : null}
+          {x.deposit ? <T v="sm" style={{ color: C.ink }}>{x.deposit}</T> : null}
         </Card>
       ))}
       {h && <Card soft>

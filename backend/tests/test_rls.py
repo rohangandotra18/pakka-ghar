@@ -56,6 +56,23 @@ def test_cash_report_is_hidden_from_the_owner_it_is_about(world):
     assert world['api'](world['owner_a']).get('/owner/tickets').json() == []
 
 
+def test_trust_reports_cannot_flood_the_queue(world):
+    send = lambda listing, cat='Listing issue': world['api'](world['simran']).post(   # noqa: E731
+        '/requests', {'category': cat, 'text': 'Photos are of another building', 'listing': listing})
+    first = send('sidhu').json()
+    assert send('sidhu').json()['id'] == first['id']            # the same open report again is the same report
+    assert send('no-such-pg').status_code == 404
+    for cat in ('Asked to pay in cash',):
+        assert send('sidhu', cat).status_code == 200
+    for slug in ('gurnoor',):
+        assert send(slug).status_code == 200
+    with system():
+        TrustReport.objects.create(reporter=world['simran'], category='Listing issue', text='x')
+        TrustReport.objects.create(reporter=world['simran'], category='Asked to pay in cash', text='y')
+    r = send('gurnoor', 'Asked to pay in cash')                  # a sixth new one in a day
+    assert r.status_code == 429 and r.json()['code'] == 'too_many_reports'
+
+
 def test_notifications_and_webhooks_are_private(world):
     with system():
         Notification.objects.create(party=world['aman'], kind='x', title='for Aman')

@@ -1,5 +1,5 @@
 """Maintenance requests (resident → owner) and trust reports (anyone → Pakka Ghar only)."""
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from django.db import IntegrityError, transaction
@@ -16,6 +16,7 @@ from apps.property.models import Property
 from .models import CATEGORIES, Ticket, TrustReport
 
 router = Router(tags=['requests'])
+REPORTS_PER_DAY = 5   # trust reports one account may send in 24 hours
 
 # the trade each kind of request needs; the owner's own contact for it is remembered on the property
 TRADE = {'Electrical': 'Electrician', 'Plumbing': 'Plumber', 'Wi-Fi': 'Wi-Fi provider', 'Cleaning': 'Housekeeping',
@@ -69,6 +70,14 @@ def raise_request(request, body: NewRequestIn):
     b = current_booking(party)
     if body.category in ('Listing issue', 'Asked to pay in cash'):
         prop = b.bed.room.property if b else (Property.objects.filter(slug=body.listing).first() if body.listing else None)
+        if body.listing and not b and not prop:
+            raise ApiError(404, 'not_found', 'No such PG.')
+        # each report lands in the trust team's queue: the same one twice adds nothing, and a flood would bury real ones
+        same = TrustReport.objects.filter(reporter=party, property=prop, category=body.category, status='open').first()
+        if same:
+            return report_out(same)
+        if TrustReport.objects.filter(reporter=party, created_at__gte=timezone.now() - timedelta(days=1)).count() >= REPORTS_PER_DAY:
+            raise ApiError(429, 'too_many_reports', 'You have sent several reports today. The trust team will look at them first.')
         r = TrustReport.objects.create(reporter=party, organisation=prop.organisation if prop else None, property=prop,
                                        category=body.category, text=text)
         if body.category == 'Listing issue' and b:  # residents' listing issues also reach the owner; cash reports never do

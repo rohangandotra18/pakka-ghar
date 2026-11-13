@@ -128,3 +128,17 @@ def test_a_confirmed_cash_report_also_pauses_a_pg_under_recheck(world):
     staff.post(f'/staff/reports/{rid}/resolve', {'outcome': 'confirmed'})
     assert read(lambda: Property.objects.get(slug='sidhu').status) == 'paused'
     assert staff.post('/staff/properties/sidhu/approve').status_code == 409
+
+
+def test_changing_where_rent_is_paid_is_checked_recorded_and_announced(world):
+    from apps.core.models import AuditEvent, Notification
+    owner = world['api'](world['owner_a'])
+    for ifsc in ('SBIN1234567', 'SBI0001234', 'sbin0001234x'):
+        assert owner.post('/owner/payout', {'bank_name': 'SBI', 'account_number': '30012345678', 'ifsc': ifsc}).status_code == 422
+    assert owner.post('/owner/payout', {'bank_name': 'SBI', 'account_number': '123', 'ifsc': 'SBIN0001234'}).status_code == 422
+    assert owner.post('/owner/payout', {'bank_name': 'SBI', 'account_number': '3001 2345 6789', 'ifsc': ' sbin0001234 '}).status_code == 200
+    with system():
+        ev = AuditEvent.objects.filter(action='payout.change').latest('id')
+        assert ev.after['account'] == 'XXXX XXXX 6789' and ev.after['ifsc'] == 'SBIN0001234'
+        assert ev.before['account'] == 'XXXX XXXX 4417'        # the account the demo PG was paid into until now
+        assert Notification.objects.filter(party=world['owner_a'], kind='payout.changed').exists()

@@ -55,6 +55,10 @@ def test_cash_or_wrong_amount_never_captures(world):
         assert pay.capture(p, 'pay_x', p.amount_paise, 'cash').status == 'failed'
         p2 = pay.create_payment(b, 'invoice', b.invoices.first())
         assert pay.capture(p2, 'pay_y', p2.amount_paise - 1, 'upi').status == 'failed'
+        # the partner kept the money either way, so each can be found and refunded
+        from apps.core.models import AuditEvent
+        assert Payment.objects.get(pk=p2.pk).provider_payment_id == 'pay_y'
+        assert set(AuditEvent.objects.filter(action='payment.rejected').values_list('after__provider_payment_id', flat=True)) == {'pay_x', 'pay_y'}
 
 
 def test_electricity_split_by_days_lived(world):

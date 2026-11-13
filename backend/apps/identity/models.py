@@ -12,6 +12,10 @@ class OtpChallenge(UUIDModel):
     attempts = models.SmallIntegerField(default=0)
     consumed_at = models.DateTimeField(null=True, blank=True)
 
+    class Meta:
+        # the per-phone and per-network limits count recent codes on every request, hardest when someone is spamming
+        indexes = [models.Index(fields=['phone', 'created_at']), models.Index(fields=['ip', 'created_at'])]
+
 
 class SessionToken(UUIDModel):
     """Only the SHA-256 of the token is stored. Revoking one denies access at once."""

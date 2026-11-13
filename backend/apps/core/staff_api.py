@@ -146,11 +146,17 @@ def resolve(request, report_id: UUID, body: ResolveIn):
     if body.outcome not in ('confirmed', 'dismissed'):
         raise ApiError(422, 'bad_outcome', 'Choose confirmed or dismissed.')
     with system():
-        r = TrustReport.objects.select_related('reporter', 'property__organisation').filter(pk=report_id).first()
+        # locked: two of the team closing the same report at once must not both act on it
+        r = (TrustReport.objects.select_for_update(of=('self',)).select_related('reporter', 'property__organisation')
+             .filter(pk=report_id).first())
         if not r or r.status != 'open':
             raise ApiError(404, 'not_found', 'No open report with that id.')
         r.status = body.outcome
         r.save(update_fields=['status', 'updated_at'])
+        # every outcome is on record with who decided it, a dismissal as much as a confirmation. Filed under no
+        # organisation: audit rows are readable by their organisation, and a report must stay hidden from the owner.
+        audit(None, who, 'report.resolve', r, {'status': 'open'},
+              {'status': body.outcome, 'category': r.category, 'property': r.property.slug if r.property else None})
         p = r.property
         if body.outcome == 'confirmed' and r.category == 'Asked to pay in cash' and p and p.status in ('published', 'submitted'):  # also mid-recheck, so approval can't republish it
             p.status = 'paused'

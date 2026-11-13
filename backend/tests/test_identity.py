@@ -35,3 +35,19 @@ def test_digilocker_keeps_only_last_four(world):
     txn = api.post('/kyc/digilocker/start').json()['txn']
     me = api.post('/kyc/digilocker/complete', {'txn': txn, 'auth_code': 'x'}).json()
     assert me['verified'] and me['aadhaar_masked'].startswith('XXXXXXXX') and len(me['aadhaar_masked']) == 12
+
+
+def test_a_number_takes_only_so_many_wrong_codes_a_day(world, settings):
+    from datetime import timedelta
+
+    from django.utils import timezone
+    phone = '+919800055555'
+    with system():   # earlier today: enough fresh codes, each guessed wrong to the limit
+        for _ in range(settings.OTP_WRONG_PER_PHONE_DAY // settings.OTP_MAX_ATTEMPTS):
+            OtpChallenge.objects.create(phone=phone, code_hash='x', expires_at=timezone.now(), attempts=settings.OTP_MAX_ATTEMPTS)
+        OtpChallenge.objects.filter(phone=phone).update(created_at=timezone.now() - timedelta(hours=3))
+    r = Api().post('/auth/otp/start', {'phone': '98000 55555'})
+    assert r.status_code == 429 and r.json()['code'] == 'too_many_wrong_codes'
+    with system():   # a day later they no longer count
+        OtpChallenge.objects.filter(phone=phone).update(created_at=timezone.now() - timedelta(hours=25))
+    assert Api().post('/auth/otp/start', {'phone': '98000 55555'}).status_code == 200

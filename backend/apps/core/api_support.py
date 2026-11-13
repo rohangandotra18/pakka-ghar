@@ -5,6 +5,7 @@ import json
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+from django.conf import settings
 from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
 from ninja.security import HttpBearer
@@ -46,6 +47,9 @@ class TokenAuth(HttpBearer):
         from apps.identity.models import SessionToken
         st = SessionToken.objects.select_related('party').filter(token_hash=sha256(token), revoked_at__isnull=True).first()
         if not st:
+            return None
+        if timezone.now() - (st.last_used_at or st.created_at) > timedelta(days=settings.SESSION_IDLE_DAYS):
+            SessionToken.objects.filter(pk=st.pk).update(revoked_at=timezone.now())
             return None
         if not st.last_used_at or timezone.now() - st.last_used_at > timedelta(minutes=5):
             SessionToken.objects.filter(pk=st.pk).update(last_used_at=timezone.now())
@@ -102,6 +106,12 @@ def idempotent(view):
             raise ApiError(400, 'idempotency_key_required', 'Send an Idempotency-Key header.')
         party = party_of(request)
         fp = sha256(f'{request.method} {request.path}\n'.encode() + (request.body or b''))
+        # A double tap or a retry can bring the same key twice at once. Both would find no record and both run the
+        # view; the second then fails on the unique key. Holding a lock on (person, key) until this request's
+        # transaction ends makes the second wait, find the first's record and replay it.
+        from django.db import connection
+        with connection.cursor() as cur:
+            cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))', [f'idem:{party.id}:{key}'])
         rec = IdempotencyRecord.objects.filter(party=party, key=key).first()
         if rec:
             if rec.fingerprint != fp:

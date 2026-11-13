@@ -79,7 +79,10 @@ DEV_ECHO_OTP = DEBUG and env('DEV_ECHO_OTP', '1') == '1'
 
 OTP_TTL_SECONDS = 300
 OTP_MAX_ATTEMPTS = 5
+SESSION_IDLE_DAYS = 90   # a sign-in unused this long (a lost phone, a shared computer) stops working
 OTP_PER_PHONE_10MIN = 5
+# wrong codes one number may take in a day: without it, fresh codes every few minutes allow thousands of guesses a day
+OTP_WRONG_PER_PHONE_DAY = 30
 OTP_PER_IP_10MIN = int(env('OTP_PER_IP_10MIN', '20'))
 CORS_ORIGINS = [o for o in env('CORS_ORIGINS', '').split(',') if o]   # the website's address in production
 NUM_PROXIES = int(env('NUM_PROXIES', '0'))   # load balancers in front of the app, for the client's real address
@@ -108,8 +111,10 @@ CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_BEAT_SCHEDULE = {
     'release-expired-holds': {'task': 'apps.booking.tasks.release_expired_holds', 'schedule': 60.0},
+    'announce-ended-bidding': {'task': 'apps.booking.tasks.announce_ended_bidding', 'schedule': crontab(minute='*/10')},
     'settle-overdue-deposits': {'task': 'apps.booking.tasks.settle_overdue_deposits', 'schedule': crontab(minute=15)},
-    'charge-rent': {'task': 'apps.payments.tasks.charge_rent_for_month', 'schedule': crontab(minute=5, hour=0, day_of_month=1)},
+    # daily on the 1st to the 5th (rent is due on the 5th): billing twice is harmless, a missed day is made up
+    'charge-rent': {'task': 'apps.payments.tasks.charge_rent_for_month', 'schedule': crontab(minute=5, hour=0, day_of_month='1-5')},
     'settle-to-banks': {'task': 'apps.payments.tasks.settle_all', 'schedule': crontab(minute=0, hour=10)},
     'purge-expired': {'task': 'apps.core.tasks.purge_expired', 'schedule': crontab(minute=30, hour=3)},
 }
@@ -129,6 +134,13 @@ if not DEBUG:
         missing += [k for k in ('RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET') if not env(k)]
     if missing:
         raise RuntimeError('Set these before running with DEBUG off: ' + ', '.join(missing))
+    # The stand-ins verify anyone's ID, take no real money and only log sign-in codes: never on a live server by
+    # accident. A demo or staging server that wants them says so with ALLOW_FAKE_PROVIDERS=1.
+    fakes = [k for k, fake in (('KYC_PROVIDER', 'fake'), ('PAYMENT_PROVIDER', 'fake'), ('OTP_PROVIDER', 'console'))
+             if globals()[k] == fake]
+    if fakes and env('ALLOW_FAKE_PROVIDERS') != '1':
+        raise RuntimeError('These still use the development stand-in with DEBUG off: ' + ', '.join(fakes) +
+                           '. Configure the real provider, or set ALLOW_FAKE_PROVIDERS=1 for a demo server.')
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = env('SECURE_SSL_REDIRECT', '1') == '1'
     SECURE_HSTS_SECONDS = 31536000
