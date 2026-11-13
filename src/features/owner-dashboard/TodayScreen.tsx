@@ -47,6 +47,9 @@ export default function Home() {
         <View key={x.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8, borderTopWidth: i ? 1 : 0, borderTopColor: C.line }}>
           <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: TONE[x.tone as keyof typeof TONE] ?? C.accent }} />
           <T style={{ flex: 1 }}>{x.text}</T>
+          {/* a tour request can be turned down too: the tenant is told and asked to pick another time */}
+          {x.action?.startsWith('visit:') && <Btn small kind="ghost" label="Can’t make it" disabled={busy}
+            onPress={() => act(() => ok(api.POST('/api/owner/visits/{visit_id}/decline', { params: { path: { visit_id: x.action!.slice(6) } } })), 'Tour declined. They can pick another time.')} />}
           <Btn small kind={x.tone === 'urgent' ? 'primary' : 'secondary'} label={x.label} disabled={busy}
             onPress={() => (x.route ? router.push(x.route as Href) : x.action ? run(x.action) : undefined)} />
         </View>
